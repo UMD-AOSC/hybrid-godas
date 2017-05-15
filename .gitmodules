@@ -1,5 +1,5 @@
 [submodule "godas-3dvar"]
-	path = godas-3dvar
+	path = 3dvar
 	url = git@bitbucket.org:travissluka/godas-3dvar.git
 [submodule "MOM6-examples"]
 	path = MOM6-examples

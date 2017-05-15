@@ -7,7 +7,7 @@
 cat <<EOF
 
  &MOM_input_nml
-         output_directory = '.',
+         output_directory = 'OUTPUT',
          input_filename = '$restart'
          restart_input_dir = 'INPUT',
          restart_output_dir = 'RESTART',
@@ -18,7 +18,7 @@ cat <<EOF
 /
 
  &SIS_input_nml
-        output_directory = './',
+        output_directory = 'OUTPUT',
         input_filename = '$restart'
         restart_input_dir = 'INPUT/',
         restart_output_dir = 'RESTART/',

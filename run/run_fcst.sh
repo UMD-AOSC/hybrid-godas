@@ -1,21 +1,21 @@
 #!/bin/bash
 #PBS -A cpo_hyb_go
-#PBS -N MOM6_fcst
+#PBS -N MOM6_GODAS
 #PBS -l nodes=15
 #PBS -l partition=c3
 #PBS -q batch
 #PBS -j oe
 #PBS -q debug
-#PBS -o MOM6_fcst.log
+#PBS -E
 
-#PBS -l walltime=00:30:00
+#PBS -l walltime=00:25:00
 ##  ~5 min for 1 day
 ## ~16 min for 5 day
 
-
+set -e
 interval=5 # interval in days
-date_start="1979-01-01"
-date_end="1979-01-10"
+date_start="2003-01-01"
+date_end="2003-02-01"
 
 root_dir="/lustre/f1/unswept/ncep/Travis.Sluka/godas-3dvar-mom6"
 exp_dir="$root_dir/exp/exp1"
@@ -37,6 +37,7 @@ if [ ! -d "$exp_dir" ]; then
     restart="n"
     mkdir -p $exp_dir
     mkdir -p $exp_dir/RESTART
+    mkdir -p $exp_dir/log
     echo "$date_start" > $exp_dir/last_date    
 fi
 
@@ -51,11 +52,12 @@ echo "Running forecast from $date_cur to $date_next   (stopping: $date_end)"
 #------------------------------------------------------------
 rm -rf $work_dir
 mkdir -p $work_dir
-mkdir -p $work_dir/RESTART
 cd $work_dir
+mkdir -p RESTART
+mkdir -p INPUT
+mkdir -p OUTPUT
 cp $root_dir/run/config_static/* . 
 . $root_dir/run/config_script/input.nml > input.nml
-mkdir INPUT
 ln -s $root_dir/run/INPUT/* INPUT/
 cp $root_dir/MOM6/build/intel/ice_ocean_SIS2/repro/MOM6 .
 
@@ -82,6 +84,23 @@ else
 fi
 
 
+# move the output files
+fdate=$date_cur
+while [ $(date -d $fdate +%s) -lt $(date -d $date_next +%s) ]
+do
+    outdir=$exp_dir/bkg
+    mkdir -p $outdir
+
+    src_file=$work_dir/$(date "+%Y%m%d" -d "$date_cur")
+    src_file=$src_file.ocean_daily_$(date "+%Y_%m_%d" -d "$fdate").nc
+    dst_file=$outdir/ocean_daily_mean_$(date "+%Y%m%d" -d "$fdate").nc
+
+    mv $src_file $dst_file
+
+    fdate=$(date "+%Y-%m-%d" -d "$fdate + 1 day")
+done
+
+
 # move the resart files, update the "last_date"
 mv $exp_dir/RESTART $exp_dir/RESTART_old
 mv $work_dir/RESTART $exp_dir/RESTART
@@ -93,5 +112,5 @@ rm $exp_dir/RESTART_old -rf
 if [ $(date -d "$date_next" +%s) -lt $(date -d "$date_end" +%s) ]; 
 then
      cd $root_dir/run
-     msub ./run_fcst.sh
+     msub -o $exp_dir/log/fcst_$(date "+%Y%m%d" -d "$date_next").log  ./run_fcst.sh
 fi
