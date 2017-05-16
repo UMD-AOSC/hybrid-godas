@@ -18,7 +18,7 @@ date_start="2003-01-01"
 date_end="2003-02-01"
 
 root_dir="/lustre/f1/unswept/ncep/Travis.Sluka/godas-3dvar-mom6"
-exp_dir="$root_dir/exp/exp1"
+exp_dir="$root_dir/DATA/exp/exp1"
 work_dir="/lustre/f1/ncep/Travis.Sluka/g3dv_$(echo $exp_dir | md5sum | cut -c 1-10)"
 
 
@@ -27,7 +27,7 @@ work_dir="/lustre/f1/ncep/Travis.Sluka/g3dv_$(echo $exp_dir | md5sum | cut -c 1-
 
 
 # import linux environment
-. $root_dir/MOM6/build/intel/env
+source $root_dir/config/env
 
 
 # check to see if the output directory has been created
@@ -59,7 +59,7 @@ mkdir -p OUTPUT
 cp $root_dir/run/config_static/* . 
 . $root_dir/run/config_script/input.nml > input.nml
 ln -s $root_dir/run/INPUT/* INPUT/
-cp $root_dir/MOM6/build/intel/ice_ocean_SIS2/repro/MOM6 .
+cp $root_dir/build/MOM6 .
 
 # copy the restart files if needed
 if [ "$restart" = 'r' ]; then
