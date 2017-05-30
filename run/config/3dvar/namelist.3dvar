@@ -36,7 +36,7 @@
 
 &g3dv_bgcov
   ! horizontal localization distance
-  hz_loc = 200e3, 10e3
+  hz_loc = 240e3, 25e3
 
   ! vertical localization distance
   vt_loc = 0.125
@@ -45,13 +45,12 @@
   vt_loc_pow = 2.0
 
   ! time localization
-  time_loc = -1
+  time_loc = 120.0
 
   ! gradient tensors
   tnsr_surf  = 0.1
   tnsr_coast_dist = 75e3
 !  tnsr_coast_min  = 0.3
-!  tnsr_depth = 500.0
 
 
   bgvar_t = 1.0

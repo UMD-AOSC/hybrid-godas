@@ -17,5 +17,5 @@ date_end=2004-01-01
 # at the end of a given job run, anothr job is submitted
 fcst_len=30
 
-# frequency to save output files (in days)
-fcst_out_interval=5
+fcst_dailymean=0
+fcst_otherfiles=1

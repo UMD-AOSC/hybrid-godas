@@ -43,9 +43,15 @@ fi
 
 # run the forecast
 fcst_start=$date_cur
-fcst_out_da=0
-fcst_out_dir="$exp_dir/%Y/"
+fcst_dailymean="${fcst_dailymean:-1}"
+fcst_dailymean_dir="${fcst_dailymean_dir:-$exp_dir/output/%Y/}"
+fcst_dailymean_int="${fcst_dailymean_int:-1}"
+fcst_dailymean_da=0
+fcst_otherfiles="${fcst_otherfiles:-0}"
+fcst_otherfiles_dir="${fcst_otherfiles_dir:-$exp_dir/output/%Y/}"
 (. $root_dir/run/subscripts/run_fcst.sh)
+if [ $? -gt 0 ]; then echo "ERROR running forecast."; exit 1; fi
+
 
 
 # submit another job if we aren't done yet

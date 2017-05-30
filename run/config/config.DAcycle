@@ -16,3 +16,4 @@ date_end=2003-02-01
 
 # experiment properties
 da_interval=5  
+fcst_otherfiles=0

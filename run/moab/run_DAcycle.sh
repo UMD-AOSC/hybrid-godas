@@ -53,10 +53,14 @@ fi
 if [ $(date +%s -d $last_date_fcst) -eq $(date +%s -d $date_cur) ]; then
     fcst_start=$date_cur
     fcst_len=$da_interval
-    fcst_out_interval=1
-    fcst_out_da=1
-    fcst_out_dir=$exp_dir/bkg/
+    fcst_dailymean=1
+    fcst_dailymean_da=1
+    fcst_dailymean_int=1
+    fcst_dailymean_dir=$exp_dir/bkg/
+    fcst_otherfiles="${fcst_otherfiles:-0}"
+    fcst_otherfiles_dir="${fcst_otherfiles_dir:-$exp_dir/output/%Y/}"
     (. $root_dir/run/subscripts/run_fcst.sh)
+    if [ $? -gt 0 ]; then echo "ERROR running forecast."; exit 1; fi
 fi
 
 
@@ -66,6 +70,7 @@ date_ana=$(date "+%Y%m%d" -d "$date_cur + $t day")
 date_obs_end=$date_ana
 date_obs_start=$date_cur
 (. $root_dir/run/subscripts/run_da.sh)
+if [ $? -gt 0 ]; then echo "ERROR running DA."; exit 1; fi
 
 cp last_date_fcst last_date_da
 
