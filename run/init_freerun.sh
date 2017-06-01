@@ -22,7 +22,7 @@ cd $exp_dir
 mkdir -p logs
 mkdir -p config
 cp -r $root_dir/run/config/mom config/
-cp -r $root_dir/run/config/config.freerun config/
+(. $root_dir/run/config/config.freerun.sh > config/config.freerun)
 
 ln -s $root_dir/run/moab/run_freerun.sh .
 
