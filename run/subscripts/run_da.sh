@@ -1,8 +1,7 @@
 #!/bin/bash
 
 obs_sst_dir=$root_dir/DATA/obs/sst_pathfinder
-
-
+obs_prf_dir=$root_dir/DATA/obs/profile
 echo ""
 echo "============================================================"
 echo "   Running Data assimilation"
@@ -25,8 +24,9 @@ rm -rf $work_dir
 mkdir -p $work_dir
 cd $work_dir
 ln -s $root_dir/build/3dvar .
-ln -s $root_dir/build/obsop_sst .
-cp $root_dir/run/config/3dvar/* .
+ln -s $root_dir/build/obsop .
+ln -s $root_dir/build/obsprep* .
+cp $exp_dir/config/3dvar/* .
 
 mkdir INPUT
 cd INPUT
@@ -37,7 +37,7 @@ ln -s $exp_dir/bkg/${date_ana}.nc bkg.nc
 ln -s $exp_dir/bkg/${date_ana}_da.nc bkg_da.nc
 cd ..
 
-# run observation operators
+# run observation prep
 toffset=0
 fdate=$date_obs_end
 while [ $(date -d $fdate +%s) -ge $(date -d $date_obs_start +%s) ]
@@ -45,27 +45,49 @@ do
     echo ""
     echo "============================================================"
     echo " date=$fdate, time offset=$toffset "
-
+    
     export obsop_hr=$toffset
-    source obsop.nml.sh > obsop.nml
 
-    ln -sf $exp_dir/bkg/$fdate.nc obsop_bkg.nc
-
-    obfile=$obs_sst_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc
-    echo $obfile
+    ln -sf $exp_dir/bkg/$fdate.nc obsop_bkg.$fdate.nc
+    ln -sf $exp_dir/bkg/${fdate}_da.nc obsop_bkg_da.$fdate.nc
+    export fdate
+    
+    # conventional obs
+    obfile=$obs_prf_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc    
     if [ -f $obfile ]; then
-	ln -sf $obfile obsin.nc
-        aprun ./obsop_sst
-	ncks --mk_rec_dmn obs obsout.nc obs.$toffset.nc
+    	export obsfile_in=$obfile
+    	export obsfile_out=obprep.$fdate.insitu.nc
+    	source obsop.nml.sh > obsprep_insitu.nml
+    	aprun obsprep_insitu
     fi
+
+    # SST obs
+    obfile=$obs_sst_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc    
+    if [ -f $obfile ]; then
+    	export obsfile_in=$obfile
+    	export obsfile_out=obprep.$fdate.sst.nc
+    	source obsop.nml.sh > obsprep_sst.nml
+    	aprun obsprep_sst
+    fi
+
+    # combine
+    echo ""
+    echo "------------------------------------------------------------"
+    echo " Combining all obs in single day..."
+    echo "------------------------------------------------------------"
+    ncrcat obprep.$fdate.*.nc obprep.$fdate.nc
+
+    # observation operator
+    export obsfile_in=obprep.$fdate.nc
+    export obsfile_out=obsop.$fdate.nc
+    source obsop.nml.sh > obsop.nml
+    aprun obsop
 
     fdate=$(date "+%Y%m%d" -d "$fdate - 1 day")
     toffset=$(($toffset -24))
 done
 
-rm obsin.nc
-rm obsout.nc
-ncrcat obs.*.nc INPUT/obs.nc
+ncrcat obsop.*.nc INPUT/obs.nc
 
 # 3dvar
 aprun -n $da_nproc 3dvar

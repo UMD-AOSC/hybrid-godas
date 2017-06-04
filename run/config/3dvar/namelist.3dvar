@@ -15,7 +15,7 @@
   
   depth_max = -1
   use_t = T
-  use_s = F
+  use_s = T
 
   inc_max_t = 10.0
   inc_max_s = 1.0
@@ -29,7 +29,7 @@
 
 
 &g3dv_solver
-  maxitr = 30
+  maxitr = 20
   conv_ratio = 1e2
 /
 

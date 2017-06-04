@@ -1,4 +1,4 @@
-module read_avhrr_pathfinder
+module obsprep_sst_pathfinder
   use netcdf
   implicit none
   private
@@ -48,8 +48,8 @@ contains
 
     real :: t_offset, t_scale
 
-    print *, ""
-    print *, "Pathfinder AVHRR SST"
+!    print *, ""
+!    print *, "Pathfinder AVHRR SST"
 
     ! read lat / lon grid
     call check(nf90_open(infile, nf90_nowrite, ncid))
@@ -81,7 +81,7 @@ contains
     call check(nf90_inq_varid(ncid, 'sea_surface_temperature', vid))
     call check(nf90_get_att(ncid, vid, "add_offset", t_offset))
     call check(nf90_get_att(ncid, vid, "scale_factor", t_scale))
-    print *,'observed temp = "sea_surface_temperature" * ',t_scale,"+",t_offset
+!    print *,'observed temp = "sea_surface_temperature" * ',t_scale,"+",t_offset
     allocate(ob_val(nx,ny))
     call check(nf90_get_var(ncid, vid, ob_val))
     ob_val = ob_val*t_scale + t_offset
@@ -122,4 +122,4 @@ contains
     end if
   end subroutine check
 
-end module read_avhrr_pathfinder
+end module obsprep_sst_pathfinder

@@ -26,7 +26,7 @@ mkdir -p bkg
 mkdir -p config
 cp -r $root_dir/run/config/3dvar config/  
 cp -r $root_dir/run/config/mom config/
-(. $root_dir/run/config/config.DAcycle config/config.DAcycle)
+(. $root_dir/run/config/config.DAcycle.sh >  config/config.DAcycle)
 
 ln -s $root_dir/run/moab/run_DAcycle.sh .
 
