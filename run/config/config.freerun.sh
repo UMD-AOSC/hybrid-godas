@@ -20,7 +20,7 @@ flux_cfsr_dir="/lustre/f1/unswept/ncep/Yan.Xue/MOM6_ensrun/fluxes_CFSR"
 #  to be changed as well
 moab_acct=cpo_hyb_go
 moab_nodes=15
-moab_walltime="03:00:00"
+moab_walltime="00:30:00"
 moab_queue="batch"
 
 # experiment start/end dates
@@ -31,7 +31,8 @@ date_end=2004-01-01
 #  run, another job is submitted to continue the run
 # NOTE: if this is changed then the moab_walltime should be changed above as well
 #  (e.g. 30 days takes about 2 hours, 5 days about 20 minutes)
-fcst_len=30
+fcst_len=5
+fcst_leapadj=1
 
 # normally the forecasting scripts save daily mean files at specific intervals,
 # this just tells the scripts to save any other files specified on the mom/diag_table file

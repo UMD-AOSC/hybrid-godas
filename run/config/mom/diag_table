@@ -22,7 +22,7 @@ OM4_SIS2_cgrid_025
 ## Other optional user defined output files
 ## ------------------------------------------------------------
 
-# "ocean_pentad%4yr%2mo%2dy",    5,"days",1,"days","time",5,"days"
+# "ocean_pentad%4yr%2mo%2dy",    -1,"days",1,"days","time",1,"days"
 # 'ocean_model', 'temp',     'temp',     'ocean_pentad%4yr%2mo%2dy',    'all', 'mean','none',2
 # 'ocean_model', 'salt',     'salt',     'ocean_pentad%4yr%2mo%2dy',    'all', 'mean','none',2
 # 'ocean_model', 'ssh',      'ssh',      'ocean_pentad%4yr%2mo%2dy',    'all', 'mean','none',2

@@ -46,6 +46,18 @@ if [ -z "${MOAB_JOBNAME}" ]; then
 fi
 
 
+# determine if leap day is an issue, if so, add a day to the forecast run
+fcst_leapadj=${fcst_leapadj:-1}
+[ $(date +%d -d "$(date +%Y-02-28 -d "$date_cur") + 1 day" ) -eq 29 ] && isleap=1 || isleap=0
+if [[ $fcst_leapadj -gt 0 && $isleap -eq 1 ]]; then
+  leapday=$(date +%s -d"$(date +%Y-02-29 -d "$date_cur")")
+  if [[ $(date +%s -d "$date_cur") -le $leapday &&\
+        $(date +%s -d "$date_cur + $da_interval day") -ge $leapday ]]; then
+      da_interval=$((da_interval + 1))
+  fi
+fi
+
+
 # otherwise, this is a job running under MOAB, continue with the da cycle
 #------------------------------------------------------------
 
@@ -77,3 +89,4 @@ cp last_date_fcst last_date_da
 # submit another job if we aren't done yet
 date_cur=$(date "+%Y-%m-%d" -d "$date_cur + $da_interval day")
 if [ $(date +%s -d $date_cur) -le $(date +%s -d $date_end) ]; then submitJob; fi
+

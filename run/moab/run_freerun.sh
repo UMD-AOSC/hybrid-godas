@@ -49,9 +49,23 @@ fcst_dailymean_int="${fcst_dailymean_int:-1}"
 fcst_dailymean_da=0
 fcst_otherfiles="${fcst_otherfiles:-0}"
 fcst_otherfiles_dir="${fcst_otherfiles_dir:-$exp_dir/output/%Y/}"
+fcst_leapadj="${fcst_leapadj:-1}"
+
+# determine if leap day is an issue, if so, add a day to the forecast run
+[ $(date +%d -d "$(date +%Y-02-28 -d "$fcst_start") + 1 day" ) -eq 29 ] && isleap=1 || isleap=0
+if [[ $fcst_leapadj -gt 0 && $isleap -eq 1 ]]; then
+  leapday=$(date +%s -d"$(date +%Y-02-29 -d "$fcst_start")")
+  if [[ $(date +%s -d "$fcst_start") -le $leapday &&\
+        $(date +%s -d "$fcst_start + $fcst_len day") -ge $leapday ]]; then
+      fcst_len=$((fcst_len + 1))
+  fi
+fi
+
+
+# run the forecast
+# ------------------------------------------------------------
 (. $root_dir/run/subscripts/run_fcst.sh)
 if [ $? -gt 0 ]; then echo "ERROR running forecast."; exit 1; fi
-
 
 
 # submit another job if we aren't done yet

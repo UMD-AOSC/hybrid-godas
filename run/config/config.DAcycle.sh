@@ -1,6 +1,9 @@
+#!/bin/bash
+cat << EOF
+
 # directory locations
-root_dir="/lustre/f1/unswept/ncep/Travis.Sluka/godas-3dvar-mom6"
-work_dir="/lustre/f1/ncep/Travis.Sluka/g3dv_$(echo $exp_dir | md5sum | cut -c 1-6)"
+root_dir="$root_dir"
+work_dir="$root_dir/WRK/g3dv_$(echo $exp_dir | md5sum | cut -c 1-6)"
 flux_cfsr_dir="/lustre/f1/unswept/ncep/Yan.Xue/MOM6_ensrun/fluxes_CFSR"
 
 # Job submission system properties
@@ -16,4 +19,7 @@ date_end=2003-02-01
 
 # experiment properties
 da_interval=5  
+fcst_leapadj=1
 fcst_otherfiles=0
+
+EOF
