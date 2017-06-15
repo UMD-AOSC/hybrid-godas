@@ -24,6 +24,8 @@ moab_walltime="00:30:00"
 moab_queue="batch"
 
 # experiment start/end dates
+# NOTE: date_start only has an impact for initializing a new experiment. Otherwise
+#  subsequent runs will simply pick up from where the previous run stopped.
 date_start=2003-01-01
 date_end=2004-01-01
 

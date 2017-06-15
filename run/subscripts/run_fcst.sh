@@ -26,6 +26,7 @@ echo "   Running MOM6 forecast..."
 echo "============================================================"
 
 # check required environment variables
+fcst_maskland=${fcst_maskland:-1}
 envvars="root_dir work_dir exp_dir fcst_start fcst_len"
 envvars="$envvars fcst_dailymean fcst_dailymean_da fcst_dailymean_int fcst_dailymean_dir"
 envvars="$envvars fcst_otherfiles fcst_otherfiles_dir"
@@ -62,8 +63,11 @@ mkdir -p OUTPUT
 mkdir -p RESTART
 ln -s $root_dir/build/MOM6 .
 
+
+
 # namelist files
 cp $exp_dir/config/mom/* .
+. ./diag_table.sh > diag_table
 . ./input.nml.sh > input.nml
 
 # static input files
@@ -119,10 +123,18 @@ fi
 
 # move any other user defined files that might be there
 if [ "$fcst_otherfiles" -gt 0 ]; then
+    pfx=$(date "+%Y%m%d" -d "$fcst_start")
+
+    # mask the land on the files first
+   if [ "$fcst_maskland" = 1 ]; then
+	echo "Masking land of output files..."
+	$root_dir/tools/mask_output.py $pfx.ocean_*.nc
+   fi
+
+    # move the files
     echo "Moving other output files..."
     cd $work_dir
     fdate=$(date "+%Y%m%d" -d "$fcst_end - 1 day")
-    pfx=$(date "+%Y%m%d" -d "$fcst_start")
     for f in $pfx.ocean_*.nc
     do
 	ofdate=$(echo "${f: -13:10}" | tr _ -)
@@ -133,7 +145,6 @@ if [ "$fcst_otherfiles" -gt 0 ]; then
 
  	dst_file=$out_dir/$ofname.$(date "+%Y%m%d" -d "$ofdate").nc
  	mv $f $dst_file
-
     done
 fi
 

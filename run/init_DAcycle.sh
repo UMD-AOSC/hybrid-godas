@@ -11,6 +11,7 @@ exp_dir=$1
 
 # determin the root directory 
 root_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../ && pwd )"
+root_dir="$(readlink -f $root_dir)"
 
 # create experiment directory
 if [ -d "$exp_dir" ]; then
@@ -24,8 +25,10 @@ mkdir -p ana
 mkdir -p bkg
 
 mkdir -p config
-cp -r $root_dir/run/config/3dvar config/  
-cp -r $root_dir/run/config/mom config/
+mkdir -p config/3dvar
+mkdir -p config/mom
+cp $root_dir/run/config/3dvar/* config/3dvar
+cp $root_dir/run/config/mom/* config/mom
 (. $root_dir/run/config/config.DAcycle.sh >  config/config.DAcycle)
 
 ln -s $root_dir/run/moab/run_DAcycle.sh .
