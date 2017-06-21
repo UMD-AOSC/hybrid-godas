@@ -1,0 +1,12 @@
+&bgvar_nml
+ bgvar_file_in=""
+ bgvar_file_out="bgvar.nc"
+
+ grid_nx = 1440
+ grid_ny = 1080
+ grid_nz = 75
+
+ cgrid_nx = 720
+ cgrid_ny = 330
+ cgrid_nz = 50
+/

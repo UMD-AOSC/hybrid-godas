@@ -35,8 +35,10 @@ cd INPUT
 ln -s $root_dir/DATA/grid/ocean_geometry.nc grid.nc
 ln -s $root_dir/DATA/grid/Vertical_coordinate.nc vgrid.nc
 ln -s $root_dir/DATA/grid/coast_dist.nc .
+ln -s $root_dir/DATA/grid/bgvar.nc .
 ln -s $exp_dir/bkg/${date_ana}.nc bkg.nc
 ln -s $exp_dir/bkg/${date_ana}_da.nc bkg_da.nc
+
 cd ..
 
 #------------------------------------------------------------

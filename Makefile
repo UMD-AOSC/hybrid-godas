@@ -2,7 +2,7 @@
 
 
 all: 
-	@echo "select individual component to build. (fms, mom, obsop, 3dvar)"
+	@echo "select individual component to build. (fms, mom, obsop, 3dvar, util)"
 
 fms:
 	rm -rf src/MOM6/build/intel/*
@@ -19,6 +19,9 @@ mom:
 
 obsop:
 	cd src/obsop; make
+
+util:
+	cd src/util; make
 
 3dvar:
 	ln -sf ../../../config/env src/3dvar/config/env
