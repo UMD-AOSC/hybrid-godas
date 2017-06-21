@@ -37,6 +37,7 @@
 &g3dv_bgcov
   ! horizontal localization distance
   hz_loc = 240e3, 25e3
+  hz_loc_scale=1.8
 
   ! vertical localization distance
   vt_loc = 0.125
@@ -53,6 +54,6 @@
 !  tnsr_coast_min  = 0.3
 
 
-  bgvar_t = 1.0
-  bgvar_s = 0.1
+  bgvar_t = 0.8
+  bgvar_s = 0.08
 /

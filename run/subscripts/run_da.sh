@@ -1,7 +1,9 @@
 #!/bin/bash
+set -e
 
 obs_sst_dir=$root_dir/DATA/obs/sst_pathfinder
 obs_prf_dir=$root_dir/DATA/obs/profile
+
 echo ""
 echo "============================================================"
 echo "   Running Data assimilation"
@@ -37,64 +39,143 @@ ln -s $exp_dir/bkg/${date_ana}.nc bkg.nc
 ln -s $exp_dir/bkg/${date_ana}_da.nc bkg_da.nc
 cd ..
 
-# run observation prep
+#------------------------------------------------------------
+# Observation prep
+#------------------------------------------------------------
+echo ""
+echo "============================================================"
+echo "Observation processing"
+echo ""
+echo "Preparing Observations (SST/insitu)"
+
+
+#run the obs prep programs
+#------------------------------------------------------------
+# TODO: move everythin to work on /dev/shm for speed improvement ?
 toffset=0
 fdate=$date_obs_end
 while [ $(date -d $fdate +%s) -ge $(date -d $date_obs_start +%s) ]
 do
-    echo ""
-    echo "============================================================"
-    echo " date=$fdate, time offset=$toffset "
-    
+    # make directory
+    d=$work_dir/obsop_$fdate
+    mkdir -p $d
+    cd $d
     export obsop_hr=$toffset
-
-    ln -sf $exp_dir/bkg/$fdate.nc obsop_bkg.$fdate.nc
-    ln -sf $exp_dir/bkg/${fdate}_da.nc obsop_bkg_da.$fdate.nc
     export fdate
-    
+
+    # link required files    
+    ln -s ../INPUT .
+    ln -sf $exp_dir/bkg/$fdate.nc obsop_bkg.nc
+    ln -sf $exp_dir/bkg/${fdate}_da.nc obsop_bkg_da.nc
+
     # conventional obs
     obfile=$obs_prf_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc    
-    if [ -f $obfile ]; then
+    if [ -f  $obfile ]; then
+	echo "  obsprep_insitu $fdate"
     	export obsfile_in=$obfile
-    	export obsfile_out=obprep.$fdate.insitu.nc
-    	source obsop.nml.sh > obsprep_insitu.nml
-    	aprun obsprep_insitu
-    fi
+    	export obsfile_out=obprep.insitu.nc
+    	source ../obsop.nml.sh > obsprep_insitu.nml
+	aprun -n 1 ../obsprep_insitu > obsprep_insitu.log &
+    fi    
 
     # SST obs
     obfile=$obs_sst_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc    
     if [ -f $obfile ]; then
+	echo "  obsprep_sst    $fdate"
     	export obsfile_in=$obfile
-    	export obsfile_out=obprep.$fdate.sst.nc
-    	source obsop.nml.sh > obsprep_sst.nml
-    	aprun obsprep_sst
+    	export obsfile_out=obprep.sst.nc
+    	source ../obsop.nml.sh > obsprep_sst.nml
+    	aprun -n 1 ../obsprep_sst > obsprep_sst.log &
     fi
 
-    # combine
-    echo ""
-    echo "------------------------------------------------------------"
-    echo " Combining all obs in single day..."
-    echo "------------------------------------------------------------"
-    ncrcat obprep.$fdate.*.nc obprep.$fdate.nc
+    # obsop file (used in later step)
+    export obsfile_in=obprep.nc
+    export obsfile_out=obsop.nc
+    source ../obsop.nml.sh > obsop.nml
 
-    # observation operator
-    export obsfile_in=obprep.$fdate.nc
-    export obsfile_out=obsop.$fdate.nc
-    source obsop.nml.sh > obsop.nml
-    aprun obsop
-
-    fdate=$(date "+%Y%m%d" -d "$fdate - 1 day")
+    fdate=$(date "+%Y%m%d" -d "$fdate - 1 day")    
     toffset=$(($toffset -24))
 done
+echo "Waiting for completetion..."
+wait
+cd $work_dir
+cat obsop_????????/obsprep*.log
 
-ncrcat obsop.*.nc INPUT/obs.nc
 
+# Obseration operators
+#------------------------------------------------------------
+echo ""
+echo "============================================================"
+echo "Daily observation operator"
+fdate=$date_obs_end
+while [ $(date -d $fdate +%s) -ge $(date -d $date_obs_start +%s) ]
+do
+    d=$work_dir/obsop_$fdate
+    cd $d
+    echo "  concatenating $fdate..."
+    ncrcat --no_tmp_fl obprep.*.nc obprep.nc &
+    fdate=$(date "+%Y%m%d" -d "$fdate - 1 day")    
+done
+wait
+fdate=$date_obs_end
+while [ $(date -d $fdate +%s) -ge $(date -d $date_obs_start +%s) ]
+do
+    d=$work_dir/obsop_$fdate
+    cd $d
+    echo "  obsop for $fdate..."
+    aprun ../obsop > obsop.log &
+    fdate=$(date "+%Y%m%d" -d "$fdate - 1 day")    
+done
+echo "waiting for completion..."
+wait
+cd $work_dir
+cat obsop_????????/obsop.log
+
+
+# combine all obs
+cd $work_dir
+echo ""
+echo "============================================================"
+echo "Combining all obs into single file..."
+ncrcat --no_tmp_fl obsop_????????/obsop.nc INPUT/obs.nc
+
+#------------------------------------------------------------
 # 3dvar
+#------------------------------------------------------------
+echo ""
+echo "============================================================"
+echo "Running 3DVar..."
+echo "============================================================"
 aprun -n $da_nproc 3dvar
 
+
+#------------------------------------------------------------
+# post processing
+#------------------------------------------------------------
+
+# O-B
+echo ""
+echo "Creating observation space statistics..."
+date_dir=${date_ana:0:4}/${date_ana:0:6}
+d=$exp_dir/diag/OmF/$date_dir
+mkdir -p $d
+mv $work_dir/INPUT/obs.nc  $d/${date_ana}.nc
+
+
 # update the restart
+echo ""
+echo "Updating the restart files..."
 $root_dir/tools/update_restart.py output.nc $exp_dir/RESTART
 
+
 # create the analysis file
-cp $exp_dir/bkg/${date_ana}.nc $exp_dir/ana/
-$root_dir/tools/update_bkg.py output.nc $exp_dir/ana/${date_ana}.nc
+echo ""
+echo "Creating final analysis..."
+d=$exp_dir/ana/$date_dir
+mkdir -p $d
+cp $exp_dir/bkg/${date_ana}.nc $d/
+$root_dir/tools/update_bkg.py output.nc $d/${date_ana}.nc
+
+
+# clean up
+rm -rf $work_dir

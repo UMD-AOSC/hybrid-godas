@@ -9,8 +9,8 @@ flux_cfsr_dir="/lustre/f1/unswept/ncep/Yan.Xue/MOM6_ensrun/fluxes_CFSR"
 # Job submission system properties
 moab_acct=cpo_hyb_go
 moab_nodes=15
-da_nproc=32
-moab_walltime="00:30:00"
+da_nproc=64
+moab_walltime="00:40:00"
 moab_queue="batch"
 
 # experiment start/end dates

@@ -16,9 +16,9 @@ cat << EOF
 &obsprep_insitu_nml
   obsfile="$obsfile_in"
   outfile="$obsfile_out"
-  densityfile="obsop_bkg_da.$fdate.nc"
+  densityfile="obsop_bkg_da.nc"
   densityvar="rhopot0"
-  density_sigma=0.25
+  density_sigma=0.125
 /
 
 &obsprep_sst_nml
@@ -29,7 +29,7 @@ cat << EOF
 &obsop_nml
   obsfile="$obsfile_in"
   outfile="$obsfile_out"
-  statefile="obsop_bkg.$fdate.nc"
+  statefile="obsop_bkg.nc"
   time_offset=$obsop_hr
 /
 
