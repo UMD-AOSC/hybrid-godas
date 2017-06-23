@@ -158,7 +158,7 @@ aprun -n $da_nproc 3dvar
 # O-B
 echo ""
 echo "Creating observation space statistics..."
-date_dir=${date_ana:0:4}/${date_ana:0:6}
+date_dir=${date_ana:0:4} #/${date_ana:0:6}
 d=$exp_dir/diag/OmF/$date_dir
 mkdir -p $d
 mv $work_dir/INPUT/obs.nc  $d/${date_ana}.nc
@@ -170,13 +170,15 @@ echo "Updating the restart files..."
 $root_dir/tools/update_restart.py output.nc $exp_dir/RESTART
 
 
-# create the analysis file
-echo ""
-echo "Creating final analysis..."
-d=$exp_dir/ana/$date_dir
+## create the analysis file
+#echo ""
+#echo "Creating final analysis..."
+echo "Moving AI file..."
+d=$exp_dir/diag/ana_inc/$date_dir
 mkdir -p $d
-cp $exp_dir/bkg/${date_ana}.nc $d/
-$root_dir/tools/update_bkg.py output.nc $d/${date_ana}.nc
+mv output.nc $d/${date_ana}.nc
+#cp $exp_dir/bkg/${date_ana}.nc $d/
+#$root_dir/tools/update_bkg.py output.nc $d/${date_ana}.nc
 
 
 # clean up

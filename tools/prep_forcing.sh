@@ -35,10 +35,9 @@ do
 	date_cur=$date_next
     done
 
-    rm -f $arg.nc
-    cdo cat $files $arg.nc.tmp
-    cdo settaxis,$date_start,00:00:00,1day $arg.nc.tmp $arg.nc
-    rm -f $arg.nc.tmp
+    ncrcat $files $arg.nc #.tmp
+#    cdo settaxis,$date_start,12:00:00,1day $arg.nc.tmp $arg.nc
+#    rm -f $arg.nc.tmp
     ncatted -O -a axis,time,c,c,T $arg.nc
     ncatted -O -a calendar,,m,c,gregorian $arg.nc    
 done

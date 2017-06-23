@@ -80,9 +80,13 @@ if [ "$restart" = 'r' ]; then
 fi
 
 # Prepare the forcing files
+# forcing start needs to be 1 day earlier because forcing is
+# centered at 12Z, and fcst_start/fcst_end are at 0Z
 mkdir -p FORC
 cd FORC
-(. $root_dir/tools/prep_forcing.sh $fcst_start $fcst_end)
+forc_start=$(date "+%Y-%m-%d" -d "$fcst_start - 1 day")
+forc_end=$fcst_end
+(. $root_dir/tools/prep_forcing.sh $forc_start $forc_end)
 cd ..
 
 

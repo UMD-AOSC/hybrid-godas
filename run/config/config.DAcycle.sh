@@ -4,7 +4,7 @@ cat << EOF
 # directory locations
 root_dir="$root_dir"
 work_dir="$root_dir/WRK/g3dv_$(echo $exp_dir | md5sum | cut -c 1-6)"
-flux_cfsr_dir="/lustre/f1/unswept/ncep/Yan.Xue/MOM6_ensrun/fluxes_CFSR"
+flux_cfsr_dir="$root_dir/DATA/fluxes/cfsr"
 
 # Job submission system properties
 moab_acct=cpo_hyb_go
@@ -20,6 +20,6 @@ date_end=2003-02-01
 # experiment properties
 da_interval=5  
 fcst_leapadj=1
-fcst_otherfiles=0
+fcst_otherfiles=1
 
 EOF
