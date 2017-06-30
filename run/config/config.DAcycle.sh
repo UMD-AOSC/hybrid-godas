@@ -18,6 +18,7 @@ date_start=2003-01-01
 date_end=2003-02-01
 
 # experiment properties
+da_skip=0
 da_interval=5  
 fcst_leapadj=1
 fcst_otherfiles=1

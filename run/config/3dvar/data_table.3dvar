@@ -22,4 +22,4 @@
 "bgvar_t",	"temp",		"INPUT/bgvar.nc"
 "bgvar_s",	"salt",		"INPUT/bgvar.nc"
 "bg_ssh",	"ssh",		"INPUT/bkg.nc"
-"bg_dens",	"rhopot0",	"INPUT/bkg_da.nc"
+"bg_dens",	"rhopot0",	"INPUT/bkg.nc"

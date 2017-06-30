@@ -10,7 +10,7 @@ echo "   Running Data assimilation"
 echo "============================================================"
 
 # check the required environment variables
-envvars="root_dir work_dir exp_dir date_ana date_obs_end date_obs_start obs_sst_dir da_nproc"
+envvars="root_dir work_dir exp_dir date_ana date_obs_end date_obs_start obs_sst_dir da_nproc da_skip"
 for v in ${envvars}; do
     if [ -z "${!v}" ]; then echo "ERROR: env var $v not set."; exit 1; fi
     echo "  $v = ${!v}"
@@ -144,12 +144,28 @@ ncrcat --no_tmp_fl obsop_????????/obsop.nc INPUT/obs.nc
 #------------------------------------------------------------
 # 3dvar
 #------------------------------------------------------------
-echo ""
-echo "============================================================"
-echo "Running 3DVar..."
-echo "============================================================"
-aprun -n $da_nproc 3dvar
+if [ $da_skip -eq 0 ]; then
+    echo ""
+    echo "============================================================"
+    echo "Running 3DVar..."
+    echo "============================================================"
+    aprun -n $da_nproc 3dvar
 
+    # update the restart
+    echo ""
+    echo "Updating the restart files..."
+    $root_dir/tools/update_restart.py output.nc $exp_dir/RESTART
+
+    # move da output
+    echo "Moving AI file..."
+    d=$exp_dir/diag/ana_inc/$date_dir/${date_ana:0:4}
+    mkdir -p $d
+    mv output.nc $d/${date_ana}.nc
+
+    # delete background files
+    echo "Deleting background..."
+    rm $exp_dir/bkg/* 
+fi
 
 #------------------------------------------------------------
 # post processing
@@ -158,28 +174,10 @@ aprun -n $da_nproc 3dvar
 # O-B
 echo ""
 echo "Creating observation space statistics..."
-date_dir=${date_ana:0:4} #/${date_ana:0:6}
+date_dir=${date_ana:0:4}
 d=$exp_dir/diag/OmF/$date_dir
 mkdir -p $d
 mv $work_dir/INPUT/obs.nc  $d/${date_ana}.nc
-
-
-# update the restart
-echo ""
-echo "Updating the restart files..."
-$root_dir/tools/update_restart.py output.nc $exp_dir/RESTART
-
-
-## create the analysis file
-#echo ""
-#echo "Creating final analysis..."
-echo "Moving AI file..."
-d=$exp_dir/diag/ana_inc/$date_dir
-mkdir -p $d
-mv output.nc $d/${date_ana}.nc
-#cp $exp_dir/bkg/${date_ana}.nc $d/
-#$root_dir/tools/update_bkg.py output.nc $d/${date_ana}.nc
-
 
 # clean up
 rm -rf $work_dir
