@@ -115,11 +115,11 @@ if [ "$fcst_dailymean" -gt 0 ]; then
 	dst_file=$out_dir/$(date "+%Y%m%d" -d "$fdate").nc
 	mv $src_file $dst_file
 	
-	if [ $fcst_dailymean_da = "1" ]; then
-	    src_file=$pfx.ocean_daily_da_$(date "+%Y_%m_%d" -d "$fdate").nc
-	    dst_file=$out_dir/$(date "+%Y%m%d" -d "$fdate")_da.nc
-	    mv $src_file $dst_file
-	fi
+# 	if [ $fcst_dailymean_da = "1" ]; then
+# 	    src_file=$pfx.ocean_daily_da_$(date "+%Y_%m_%d" -d "$fdate").nc
+# 	    dst_file=$out_dir/$(date "+%Y%m%d" -d "$fdate")_da.nc
+# 	    mv $src_file $dst_file
+# 	fi
 	fdate=$(date "+%Y%m%d" -d "$fdate - $fcst_dailymean_int day")
     done
 fi
@@ -139,7 +139,7 @@ if [ "$fcst_otherfiles" -gt 0 ]; then
     echo "Moving other output files..."
     cd $work_dir
     fdate=$(date "+%Y%m%d" -d "$fcst_end - 1 day")
-    for f in $pfx.ocean_*.nc
+    for f in $pfx.*.nc
     do
 	ofdate=$(echo "${f: -13:10}" | tr _ -)
 	ofname="${f: 9:$((${#f}-23))}"

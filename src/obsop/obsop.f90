@@ -29,7 +29,7 @@ program obsop
   integer :: unit
 
   type(cspline) :: spline_t, spline_s
-  real, allocatable :: state_t(:,:,:), state_s(:,:,:)
+  real, allocatable :: state_t(:,:,:), state_s(:,:,:), state_sst(:,:)
   integer :: ncid, vid
 
 
@@ -61,15 +61,23 @@ program obsop
   print *, ""
 
   ! read in the model state
-  allocate(state_t(grid_nx, grid_ny, grid_nz))
-  allocate(state_s(grid_nx, grid_ny, grid_nz))
   call check(nf90_open(statefile, nf90_nowrite, ncid))
+
+  allocate(state_t(grid_nx, grid_ny, grid_nz))
   print *, "Reading state TEMP..."
   call check(nf90_inq_varid(ncid, "temp", vid))
   call check(nf90_get_var(ncid, vid, state_t))
+
+  allocate(state_s(grid_nx, grid_ny, grid_nz))
   print *, "Reading state SALT..."
   call check(nf90_inq_varid(ncid, "salt", vid))
   call check(nf90_get_var(ncid, vid, state_s))
+
+  allocate(state_sst(grid_nx, grid_ny))
+  print *, "Reading state SST..."
+  call check(nf90_inq_varid(ncid, "SST_min", vid))
+  call check(nf90_get_var(ncid, vid, state_sst))
+
   call check(nf90_close(ncid))
   
   ! read in the observations
@@ -94,7 +102,9 @@ program obsop
      if (grid_mask(x,y) < 1) cycle
      
      ! get the model PT, S values at the observation location
-     if(obs(i)%dpth <= grid_depths(1)) then
+     if(obs(i)%plat .ge. 1000 .and. obs(i)%id == obid_t) then
+        pt = state_sst(x,y)
+     else if(obs(i)%dpth <= grid_depths(1)) then
         ! if at the surface...
         pt = state_t(x,y,1)
         s  = state_s(x,y,1) 
@@ -121,7 +131,11 @@ program obsop
         ! insitu temperature
         !  note: need to convert model output from
         !   potential temp to insitu here
-        v = pt2t(pt,s,obs(i)%dpth, obs(i)%lon, obs(i)%lat)
+        if (obs(i)%dpth .gt. 0) then
+           v = pt2t(pt,s,obs(i)%dpth, obs(i)%lon, obs(i)%lat)
+        else
+           v = pt
+        end if
      else if(obs(i)%id == obid_pt) then
         ! potential temperature
         v = pt

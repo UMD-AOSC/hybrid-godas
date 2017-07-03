@@ -16,7 +16,7 @@ cat << EOF
 &obsprep_insitu_nml
   obsfile="$obsfile_in"
   outfile="$obsfile_out"
-  densityfile="obsop_bkg_da.nc"
+  densityfile="obsop_bkg.nc"
   densityvar="rhopot0"
   density_sigma=0.125
 /
