@@ -1,6 +1,6 @@
 [submodule "godas-3dvar"]
 	path = src/3dvar
-	url = git@bitbucket.org:travissluka/godas-3dvar.git
+	url = git@github.com:UMD-AOSC/godas-3dvar.git
 [submodule "MOM6"]
 	path = src/MOM6
 	url = https://github.com/NOAA-GFDL/MOM6-examples.git
