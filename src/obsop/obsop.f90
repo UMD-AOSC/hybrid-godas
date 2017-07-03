@@ -79,7 +79,9 @@ program obsop
   call check(nf90_get_var(ncid, vid, state_sst))
 
   call check(nf90_close(ncid))
-  
+
+  call gsw_saar_init(.true.)
+
   ! read in the observations
   call obsio%read(obsfile, obs)
   print *, size(obs),"observations read in"
@@ -136,6 +138,7 @@ program obsop
         else
            v = pt
         end if
+
      else if(obs(i)%id == obid_pt) then
         ! potential temperature
         v = pt

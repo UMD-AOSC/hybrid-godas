@@ -68,7 +68,7 @@ do
     # link required files    
     ln -s ../INPUT .
     ln -sf $exp_dir/bkg/$fdate.nc obsop_bkg.nc
-#    ln -sf $exp_dir/bkg/${fdate}_da.nc obsop_bkg_da.nc
+    ln -s $root_dir/build/gsw_data_v3_0.nc .
 
     # conventional obs
     obfile=$obs_prf_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc    

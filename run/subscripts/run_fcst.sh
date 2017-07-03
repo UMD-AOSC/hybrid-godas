@@ -115,11 +115,6 @@ if [ "$fcst_dailymean" -gt 0 ]; then
 	dst_file=$out_dir/$(date "+%Y%m%d" -d "$fdate").nc
 	mv $src_file $dst_file
 	
-# 	if [ $fcst_dailymean_da = "1" ]; then
-# 	    src_file=$pfx.ocean_daily_da_$(date "+%Y_%m_%d" -d "$fdate").nc
-# 	    dst_file=$out_dir/$(date "+%Y%m%d" -d "$fdate")_da.nc
-# 	    mv $src_file $dst_file
-# 	fi
 	fdate=$(date "+%Y%m%d" -d "$fdate - $fcst_dailymean_int day")
     done
 fi
