@@ -50,7 +50,6 @@ cat <<EOF
 /
 
  &diag_manager_nml
-            conserve_water=.false.
             max_axes = 100,
             max_files = 63,
             max_num_axis_sets = 100,
