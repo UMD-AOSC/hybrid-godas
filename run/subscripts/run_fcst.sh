@@ -136,6 +136,7 @@ if [ "$fcst_otherfiles" -gt 0 ]; then
     fdate=$(date "+%Y%m%d" -d "$fcst_end - 1 day")
     for f in $pfx.*.nc
     do
+	echo "Moving $f"
 	ofdate=$(echo "${f: -13:10}" | tr _ -)
 	ofname="${f: 9:$((${#f}-23))}"
 

@@ -51,11 +51,13 @@ if [ "$fcst_otherfiles" = 1 ]; then
 cat <<EOF
 
 "ocean_pentad%4yr%2mo%2dy",    ${fcst_len}, "days", 1, "days", "time", ${fcst_len}, "days"
+"ice_pentad%4yr%2mo%2dy",      ${fcst_len}, "days", 1, "days", "time", ${fcst_len}, "days"
 
 # For some weird reason it seems MOM is often putting zeros in for the entire field of
 # the first time averaged variable defined in this file (for averaging periods > ~2 days).
 #  As a work around I'm just defining a 2D field here that I don't care about, until the bug is fixed.
 "ocean_model", "tosga", "ignore_this",  "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ocean_model", "tosga", "ignore_this",  "ice_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
 
 
 ## state variables
@@ -75,26 +77,37 @@ cat <<EOF
 
 ## heat flux
 #------------------------------------------------------------
-"ocean_model", "sw",               "sw",               "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
-"ocean_model", "lw",               "lw",               "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
-"ocean_model", "latent",           "latent",           "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
-"ocean_model", "sensible",         "sensible",         "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
-"ocean_model", "net_heat_coupler", "net_heat_coupler", "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
-#"ocean_model", "heat_added",       "heat_added",       "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ice_model", "sw",                 "sw",         "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ice_model", "lw",                 "lw",         "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ice_model", "swdn",               "swdn",       "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ice_model", "lh",                 "lh",         "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ice_model", "sh",                 "sh",         "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ocean_model", "net_heat_surface", "net_heat",   "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
 
 
 ## salt flux
 #------------------------------------------------------------
-#"ocean_model", "precip",          "precip",           "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
-"ocean_model", "evap",            "evap",            "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ocean_model", "precip",          "precip",          "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+#"ice_model",   "rain",            "rain",            "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+#"ice_model",   "SNOWFL",          "SNOWFL",          "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ice_model",   "evap",            "evap",            "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
 "ocean_model", "salt_flux_added", "salt_flux_added", "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
 
 
 ## MLD
 #------------------------------------------------------------
-"ocean_model", "mld_003",   "mld_003",    "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
-"ocean_model", "mld_0125",  "mld_0125",   "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+#"ocean_model", "mld_003",   "mld_003",    "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+#"ocean_model", "mld_0125",  "mld_0125",   "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
 "ocean_model", "epbl_h_ml", "epbl_h_ml",  "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+
+## Ice / snow
+#------------------------------------------------------------
+"ice_model",   "cn",      "cn",      "ice_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+#"ice_model",   "siconc",  "siconc",  "ice_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ice_model",   "hi",      "hi",      "ice_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ice_model",   "hs",      "hs",      "ice_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ice_model",   "mi",      "mi",      "ice_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+
 
 EOF
 fi

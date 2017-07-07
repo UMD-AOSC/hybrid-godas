@@ -36,7 +36,7 @@ for f in args.file:
     ncd = nc.Dataset(f, 'r+')
 
     for v in ncd.variables:
-        if(len(ncd.variables[v].shape) == 4):
+        if(len(ncd.variables[v].shape) == 4 and ncd.variables[v].shape[1] == len(grid_lvls)):
             print("  ",v)
             # process all 3d variables (shape is of length 4)            
             dat = ncd.variables[v][0]
