@@ -24,7 +24,11 @@ fields = [
  ('VGRD.10m',  37, "f*"),
  ]
 
-server = "https://nomads.ncdc.noaa.gov/modeldata/cmd_flxf"
+server     = "https://nomads.ncdc.noaa.gov/modeldata/"
+path_cfsr  = server+"/cmd_flxf/{0:.4}/{0:.6}/{0}/flxf{1:02d}.gdas.{0}{2:02d}.grb2\n"
+path_cfsv2 = server+"/cfsv2_analysis_flxf/{0:.4}/{0:.6}/{0}/cdas1.t{2:02d}z.sfluxgrbf{1:02d}.grib2\n"
+cfsr_end   = dt.date(2011,3,31)
+hires_date = dt.date(2011,1,1)
 
 
 # Get command line arguments 
@@ -49,15 +53,14 @@ args.start_date = dt.datetime.strptime(args.start_date, "%Y%m%d").date()
 args.end_date   = dt.datetime.strptime(args.end_date,   "%Y%m%d").date()
 
 
-min_date = dt.date(1979,1,1)
-max_date = dt.date(2011,3,31)
-
-if( args.start_date < min_date or args.start_date > max_date):
-    print("start date out of range")
-    sys.exit(1)
-if( args.end_date < min_date or args.end_date > max_date):
-    print("end date out of range")
-    sys.exit(1)
+#min_date = dt.date(1979,1,1)
+#max_date = dt.date(2011,3,31)
+# if( args.start_date < min_date or args.start_date > max_date):
+#     print("start date out of range",str(max_date))
+#     sys.exit(1)
+# if( args.end_date < min_date or args.end_date > max_date):
+#     print("end date out of range, max date is ",str(max_date))
+#     sys.exit(1)
 
 # removte temporary directory if it already exists
 if os.path.exists(args.tmpdir):
@@ -68,6 +71,9 @@ if os.path.exists(args.tmpdir):
 #------------------------------------------------------------
 cdate = args.start_date
 while(cdate <= args.end_date):
+    hires = cdate >= hires_date
+    path = path_cfsr if cdate <= cfsr_end else path_cfsv2
+
     date = cdate.strftime("%Y%m%d")
     outdir = args.outdir+'/{0:.4}/{0}/'.format(date)
 
@@ -81,7 +87,7 @@ while(cdate <= args.end_date):
     f = open(args.tmpdir+'/wgetfiles','w')
     for i in range(1,7): # forecast hour (F01 - F06)
         for hr in (0,6,12,18): # initial time (every 6 hours)
-            f.write("{0}/{1:.4}/{1:.6}/{1}/flxf{2:02d}.gdas.{1}{3:02d}.grb2\n".format(server,date,i,hr))
+            f.write(path.format(date,i,hr))
     f.close()
     sp.check_call('wget -nv -i wgetfiles',shell=True, cwd=args.tmpdir)
             
@@ -90,12 +96,17 @@ while(cdate <= args.end_date):
     #------------------------------------------------------------
     for field in fields:
         # create new netcdf file
-        ncd = nc.Dataset(outdir+'cfsr.'+date+'.'+field[0]+'.nc','w', format="NETCDF3_CLASSIC")
+        ncd_file = outdir+'cfsr.'+date+'.'+field[0]+'.nc'
+        ncd = nc.Dataset(ncd_file,'w', format="NETCDF3_CLASSIC")
     
-        # open the F03 or F06 files and average the values
+        # open the F0X files and average the values
         avg = None
         cnt = 0
-        for flxfile in glob(args.tmpdir+'/flx{}*.grb2'.format(field[2])):
+        match_cfsv2 = "/cdas1.t??z.sfluxgrb{}.grib2"
+        match_cfsr  = "/flx{}*.grb2"
+        match = match_cfsr if cdate <= cfsr_end else match_cfsv2
+
+        for flxfile in glob(args.tmpdir+match.format(field[2])):
             grbs=pygrib.open(flxfile)
             grb = grbs.message(field[1])
             cnt += 1
@@ -145,6 +156,15 @@ while(cdate <= args.end_date):
         v[0] = avg
 
         ncd.close()
+
+        # convert to lower resolution, if needed
+        if hires:
+            sp.check_call('ncks --map="{}" {} tmp.nc'.format(
+                    "../get_cfsr_fluxes.data/esmf_CFSRhi2low_patch_weights.nc",
+                    ncd_file), shell=True, cwd=args.tmpdir)
+            sp.check_call('ncks -O -x -v gw,lat_bnds,lon_bnds,area tmp.nc '+ncd_file,
+                    shell=True, cwd=args.tmpdir)
+            os.remove(args.tmpdir+'/tmp.nc')
 
     # continue on to the next date
     cdate += dt.timedelta(days=1)
