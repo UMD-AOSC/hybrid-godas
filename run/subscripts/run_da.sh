@@ -1,16 +1,59 @@
 #!/bin/bash
 set -e
 
-obs_sst_dir=$root_dir/DATA/obs/sst_pathfinder
-obs_prf_dir=$root_dir/DATA/obs/profile
+# Hybrid-GODAS data assimilation step scripts
+
+#================================================================================
+#================================================================================
+# Set the required environment variables, along with any default values.
+# Any variable that doesn't have a default value will be checked by this script
+# to make sure it has been defined
+v=""
+
+v="$V PBS_NP"    # number of processors given by job scheduler
+v="$v da_nproc"  # number of processors we actually want to use
+v="$v da_skip"   # If = 1, skip the 3DVar code (but still do obsop for O-F stats)
+
+# directory paths
+#------------------------------
+v="$v root_dir"    # Path to the top level directory for the hybrid-godas code.
+v="$v work_dir"    # A temporary working directory to use when running the forecast
+                   # the location needs to be accessible from all computational nodes.
+v="$v exp_dir"     # Top level directory of the experiment
+
+
+# Dates (all dates in YYYYMMDD format)
+#------------------------------
+v="$v da_date_ana"       # The date on which the analysis is centered.
+v="$v da_date_ob_start"  # The start date of observation window
+v="$v da_date_ob_end"    # The end date of observation window
+
+
+# Observation types
+#------------------------------
+v="$v da_sst_use"   # If = 1, use SST observations
+v="$v da_sst_dir"   # Directory to AVHRR SST observation
+da_sst_use=${da_sst_use:-1}
+da_sst_dir=${da_sst_dir:-$root_dir/DATA/obs/sst_pathfinder}
+v="$v da_prof_use"  # If = 1, use profile observations
+v="$v da_prof_dir"  # Directory to T/S profile observations
+da_prof_use=${da_prof_use:-1}
+da_prof_dir=${da_prof_dir:-$root_dir/DATA/obs/profile}
+
+
+envvars="$v"
+
+
+#================================================================================
+#================================================================================
 
 echo ""
 echo "============================================================"
 echo "   Running Data assimilation"
 echo "============================================================"
 
+
 # check the required environment variables
-envvars="root_dir work_dir exp_dir date_ana date_obs_end date_obs_start obs_sst_dir da_nproc da_skip"
 for v in ${envvars}; do
     if [ -z "${!v}" ]; then echo "ERROR: env var $v not set."; exit 1; fi
     echo "  $v = ${!v}"
@@ -36,8 +79,8 @@ ln -s $root_dir/DATA/grid/ocean_geometry.nc grid.nc
 ln -s $root_dir/DATA/grid/Vertical_coordinate.nc vgrid.nc
 ln -s $root_dir/DATA/grid/coast_dist.nc .
 ln -s $root_dir/DATA/grid/bgvar.nc .
-ln -s $exp_dir/bkg/${date_ana}.nc bkg.nc
-ln -s $exp_dir/bkg/${date_ana}_da.nc bkg_da.nc
+ln -s $exp_dir/bkg/${da_date_ana}.nc bkg.nc
+ln -s $exp_dir/bkg/${da_date_ana}_da.nc bkg_da.nc
 
 cd ..
 
@@ -55,8 +98,8 @@ echo "Preparing Observations (SST/insitu)"
 #------------------------------------------------------------
 # TODO: move everythin to work on /dev/shm for speed improvement ?
 toffset=0
-fdate=$date_obs_end
-while [ $(date -d $fdate +%s) -ge $(date -d $date_obs_start +%s) ]
+fdate=$da_date_ob_end
+while [ $(date -d $fdate +%s) -ge $(date -d $da_date_ob_start +%s) ]
 do
     # make directory
     d=$work_dir/obsop_$fdate
@@ -71,8 +114,8 @@ do
     ln -s $root_dir/build/gsw_data_v3_0.nc .
 
     # conventional obs
-    obfile=$obs_prf_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc    
-    if [ -f  $obfile ]; then
+    obfile=$da_prof_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc    
+    if [[ ("$da_prof_use" -eq 1) && (-f  $obfile) ]]; then
 	echo "  obsprep_insitu $fdate"
     	export obsfile_in=$obfile
     	export obsfile_out=obprep.insitu.nc
@@ -81,8 +124,8 @@ do
     fi    
 
     # SST obs
-    obfile=$obs_sst_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc    
-    if [ -f $obfile ]; then
+    obfile=$da_sst_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc    
+    if [[ ("$da_sst_use" -eq 1) &&  (-f $obfile) ]]; then
 	echo "  obsprep_sst    $fdate"
     	export obsfile_in=$obfile
     	export obsfile_out=obprep.sst.nc
@@ -109,8 +152,8 @@ cat obsop_????????/obsprep*.log
 echo ""
 echo "============================================================"
 echo "Daily observation operator"
-fdate=$date_obs_end
-while [ $(date -d $fdate +%s) -ge $(date -d $date_obs_start +%s) ]
+fdate=$da_date_ob_end
+while [ $(date -d $fdate +%s) -ge $(date -d $da_date_ob_start +%s) ]
 do
     d=$work_dir/obsop_$fdate
     cd $d
@@ -119,8 +162,8 @@ do
     fdate=$(date "+%Y%m%d" -d "$fdate - 1 day")    
 done
 wait
-fdate=$date_obs_end
-while [ $(date -d $fdate +%s) -ge $(date -d $date_obs_start +%s) ]
+fdate=$da_date_ob_end
+while [ $(date -d $fdate +%s) -ge $(date -d $da_date_ob_start +%s) ]
 do
     d=$work_dir/obsop_$fdate
     cd $d
@@ -141,6 +184,8 @@ echo "============================================================"
 echo "Combining all obs into single file..."
 ncrcat --no_tmp_fl obsop_????????/obsop.nc INPUT/obs.nc
 
+
+
 #------------------------------------------------------------
 # 3dvar
 #------------------------------------------------------------
@@ -158,14 +203,16 @@ if [ $da_skip -eq 0 ]; then
 
     # move da output
     echo "Moving AI file..."
-    d=$exp_dir/diag/ana_inc/$date_dir/${date_ana:0:4}
+    d=$exp_dir/diag/ana_inc/$date_dir/${da_date_ana:0:4}
     mkdir -p $d
-    mv output.nc $d/${date_ana}.nc
+    mv output.nc $d/${da_date_ana}.nc
 
     # delete background files
     echo "Deleting background..."
     rm $exp_dir/bkg/* 
 fi
+
+
 
 #------------------------------------------------------------
 # post processing
@@ -174,10 +221,10 @@ fi
 # O-B
 echo ""
 echo "Creating observation space statistics..."
-date_dir=${date_ana:0:4}
+date_dir=${da_date_ana:0:4}
 d=$exp_dir/diag/OmF/$date_dir
 mkdir -p $d
-mv $work_dir/INPUT/obs.nc  $d/${date_ana}.nc
+mv $work_dir/INPUT/obs.nc  $d/${da_date_ana}.nc
 
 # clean up
 rm -rf $work_dir

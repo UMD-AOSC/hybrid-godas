@@ -45,8 +45,6 @@ fi
 fcst_start=$date_cur
 fcst_dailymean="${fcst_dailymean:-1}"
 fcst_dailymean_dir="${fcst_dailymean_dir:-$exp_dir/output/%Y/}"
-fcst_dailymean_int="${fcst_dailymean_int:-1}"
-fcst_dailymean_da=0
 fcst_otherfiles="${fcst_otherfiles:-0}"
 fcst_otherfiles_dir="${fcst_otherfiles_dir:-$exp_dir/output/%Y/}"
 fcst_leapadj="${fcst_leapadj:-1}"

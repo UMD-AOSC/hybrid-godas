@@ -1,23 +1,56 @@
 #!/bin/bash
-# TODO, list the env vars it is expecting
+set -e
 
-# required environment variables
-#------------------------------------------------------------
-# root_dir            =
-# work_dir            =
-# exp_dir             =
-#
-# fcst_start          = start date of forecast (YYYY-MM-DD), hour is assumed to be 00Z
-# fcst_len            = length of forecast in days
+# Hybrid-GODAS forecast run script
 
-# fcst_dailymean      = if 1, save the daily mean files
-# fcst_dailymean_da   = if 1, the optional DA required daily mean fields are saved as well
-# fcst_dailymean_int  = interval of daily mean files to save. E.g. if 1, saves every day
-#                     = if 5, saves every 5th day counting back from and including the end date
-# fcst_dailymean_dir  = directory to save daily mean files to
 
-# fcst_otherfiles     = if 1, indicates other "ocean_*.nc" files in the output that are to be saved
-# fcst_otherfiles_dir = directory to save other files to
+#================================================================================
+#================================================================================
+# Set the required environment variables, along with any default values
+# Any variable that doesn't have a default value will be checked 
+# by this script to make sure it is defined.
+v=""
+
+v="$v PBS_NP"   # number of processors
+
+# directory paths
+#------------------------------
+v="$v root_dir"   # Path to the top level directory for the hybrid-godas code.
+v="$v work_dir"   # A temporary working directory to use when running the forecast, the location
+                  # needs to be accessible from all computational nodes.
+v="$v exp_dir"    # Top level directory of the experiment  
+
+# forecast time start /stop
+#------------------------------
+v="$v fcst_start" # Start date of forecast (YYYY-MM-DD), hour is assumed to be 00Z.
+v="$v fcst_len"   # Length of forecast in days.
+
+# saving of daily mean values (for data assimilation)
+#------------------------------
+v="$v fcst_dailymean"     # If 1, save the daily mean files required by the DA step, (Default: 0)
+v="$v fcst_dailymean_int" # interval of daily mean files to save. E.g. if 1, saves every day
+                          # if 5, saves every 5th day counting back from and including the end date
+v="$v fcst_dailymean_dir" # directory to save daily mean files to
+
+fcst_dailymean="${fcst_dailymean:-0}"
+fcst_dailymean_int=${fcst_dailymean_int:-1}
+if [[ "$fcst_dailymean" -eq 0 ]]; then fcst_dailymean_dir=""; fi
+
+# saving of other model output (usually pentad data)
+#------------------------------
+v="$v fcst_otherfiles"      # If save other output files from the model.
+v="$v fcst_otherfiles_dir"  # Directory to save other files to
+v="$v fcst_maskland"        # If 1, output undergoes an extra step to have a land mask applied
+
+fcst_maskland=${fcst_maskland:-1}
+if [[ "$fcst_otherfiles" -eq 0 ]]; then fcst_otherfiles_dir=""; fi
+
+envvars="$v"
+
+
+
+# ================================================================================
+# ================================================================================
 
 
 echo ""
@@ -25,16 +58,14 @@ echo "============================================================"
 echo "   Running MOM6 forecast..."
 echo "============================================================"
 
+
 # check required environment variables
-fcst_maskland=${fcst_maskland:-1}
-envvars="root_dir work_dir exp_dir fcst_start fcst_len"
-envvars="$envvars fcst_dailymean fcst_dailymean_da fcst_dailymean_int fcst_dailymean_dir"
-envvars="$envvars fcst_otherfiles fcst_otherfiles_dir"
 for v in ${envvars}; do
     if [ -z "${!v}" ]; then echo "ERROR: env var $v not set."; exit 1; fi
     echo "  $v = ${!v}"
 done
 echo ""
+
 
 # setup the environment
 . $root_dir/config/env
@@ -62,8 +93,6 @@ cd $work_dir
 mkdir -p OUTPUT
 mkdir -p RESTART
 ln -s $root_dir/build/MOM6 .
-
-
 
 # namelist files
 cp $exp_dir/config/mom/* .
@@ -149,7 +178,6 @@ if [ "$fcst_otherfiles" -gt 0 ]; then
 fi
 
 
-
 # move the restart files
 rm -rf $exp_dir/RESTART_old
 if [ -d $exp_dir/RESTART ]; then mv $exp_dir/RESTART $exp_dir/RESTART_old; fi
@@ -158,6 +186,7 @@ mv $work_dir/RESTART $exp_dir/RESTART
 
 # update the "last_date" file
 echo $fcst_end > $exp_dir/last_date_fcst
+
 
 # clean up working directory
 rm -rf $work_dir

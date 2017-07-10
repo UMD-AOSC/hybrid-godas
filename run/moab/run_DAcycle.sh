@@ -15,13 +15,13 @@ cd $exp_dir
 # get the date we are about to start from
 # note that that forecast could have finished, but the 
 # DA might not have, so pick up from the appropriate place
-if [ ! -f "last_date_fcst" ]; then 
+if [[ ! -f "last_date_fcst" ]]; then 
     echo "$date_start" > last_date_fcst 
     echo "$date_start" > last_date_da
 fi
 last_date_fcst=$(cat last_date_fcst)
 last_date_da=$(cat last_date_da)
-if [ $(date -d $last_date_fcst +%s) -gt $(date -d $last_date_da +%s) ]; then
+if [[ $(date -d $last_date_fcst +%s) -gt $(date -d $last_date_da +%s) ]]; then
     date_cur=$last_date_da
 else
     date_cur=$last_date_fcst
@@ -40,7 +40,7 @@ function submitJob()
     cd $exp_dir
     msub $exp_dir/run_DAcycle.sh -N MOM6_GODAS_DACYCLE -E -A $moab_acct -l partition=c3,nodes=$moab_nodes,walltime=$moab_walltime -q $moab_queue -j oe -o $exp_dir/logs/dacycle_$date_cur.log -d $exp_dir
 }
-if [ -z "${MOAB_JOBNAME}" ]; then
+if [[ -z "${MOAB_JOBNAME}" ]]; then
     submitJob
     exit
 fi
@@ -62,12 +62,10 @@ fi
 #------------------------------------------------------------
 
 # run the forecast
-if [ $(date +%s -d $last_date_fcst) -eq $(date +%s -d $date_cur) ]; then
+if [[ $(date +%s -d $last_date_fcst) -eq $(date +%s -d $date_cur) ]]; then
     fcst_start=$date_cur
     fcst_len=$da_interval
     fcst_dailymean=1
-    fcst_dailymean_da=1
-    fcst_dailymean_int=1
     fcst_dailymean_dir=$exp_dir/bkg/
     fcst_otherfiles="${fcst_otherfiles:-0}"
     fcst_otherfiles_dir="${fcst_otherfiles_dir:-$exp_dir/output/%Y/}"
@@ -78,9 +76,9 @@ fi
 
 # run the DA step
 t=$(($da_interval-1))
-date_ana=$(date "+%Y%m%d" -d "$date_cur + $t day")
-date_obs_end=$date_ana
-date_obs_start=$date_cur
+da_date_ana=$(date "+%Y%m%d" -d "$date_cur + $t day")
+da_date_ob_end=$da_date_ana
+da_date_ob_start=$date_cur
 (. $root_dir/run/subscripts/run_da.sh)
 if [ $? -gt 0 ]; then echo "ERROR running DA."; exit 1; fi
 
