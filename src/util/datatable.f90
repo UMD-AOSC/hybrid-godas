@@ -25,7 +25,7 @@ module datatable
   ! custom types
   !------------------------------------------------------------
   type datatable_entry
-     character(len=10)   :: key
+     character(len=20)   :: key
      character(len=20)   :: file_var
      character(len=1024) :: file_name
   end type datatable_entry
@@ -205,6 +205,7 @@ contains
        ! ignore comments
        line = adjustl(line)
        if (line(1:1) == '#') cycle
+       if (line(1:1) == '!') cycle
 
        ! ignore empty lines
        if (len(trim(adjustl(line))) == 0) cycle

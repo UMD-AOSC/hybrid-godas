@@ -1,5 +1,12 @@
+#!/bin/bash
+cat <<EOF
+ 
 &bgvar_nml
- bgvar_file_in=""
+ init=${da_bgvar_init:-F}
+ day_update = ${da_interval}
+ day_relax_obs=10
+ day_relax_clim=90
+
  bgvar_file_out="bgvar.nc"
 
  grid_nx = 1440
@@ -10,3 +17,5 @@
  cgrid_ny = 330
  cgrid_nz = 50
 /
+
+EOF

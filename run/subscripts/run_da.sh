@@ -71,6 +71,7 @@ cd $work_dir
 ln -s $root_dir/build/3dvar .
 ln -s $root_dir/build/obsop .
 ln -s $root_dir/build/obsprep* .
+ln -s $root_dir/build/bgvar .
 cp $exp_dir/config/3dvar/* .
 
 mkdir INPUT
@@ -78,10 +79,9 @@ cd INPUT
 ln -s $root_dir/DATA/grid/ocean_geometry.nc grid.nc
 ln -s $root_dir/DATA/grid/Vertical_coordinate.nc vgrid.nc
 ln -s $root_dir/DATA/grid/coast_dist.nc .
-ln -s $root_dir/DATA/grid/bgvar.nc .
+ln -s $root_dir/DATA/grid/clim_var.nc .
+ln -s $exp_dir/bkg_errvar/bgvar.nc .
 ln -s $exp_dir/bkg/${da_date_ana}.nc bkg.nc
-ln -s $exp_dir/bkg/${da_date_ana}_da.nc bkg_da.nc
-
 cd ..
 
 #------------------------------------------------------------
@@ -196,6 +196,12 @@ if [ $da_skip -eq 0 ]; then
     echo "============================================================"
     aprun -n $da_nproc 3dvar
 
+    # calculate updated bgvar for next time
+    source namelist.bgvar.sh > namelist.bgvar
+    aprun -n 1 bgvar
+    mv $exp_dir/bkg_errvar/bgvar.nc $exp_dir/bkg_errvar/${da_date_ana}.nc
+    mv bgvar.nc $exp_dir/bkg_errvar/bgvar.nc
+
     # update the restart
     echo ""
     echo "Updating the restart files..."
@@ -210,6 +216,7 @@ if [ $da_skip -eq 0 ]; then
     # delete background files
     echo "Deleting background..."
     rm $exp_dir/bkg/* 
+
 fi
 
 

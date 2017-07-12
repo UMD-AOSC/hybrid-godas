@@ -1,1 +1,27 @@
-data_table.3dvar
+! varname (in 3dvar) |  varname (in file)  | netcdf file
+!------------------------------------------------------------
+
+! Grid parameters
+!------------------------------------------------------------
+"grid_x",	"geolon",	"INPUT/grid.nc",
+"grid_y",	"geolat",	"INPUT/grid.nc",
+"grid_z",	"Layer",	"INPUT/vgrid.nc"
+"grid_mask",	"wet",		"INPUT/grid.nc"
+"grid_D",	"D",		"INPUT/grid.nc"
+"grid_coast",	"coast_dist",   "INPUT/coast_dist.nc"
+
+! variance climatology
+"cgrid_x",	"lon",		"INPUT/clim_var.nc"
+"cgrid_y",	"lat",		"INPUT/clim_var.nc"
+"cgrid_z",	"depth",	"INPUT/clim_var.nc"
+"cgrid_mask",	"mask",		"INPUT/clim_var.nc"
+
+
+! background input fields
+!------------------------------------------------------------
+"bgvar_prev_t",	"temp",		"INPUT/bgvar.nc"
+"ana_inc_t",    "ai_temp",	"output.nc"
+"ana_mc_t",	"maxobcorr_t",	"output.nc"
+"bgvar_prev_s",	"salt",		"INPUT/bgvar.nc"
+"ana_inc_s",    "ai_salt",	"output.nc"
+"ana_mc_s",	"maxobcorr_s",	"output.nc"
