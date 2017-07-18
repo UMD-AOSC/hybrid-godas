@@ -17,6 +17,7 @@
   use_t = T
   use_s = T
 
+  qc_max = 3.0
   inc_max_t = 10.0
   inc_max_s = 1.0
   obs_block_dx = 20
@@ -54,6 +55,6 @@
 !  tnsr_coast_min  = 0.3
 
 
-  bgvar_t = 0.8
-  bgvar_s = 0.08
+!  bgvar_t = 0.8
+!  bgvar_s = 0.08
 /
