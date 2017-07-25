@@ -31,14 +31,25 @@ v="$v da_date_ob_end"    # The end date of observation window
 
 # Observation types
 #------------------------------
-v="$v da_sst_use"   # If = 1, use SST observations
-v="$v da_sst_dir"   # Directory to AVHRR SST observation
+# da_sst_use:     If = 1, use SST observations
 da_sst_use=${da_sst_use:-1}
+v="$v da_sst_use"   
+
+# da_sst_dir:     Directory to AVHRR SST observation
 da_sst_dir=${da_sst_dir:-$root_dir/DATA/obs/sst_pathfinder}
-v="$v da_prof_use"  # If = 1, use profile observations
-v="$v da_prof_dir"  # Directory to T/S profile observations
+v="$v da_sst_dir"   
+
+# da_prof_use:    If = 1, use profile observations
 da_prof_use=${da_prof_use:-1}
+v="$v da_prof_use"  
+
+# da_prof_dir:    Directory to T/S profile observations
 da_prof_dir=${da_prof_dir:-$root_dir/DATA/obs/profile}
+v="$v da_prof_dir"  
+
+# da_prof_legacy: If = 1 , use "dave's obs" from legacy GODAS
+da_prof_legacy=${da_prof_legacy:-0}
+v="$v da_prof_legacy"
 
 
 envvars="$v"
@@ -114,13 +125,23 @@ do
     ln -s $root_dir/build/gsw_data_v3_0.nc .
 
     # conventional obs
-    obfile=$da_prof_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc    
-    if [[ ("$da_prof_use" -eq 1) && (-f  $obfile) ]]; then
+    if [[ "$da_prof_legacy" -eq 1 ]]; then
+	# are use using the legacy GODAS profiles, or 
+	# new ones (not yet implemented
+	obsprep_exec=obsprep_insitu_legacy
+	obfile=$da_prof_dir/$(date "+%Y/%Y%m%d" -d $fdate)    
+    else
+	obsprep_exec=obsprep_insitu
+	obfile=$da_prof_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc
+    fi
+
+    if [[ ("$da_prof_use" -eq 1) ]]; then #&& (-f  $obfile) ]]; then
 	echo "  obsprep_insitu $fdate"
     	export obsfile_in=$obfile
     	export obsfile_out=obprep.insitu.nc
-    	source ../obsop.nml.sh > obsprep_insitu.nml
-	aprun -n 1 ../obsprep_insitu > obsprep_insitu.log &
+    	source ../obsop.nml.sh > obsprep.nml
+#    	source ../obsop.nml.sh > obsprep_insitu.nml	
+	aprun -n 1 ../$obsprep_exec > obsprep_insitu.log &
     fi    
 
     # SST obs

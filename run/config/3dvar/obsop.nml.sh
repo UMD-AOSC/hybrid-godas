@@ -33,4 +33,12 @@ cat << EOF
   time_offset=$obsop_hr
 /
 
+&obsprep_insitu_legacy_nml
+  obsfile="$obsfile_in"
+  outfile="$obsfile_out"
+  densityfile="obsop_bkg.nc"
+  densityvar="rhopot0"
+  density_sigma=0.125
+/
+
 EOF

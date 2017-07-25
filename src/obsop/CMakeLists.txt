@@ -28,8 +28,14 @@ set(SRCS obscom_obsio.f90 obscom_grid.f90 linked_list.f90 kdtree.f90 cubic_splin
 add_library( obsop_common STATIC ${SRCS} )
 
 # obs prep - insitu
-file(GLOB SRCS "obsprep_insitu*.[f,F]90")
+file(GLOB SRCS "obsprep_insitu.[f,F]90")
 set(EXE  obsprep_insitu)
+add_executable(${EXE} ${SRCS})
+target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS})
+
+file(GLOB SRCS "obsprep_insitu_legacy.[f,F]90")
+set(SRCS ${SRCS} compute_profile_error.f90 linked_list.f90)
+set(EXE  obsprep_insitu_legacy)
 add_executable(${EXE} ${SRCS})
 target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS})
 

@@ -12,7 +12,7 @@ cat << EOF
 # NOTE: the work_dir is a temporary space, and should be moved to a swept lustre location
 root_dir="$root_dir"
 work_dir="$root_dir/WRK/g3dv_$(echo $exp_dir | md5sum | cut -c 1-6)"
-flux_cfsr_dir="$root_dir/DATA/fluxes/cfsr"
+flux_cfsr_dir="$root_dir/DATA/fluxes/cfsr_corr"
 
 # Job submission system properties
 # NOTE: if then umber of nodes is changed, the MOM configuration file will need
@@ -33,6 +33,8 @@ date_end=2003-02-01
 
 da_sst_use=1
 da_prof_use=1
+da_prof_legacy=1
+da_prof_dir=$root_dir/DATA/obs/profile_legacy
 
 # skips 3dvar code if =1, instead doing just the obsop
 da_skip=0        
