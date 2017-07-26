@@ -14,6 +14,8 @@ program obsprep_sst
   real :: time_offset = 0.0
   integer :: obid = 2210
   integer :: platid = 1000
+  real :: min_wind = -1
+  real :: bias_adj = 0.0
 
   character(len=1024) :: nml_file
   integer :: unit
@@ -33,7 +35,7 @@ program obsprep_sst
 
   
   namelist /obsprep_sst_nml/ obsfile, outfile, obid, platid, min_err_lvl, err_base,&
-       err_superob, time_offset
+       err_superob, time_offset, min_wind, bias_adj
 
   print *, "------------------------------------------------------------"
   print *, "  SST (AVHRR Pathfinder) observation preparation"
@@ -72,6 +74,9 @@ program obsprep_sst
   val_min=1e10
   val_max=-1e10
   do i=1, size(obsin)
+     ! ignore ob if not windy enough
+     if( (min_wind > 0) .and. (obsin(i)%wnd < min_wind)) cycle
+
      ! get the closest grid point to the ob
      call grid_ll2xy(obsin(i)%lat, obsin(i)%lon, x, y)
      bin_cnt(x,y) = bin_cnt(x,y) + 1
@@ -114,7 +119,7 @@ program obsprep_sst
         obsout(i)%lon  = grid_lons(x,y)
         obsout(i)%dpth = 0.0
         obsout(i)%hr   = time_offset
-        obsout(i)%val  = bin_val(x,y) - 273.15
+        obsout(i)%val  = bin_val(x,y) - 273.15 + bias_adj
         obsout(i)%err  = err_base
         if(bin_cnt(x,y) > 1 .and. err_superob > 0) then
            r = sqrt(bin_m2(x,y)/(bin_cnt(x,y)-1))

@@ -14,6 +14,7 @@ module obsprep_sst_pathfinder
      integer :: qkey
      integer :: typ
      logical :: kept
+     real    :: wnd
   end type avhrr_data
 
 
@@ -45,6 +46,7 @@ contains
     real,    allocatable :: ob_val(:,:)
     integer, allocatable :: ob_qual(:,:)
     integer, allocatable :: ob_dtime(:,:)
+    real,    allocatable :: ob_wnd(:,:)
 
     real :: t_offset, t_scale
 
@@ -86,6 +88,11 @@ contains
     call check(nf90_get_var(ncid, vid, ob_val))
     ob_val = ob_val*t_scale + t_offset
 
+    ! read wind spead
+    allocate(ob_wnd(nx,ny))
+    call check(nf90_inq_varid(ncid, 'wind_speed', vid))
+    call check(nf90_get_var(ncid, vid, ob_wnd))
+
     ! all done, put into list
     allocate(obs(ob_cnt))
     ob_cnt = 0
@@ -96,6 +103,7 @@ contains
           obs(ob_cnt)%lon = lons(x)
           obs(ob_cnt)%lat = lats(y)
           obs(ob_cnt)%val = ob_val(x,y)
+          obs(ob_cnt)%wnd = ob_wnd(x,y)
           
 !                real    :: lon
 !      real    :: lat
