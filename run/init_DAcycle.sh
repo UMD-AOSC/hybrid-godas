@@ -35,6 +35,12 @@ cp $root_dir/run/config/mom/* config/mom
 
 ln -s $root_dir/run/moab/run_DAcycle.sh .
 
+touch version
+echo "Source code versions used at time project was initialized: " >> version
+echo "Main repository:" >> version
+echo " $(git rev-parse HEAD)" >> version
+echo "Submodules:" >> version
+echo "$(git submodule)" >> version
 
 echo "Experiment directory has been setup."
 echo "Ensure configuration in $exp_dir/config is correct before running"
