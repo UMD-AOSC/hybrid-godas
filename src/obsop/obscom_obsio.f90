@@ -86,9 +86,6 @@ contains
     ! create file definition
     call check( nf90_create(file, nf90_clobber, ncid))
 
-    call check( nf90_put_att(ncid, nf90_global, "description",&
-         "UMD-LETKF compatible observation file"))
-
     call check( nf90_def_dim(ncid, "obs",  nf90_unlimited, dimid))
     call check( nf90_def_var(ncid, "obid",    nf90_int,  dimid, varid))
     call check( nf90_put_att(ncid, varid, "long_name", "observation ID number"))

@@ -37,8 +37,8 @@
 
 &g3dv_bgcov
   ! horizontal localization distance
-  hz_loc = 240e3, 25e3
-  hz_loc_scale=1.8
+  hz_loc = 250e3, 50e3
+  hz_loc_scale=2.5
 
   ! vertical localization distance
   vt_loc = 0.125

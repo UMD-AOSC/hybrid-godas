@@ -253,6 +253,8 @@ date_dir=${da_date_ana:0:4}
 d=$exp_dir/diag/OmF/$date_dir
 mkdir -p $d
 mv $work_dir/INPUT/obs.nc  $d/${da_date_ana}.nc
+mv $work_dir/obs.varqc.nc  $d/${da_date_ana}.varqc.nc
+
 
 # clean up
 rm -rf $work_dir
