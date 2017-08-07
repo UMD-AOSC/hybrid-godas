@@ -16,7 +16,6 @@
 "cgrid_z",	"depth",	"INPUT/clim_var.nc"
 "cgrid_mask",	"mask",		"INPUT/clim_var.nc"
 
-"vtloc",	"vtloc",	"vtloc.nc"
 
 ! background input fields
 !------------------------------------------------------------

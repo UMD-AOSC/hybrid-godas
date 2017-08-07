@@ -5,7 +5,6 @@
 /
 
 
-
 &g3dv_obs
   ! single obs tests
   test_obs = .false.
@@ -40,12 +39,6 @@
   hz_loc = 250e3, 50e3
   hz_loc_scale=2.5
 
-  ! vertical localization distance
-  vt_loc = 0.125
-  vt_loc_min = 5.0
-  vt_loc_max = 250.0
-  vt_loc_pow = 2.0
-
   ! time localization
   time_loc = 120.0
 
@@ -57,4 +50,14 @@
 
 !  bgvar_t = 0.8
 !  bgvar_s = 0.08
+/
+
+&vtloc_nml
+  rho_delta = 0.125
+  vtloc_min= 1.0
+  vtloc_max = 250.0
+  hz_loc = 200e3, 25e3
+  hz_loc_scale = 2.0
+  gauss_iter = 2
+  mld_only=T
 /

@@ -20,6 +20,7 @@ flux_cfsr_dir="$root_dir/DATA/fluxes/cfsr_corr"
 moab_acct=cpo_hyb_go
 moab_nodes=15
 da_nproc=64
+da_threads=16
 moab_walltime="00:40:00"
 moab_queue="batch"
 

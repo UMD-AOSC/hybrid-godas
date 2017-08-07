@@ -73,7 +73,6 @@ if [[ $(date +%s -d $last_date_fcst) -eq $(date +%s -d $date_cur) ]]; then
     if [ $? -gt 0 ]; then echo "ERROR running forecast."; exit 1; fi
 fi
 
-
 # run the DA step
 t=$(($da_interval-1))
 da_date_ana=$(date "+%Y%m%d" -d "$date_cur + $t day")

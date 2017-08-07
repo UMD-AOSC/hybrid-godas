@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-project(utilities Fortran)
+project(utilities Fortran C)
 
 # global compiler options
 #------------------------------------------------------------
@@ -18,7 +18,7 @@ else()
 endif()
 
 include_directories($ENV{NETCDF_INCS})
-
+FIND_PACKAGE( OpenMP REQUIRED)
 
 # common objects
 set(SRCS kdtree.f90 datatable.f90)
@@ -29,3 +29,13 @@ file(GLOB SRCS "bgvar*.[f,F]90")
 set(EXE  bgvar)
 add_executable(${EXE} ${SRCS})
 target_link_libraries(${EXE} util_common $ENV{NETCDF_LIBS})
+
+# vt loc
+file(GLOB SRCS "vtloc*.[f,F]90")
+set(EXE vtloc)
+add_executable(${EXE} ${SRCS})
+target_link_libraries(${EXE} util_common)
+target_link_libraries(${EXE} $ENV{NETCDF_LIBS})
+set_target_properties(${EXE} PROPERTIES 
+    COMPILE_FLAGS "${OpenMP_C_FLAGS}"
+    LINK_FLAGS "${OpenMP_C_FLAGS}")

@@ -10,9 +10,10 @@ set -e
 # to make sure it has been defined
 v=""
 
-v="$V PBS_NP"    # number of processors given by job scheduler
-v="$v da_nproc"  # number of processors we actually want to use
-v="$v da_skip"   # If = 1, skip the 3DVar code (but still do obsop for O-F stats)
+v="$V PBS_NP"     # number of processors given by job scheduler
+v="$v da_nproc"   # number of processors we actually want to use
+v="$v da_threads" # number of thread to use for the non-mpi openmp jobs
+v="$v da_skip"    # If = 1, skip the 3DVar code (but still do obsop for O-F stats)
 
 # directory paths
 #------------------------------
@@ -79,6 +80,7 @@ work_dir=$work_dir/3dvar
 rm -rf $work_dir
 mkdir -p $work_dir
 cd $work_dir
+ln -s $root_dir/build/vtloc .
 ln -s $root_dir/build/3dvar .
 ln -s $root_dir/build/obsop .
 ln -s $root_dir/build/obsprep* .
@@ -94,6 +96,15 @@ ln -s $root_dir/DATA/grid/clim_var.nc .
 ln -s $exp_dir/bkg_errvar/bgvar.nc .
 ln -s $exp_dir/bkg/${da_date_ana}.nc bkg.nc
 cd ..
+
+#------------------------------------------------------------
+#------------------------------------------------------------
+echo ""
+echo "============================================================"
+echo "Vertical Localization distance"
+echo ""
+OMP_NUM_THREADS=$da_threads aprun -cc depth -n 1 -d $da_threads time  vtloc
+
 
 #------------------------------------------------------------
 # Observation prep
@@ -233,6 +244,11 @@ if [ $da_skip -eq 0 ]; then
     d=$exp_dir/diag/ana_inc/$date_dir/${da_date_ana:0:4}
     mkdir -p $d
     mv output.nc $d/${da_date_ana}.nc
+
+    # vtloc file
+    d=$exp_dir/diag/vtloc/$date_dir/${da_date_ana:0:4}
+    mkdir -p $d
+    mv vtloc.nc $d/${da_date_ana}.nc
 
     # delete background files
     echo "Deleting background..."
