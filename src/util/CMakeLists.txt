@@ -21,14 +21,21 @@ include_directories($ENV{NETCDF_INCS})
 FIND_PACKAGE( OpenMP REQUIRED)
 
 # common objects
-set(SRCS kdtree.f90 datatable.f90)
+set(SRCS kdtree.f90 datatable.f90 hzsmooth.f90)
 add_library( util_common STATIC ${SRCS} )
+set_target_properties(util_common PROPERTIES 
+    COMPILE_FLAGS "${OpenMP_C_FLAGS}")
+
 
 # bgerr var
 file(GLOB SRCS "bgvar*.[f,F]90")
 set(EXE  bgvar)
 add_executable(${EXE} ${SRCS})
 target_link_libraries(${EXE} util_common $ENV{NETCDF_LIBS})
+set_target_properties(${EXE} PROPERTIES 
+    COMPILE_FLAGS "${OpenMP_C_FLAGS}"
+    LINK_FLAGS "${OpenMP_C_FLAGS}")
+
 
 # vt loc
 file(GLOB SRCS "vtloc*.[f,F]90")

@@ -92,8 +92,8 @@ cd INPUT
 ln -s $root_dir/DATA/grid/ocean_geometry.nc grid.nc
 ln -s $root_dir/DATA/grid/Vertical_coordinate.nc vgrid.nc
 ln -s $root_dir/DATA/grid/coast_dist.nc .
-ln -s $root_dir/DATA/grid/clim_var.nc .
-ln -s $exp_dir/bkg_errvar/bgvar.nc .
+#ln -s $root_dir/DATA/grid/clim_var.nc .
+#ln -s $exp_dir/bkg_errvar/bgvar.nc .
 ln -s $exp_dir/bkg/${da_date_ana}.nc bkg.nc
 cd ..
 
@@ -106,6 +106,17 @@ echo ""
 OMP_NUM_THREADS=$da_threads aprun -cc depth -n 1 -d $da_threads time  vtloc
 
 
+
+#------------------------------------------------------------
+#------------------------------------------------------------
+echo ""
+echo "============================================================"
+echo "background variance"
+echo ""
+OMP_NUM_THREADS=$da_threads aprun -cc depth -n 1 -d $da_threads time bgvar
+
+
+
 #------------------------------------------------------------
 # Observation prep
 #------------------------------------------------------------
@@ -114,6 +125,7 @@ echo "============================================================"
 echo "Observation processing"
 echo ""
 echo "Preparing Observations (SST/insitu)"
+
 
 
 #run the obs prep programs
@@ -228,12 +240,6 @@ if [ $da_skip -eq 0 ]; then
     echo "============================================================"
     aprun -n $da_nproc 3dvar
 
-    # calculate updated bgvar for next time
-    source namelist.bgvar.sh > namelist.bgvar
-    aprun -n 1 bgvar
-    mv $exp_dir/bkg_errvar/bgvar.nc $exp_dir/bkg_errvar/${da_date_ana}.nc
-    mv bgvar.nc $exp_dir/bkg_errvar/bgvar.nc
-
     # update the restart
     echo ""
     echo "Updating the restart files..."
@@ -249,6 +255,11 @@ if [ $da_skip -eq 0 ]; then
     d=$exp_dir/diag/vtloc/$date_dir/${da_date_ana:0:4}
     mkdir -p $d
     mv vtloc.nc $d/${da_date_ana}.nc
+
+    #bgvar file
+    d=$exp_dir/diag/bgvar/$date_dir/${da_date_ana:0:4}
+    mkdir -p $d
+    mv bgvar.nc $d/${da_date_ana}.nc
 
     # delete background files
     echo "Deleting background..."

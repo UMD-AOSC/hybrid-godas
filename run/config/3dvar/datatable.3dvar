@@ -10,16 +10,18 @@
 "grid_D",	"D",		"INPUT/grid.nc"
 "grid_coast",	"coast_dist",   "INPUT/coast_dist.nc"
 
-! variance climatology
-"cgrid_x",	"lon",		"INPUT/clim_var.nc"
-"cgrid_y",	"lat",		"INPUT/clim_var.nc"
-"cgrid_z",	"depth",	"INPUT/clim_var.nc"
-"cgrid_mask",	"mask",		"INPUT/clim_var.nc"
 
 
 ! background input fields
 !------------------------------------------------------------
-"bgvar_t",	"temp",		"INPUT/bgvar.nc"
-"bgvar_s",	"salt",		"INPUT/bgvar.nc"
+"bgvar_t",	"bgvar_t",	"bgvar.nc"
+"bgvar_s",	"bgvar_s",	"bgvar.nc"
+"bg_t",		"temp",		"INPUT/bkg.nc"
+"bg_t",		"salt",		"INPUT/bkg.nc"
 "bg_ssh",	"ssh",		"INPUT/bkg.nc"
 "bg_dens",	"rhopot0",	"INPUT/bkg.nc"
+
+
+! other 3dvar input fields
+!------------------------------------------------------------
+"vtloc",	"vtloc",	"vtloc.nc"   

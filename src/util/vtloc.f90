@@ -1,4 +1,5 @@
 program vtloc
+   use hzsmooth
    use netcdf
    use datatable
    implicit none
@@ -10,7 +11,7 @@ program vtloc
    real    :: rho_delta = 0.125
    real    :: vtloc_min = 5.0
    real    :: vtloc_max = 250.0
-   real    :: hz_loc(2) = (/250.0, 50.0/)
+   real    :: hz_loc(2) = (/250e3, 50e3/)
    real    :: hz_loc_scale = 2.5
    integer :: gauss_iter = 2
    logical :: mld_only = .true.
@@ -25,12 +26,8 @@ program vtloc
 
    ! calculated data
    integer, allocatable :: grid_btm(:,:)
-   real,    allocatable :: grid_ll_a(:,:)
-   real,    allocatable :: grid_ll_b(:,:)
-   real,    allocatable :: grid_ll_c(:,:)
    real,    allocatable :: grid_ld(:,:)
    real,    allocatable :: vtloc_dist(:,:,:)
-   real,    allocatable :: vtloc_dist2(:,:,:)
 
    ! constants
    real, parameter :: pi = 4*atan(1.0)
@@ -38,22 +35,17 @@ program vtloc
    real, parameter :: omega = 7.29e-5
 
    ! other misc variables
-   real, allocatable :: gb_s(:)
-   real, allocatable :: gb_v(:)
-   integer :: i, x,y,z,x2, y2, btm
-   real    :: ld1, ld2, r, d
+   integer :: x, y, z, btm
    integer :: unit, ierr
    integer :: nc, nc_x, nc_y, nc_z, nc_v
-   integer :: itr
 
    ! OpenMP functions
    INTEGER ::  OMP_GET_NUM_THREADS,  OMP_GET_THREAD_NUM
 
 
    namelist /g3dv_grid/ grid_nx, grid_ny, grid_nz
-
-   namelist /vtloc_nml/ rho_delta, vtloc_min, vtloc_max,&
-        hz_loc, hz_loc_scale, gauss_iter, mld_only
+   namelist /g3dv_hzloc/ hz_loc, hz_loc_scale
+   namelist /vtloc_nml/ rho_delta, vtloc_min, vtloc_max, gauss_iter, mld_only
 
 
    ! read in namelist and datatable files
@@ -68,14 +60,21 @@ program vtloc
 !$OMP END PARALLEL
    
    open(newunit=unit, file="namelist.3dvar", status='old')
+
    read(unit, nml=g3dv_grid)
+   print g3dv_grid
+
+   rewind(unit)
+   read(unit, nml=g3dv_hzloc)
+   print g3dv_hzloc
+
    rewind(unit)
    read(unit, nml=vtloc_nml)
-   close(unit)
-   print g3dv_grid
    print vtloc_nml
 
-   call datatable_init(.true., "datatable.vtloc")
+   close(unit)
+
+   call datatable_init(.true., "datatable.3dvar")
 
     
    ! read in the data files
@@ -102,15 +101,9 @@ program vtloc
    allocate(grid_lat(grid_nx,grid_ny))
    call datatable_get('grid_y', grid_lat)
 
-   allocate(grid_ll_a(grid_nx,grid_ny))
-   allocate(grid_ll_b(grid_nx,grid_ny))
-   allocate(grid_ll_c(grid_nx,grid_ny))
    allocate(grid_ld(grid_nx,grid_ny))
    do y=1,grid_ny
       do x=1,grid_nx
-         grid_ll_a(x,y) = sin(grid_lat(x,y)*pi/180.0)
-         grid_ll_b(x,y) = cos(grid_lat(x,y)*pi/180.0)*cos(grid_lon(x,y)*pi/180.0)
-         grid_ll_c(x,y) = cos(grid_lat(x,y)*pi/180.0)*sin(grid_lon(x,y)*pi/180.0)
          grid_ld(x,y) = sqrt(bgcov_hzdist(grid_lat(x,y))**2/gauss_iter)
       end do
    end do
@@ -139,7 +132,6 @@ program vtloc
   
    ! calculate initial vt loc distances
    allocate(vtloc_dist(grid_nx, grid_ny, grid_nz))
-   allocate(vtloc_dist2(grid_nx, grid_ny, grid_nz))
    vtloc_dist =0
    print*, "Calculating vertical distances..."
 !$OMP PARALLEL DO PRIVATE(btm,x) SCHEDULE(static,1)
@@ -164,87 +156,7 @@ program vtloc
    !perform gaussian smoothing
    !------------------------------------------------------------
    print *, "Gaussian smoother..."
-   allocate(gb_s(grid_nz))
-   allocate(gb_v(grid_nz))
-
-do itr=1,gauss_iter
-   ! horizontal blur
-   !------------------------------
-   vtloc_dist2 = vtloc_dist
-   vtloc_dist = 0.0
-!$OMP PARALLEL DO PRIVATE(ld1,gb_s,gb_v,x2,d,r,i,btm,x) SCHEDULE(static,1)
-   do y=1,grid_ny
-      do x=1,grid_nx
-         if(grid_mask(x,y) <= 0.0) cycle
-         ld1 = grid_ld(x,y)
-         gb_s = 1.0
-         gb_v = vtloc_dist2(x,y,:)
-
-         ! do the following loop twice, once for right (i=1) and left (i=-1)
-         do i=1,-1, -2 
-            x2 = x + i
-            do while(x2 /= x)
-               ! wrap in the x direction
-               if(i==1) then
-                  if (x2 > grid_nx) x2 = 1
-               else
-                  if (x2 < 1) x2 = grid_nx
-               end if
-
-               d = lldist(x,y,x2,y)
-               r = loc_gc(d, ld1)            
-               if (r == 0) exit
-               if(grid_mask(x2,y) > 0.0) then
-                  btm = grid_btm(x2,y)
-                  gb_v = gb_v + vtloc_dist2(x2,y,:)*r
-                  gb_s(1:btm) = gb_s(1:btm) + r
-               end if
-               x2 = x2 + i
-            end do
-            ! if we looped back to the original point, dont bother doing the loop
-            ! in the other direction
-            if(x2 == x) exit 
-         end do
-         btm = grid_btm(x,y)
-         vtloc_dist(x,y,1:btm) = gb_v(1:btm)/gb_s(1:btm)
-      end do
-   end do
-!$OMP END PARALLEL DO
-
-
-   ! vertical blur
-   !------------------------------
-   vtloc_dist2 = vtloc_dist
-   vtloc_dist = 0.0
-!$OMP PARALLEL DO PRIVATE(ld1,gb_s,gb_v,y2,d,r,i,btm,x) SCHEDULE(static,1)
-   do y=1,grid_ny
-      do x=1,grid_nx
-         if(grid_mask(x,y) <= 0.0) cycle
-         ld1 = grid_ld(x,y)
-         gb_s=1.0
-         gb_v=vtloc_dist2(x,y,:)
-
-         ! do the following loop twice, once for up (i=1) and down (i=-1)
-         do i=1,-1,-2 
-            y2 = y + i
-            do while(y2 <= grid_ny .and. y2 >= 1)
-               d = lldist(x,y,x,y2)
-               r = loc_gc(d, (ld1 + grid_ld(x,y2))/2.0)
-               if (r == 0) exit
-               if(grid_mask(x,y2) > 0.0) then
-                  btm = grid_btm(x,y2)
-                  gb_v = gb_v + vtloc_dist2(x,y2,:)*r
-                  gb_s(1:btm) = gb_s(1:btm) + r
-               end if
-               y2 = y2 + i
-            end do
-         end do
-         btm = grid_btm(x,y)
-         vtloc_dist(x,y,1:btm) = gb_v(1:btm)/gb_s(1:btm)
-      end do
-   end do
-!$OMP END PARALLEL DO
-end do
+   call hzsmooth_gauss(vtloc_dist, grid_lat, grid_lon, grid_btm, grid_ld, gauss_iter)
 
 
    !------------------------------------------------------------
@@ -499,37 +411,6 @@ end do
   !================================================================================
 
 
-
-  pure function loc_gc(z, L)
-    real, intent(in) :: z
-    real, intent(in) :: L
-    real :: loc_gc
-
-    real :: c
-    real :: abs_z, z_c
-
-    c = L / sqrt(0.3)
-    abs_z = abs(z)
-    z_c = abs_z / c
-
-    if (abs_z >= 2*c) then
-       loc_gc = 0.0
-    elseif (abs_z < 2*c .and. abs_z > c) then
-       loc_gc = &
-            (1.0/12.0)*z_c**5 - 0.5*z_c**4 + &
-            (5.0/8.0)*z_c**3 + (5.0/3.0)*z_c**2 &
-            - 5.0*z_c + 4 - (2.0/3.0)*c/abs_z
-    else
-       loc_gc = &
-            -0.25*z_c**5 + 0.5*z_c**4 + &
-            (5.0/8.0)*z_c**3 - (5.0/3.0)*z_c**2 + 1
-    end if
-  end function loc_gc
-
-
-  !================================================================================
-  !================================================================================
-
   subroutine check(status)
     !! helper function to wrap calls to netcdf
     integer, intent(in) :: status
@@ -542,14 +423,6 @@ end do
 
   !================================================================================
   !================================================================================
-
-
-  pure function lldist(x1,y1,x2,y2) result(d)
-    integer, intent(in) :: x1,y1,x2,y2
-    real :: d, r
-    r = grid_ll_a(x1,y1)*grid_ll_a(x2,y2) + grid_ll_b(x1,y1)*grid_ll_b(x2,y2) + grid_ll_c(x1,y1)*grid_ll_c(x2,y2)
-    d = re*acos(r)
-  end function lldist
 
 
 end program vtloc

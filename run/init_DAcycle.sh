@@ -23,8 +23,6 @@ cd $exp_dir
 mkdir -p logs
 #mkdir -p ana
 mkdir -p bkg
-mkdir -p bkg_errvar
-cp $root_dir/DATA/grid/bgvar.nc bkg_errvar/
 mkdir -p diag
 mkdir -p config
 mkdir -p config/3dvar
