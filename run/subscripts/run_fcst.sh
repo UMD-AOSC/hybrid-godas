@@ -3,6 +3,7 @@ set -e
 
 # Hybrid-GODAS forecast run script
 
+timing_start=$(date +%s)
 
 #================================================================================
 #================================================================================
@@ -61,6 +62,7 @@ echo "============================================================"
 echo "   Running MOM6 forecast..."
 echo "============================================================"
 
+ts=$(date +%s)
 
 # check required environment variables
 for v in ${envvars}; do
@@ -123,28 +125,33 @@ if [ "$restart" = 'r' ]; then
 	fi
     fi
 fi
+timing_setup=$(( $(date +%s) - $ts ))
 
 # Prepare the forcing files
 # forcing start needs to be 1 day earlier because forcing is
 # centered at 12Z, and fcst_start/fcst_end are at 0Z
+ts=$(date +%s)
 mkdir -p FORC
 cd FORC
 forc_start=$(date "+%Y-%m-%d" -d "$fcst_start - 1 day")
 forc_end=$fcst_end
 (. $root_dir/tools/prep_forcing.sh $forc_start $forc_end)
 cd ..
-
+timing_obprep=$(( $(date +%s) - $ts ))
 
 # run the forecast
 #------------------------------------------------------------
+ts=$(date +%s)
 aprun -n $PBS_NP MOM6
 echo "exit code $?"
 if [ $? -gt 0 ]; then
     echo "ERROR running forecast."
     exit 1
 fi
+timing_fcst=$(( $(date +%s) - $ts ))
 
 
+ts=$(date +%s)
 # Move the output files needed for DA
 #------------------------------------------------------------
 if [ "$fcst_dailymean" -gt 0 ]; then
@@ -193,7 +200,6 @@ if [ "$fcst_otherfiles" -gt 0 ]; then
     done
 fi
 
-
 # move the restart files
 rm -rf $exp_dir/RESTART_old
 if [ -d $exp_dir/RESTART ]; then mv $exp_dir/RESTART $exp_dir/RESTART_old; fi
@@ -202,7 +208,20 @@ mv $work_dir/RESTART $exp_dir/RESTART
 
 # update the "last_date" file
 echo $fcst_end > $exp_dir/last_date_fcst
+timing_mv=$(( $(date +%s) - $ts ))
 
 
 # clean up working directory
 rm -rf $work_dir
+
+timing_total=$(( $(date +%s) - $timing_start ))
+
+echo ""
+echo "============================================================"
+echo " Forecast timing (seconds)"
+echo "============================================================"
+echo " setup           : $timing_setup"
+echo " sbc prep        : $timing_obprep"
+echo " forecast        : $timing_fcst"
+echo " output move     : $timing_mv"
+echo "           total : $timing_total"
