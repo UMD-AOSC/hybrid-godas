@@ -18,10 +18,8 @@ else()
 endif()
 
 include_directories($ENV{NETCDF_INCS})
-
-#GSW toolkit
-add_subdirectory(gsw)
-include_directories("build/gsw")
+include_directories("../gsw/build")
+find_library(GSWLIB NAMES gsw_toolbox PATHS ../gsw/build)
 
 # common objects
 set(SRCS obscom_obsio.f90 obscom_grid.f90 linked_list.f90 kdtree.f90 cubic_spline.f90)
@@ -49,4 +47,4 @@ target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS})
 set(SRCS obsop.f90)
 set(EXE  obsop)
 add_executable(${EXE} ${SRCS})
-target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS} gsw_toolbox)
+target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS} ${GSWLIB})

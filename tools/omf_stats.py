@@ -43,8 +43,17 @@ def procFile(filename):
     dat={}
     for f in fields:
         dat[f] = ncd.variables[f][:]
+
+    # remove obs that the 3dvar qc rejected
+    # (except for rejection due to ob being outside bg err spread)
+    qcfile=os.path.dirname(filename) + '/'+os.path.basename(filename).split('.')[0]+'.varqc.nc'
+    ncd2=nc.Dataset(qcfile,'r')
+    dat['qc']=ncd2.variables['qc'][:]
+    ncd2.close()
+
     dat = pd.DataFrame(dat).dropna()
-    dat = dat[dat.qc == 0]
+    dat = dat[ (dat.qc == 0) | (dat.qc == 30)]
+#    dat = dat[ (dat.qc == 0) ]
     ncd.close()
 
     # divide T and S obs
@@ -85,7 +94,7 @@ def procFile(filename):
 #============================================================
 #============================================================
 
-indir=args.path+'/diag/OmF/*/*.nc'
+indir=args.path+'/diag/OmF/*/????????.nc'
 outdir1=args.path+'/diag/OmF_stats/'
     
 for f in sorted(glob(indir)):

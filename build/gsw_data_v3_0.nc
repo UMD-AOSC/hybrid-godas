@@ -1,1 +1,1 @@
-../src/obsop/gsw/GSW-Fortran/test/gsw_data_v3_0.nc
+../src/gsw/GSW-Fortran/test/gsw_data_v3_0.nc

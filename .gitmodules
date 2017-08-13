@@ -4,6 +4,6 @@
 [submodule "MOM6"]
 	path = src/MOM6
 	url = https://github.com/NOAA-GFDL/MOM6-examples.git
-[submodule "GSW-Fortran"]
-	path = src/obsop/gsw/GSW-Fortran
+[submodule "src/gsw/GSW-Fortran"]
+	path = src/gsw/GSW-Fortran
 	url = https://github.com/TEOS-10/GSW-Fortran.git

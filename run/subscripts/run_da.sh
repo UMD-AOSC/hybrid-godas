@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
 
+
 # Hybrid-GODAS data assimilation step scripts
+
+timing_start=$(date +%s)
+
 
 #================================================================================
 #================================================================================
@@ -80,11 +84,7 @@ work_dir=$work_dir/3dvar
 rm -rf $work_dir
 mkdir -p $work_dir
 cd $work_dir
-ln -s $root_dir/build/vtloc .
-ln -s $root_dir/build/3dvar .
-ln -s $root_dir/build/obsop .
-ln -s $root_dir/build/obsprep* .
-ln -s $root_dir/build/bgvar .
+ln -s $root_dir/build/* .
 cp $exp_dir/config/3dvar/* .
 
 mkdir INPUT
@@ -97,13 +97,18 @@ ln -s $root_dir/DATA/grid/coast_dist.nc .
 ln -s $exp_dir/bkg/${da_date_ana}.nc bkg.nc
 cd ..
 
+# make sure that unless otherwise specified, all programs are single threaded
+export OMP_NUM_THREADS=1
+
 #------------------------------------------------------------
 #------------------------------------------------------------
 echo ""
 echo "============================================================"
 echo "Vertical Localization distance"
 echo ""
+ts=$(date +%s)
 OMP_NUM_THREADS=$da_threads aprun -cc depth -n 1 -d $da_threads time  vtloc
+timing_vtloc=$(( $(date +%s) - $ts ))
 
 
 
@@ -113,7 +118,9 @@ echo ""
 echo "============================================================"
 echo "background variance"
 echo ""
+ts=$(date +%s)
 OMP_NUM_THREADS=$da_threads aprun -cc depth -n 1 -d $da_threads time bgvar
+timing_bgvar=$(( $(date +%s) - $ts ))
 
 
 
@@ -131,6 +138,7 @@ echo "Preparing Observations (SST/insitu)"
 #run the obs prep programs
 #------------------------------------------------------------
 # TODO: move everythin to work on /dev/shm for speed improvement ?
+ts=$(date +%s)
 toffset=0
 fdate=$da_date_ob_end
 while [ $(date -d $fdate +%s) -ge $(date -d $da_date_ob_start +%s) ]
@@ -189,10 +197,12 @@ echo "Waiting for completetion..."
 wait
 cd $work_dir
 cat obsop_????????/obsprep*.log
+timing_obsprep=$(( $(date +%s) - $ts ))
 
 
 # Obseration operators
 #------------------------------------------------------------
+ts=$(date +%s)
 echo ""
 echo "============================================================"
 echo "Daily observation operator"
@@ -219,32 +229,41 @@ echo "waiting for completion..."
 wait
 cd $work_dir
 cat obsop_????????/obsop.log
+timing_obsop=$(( $(date +%s) - $ts ))
 
 
 # combine all obs
+ts=$(date +%s)
 cd $work_dir
 echo ""
 echo "============================================================"
 echo "Combining all obs into single file..."
 ncrcat --no_tmp_fl obsop_????????/obsop.nc INPUT/obs.nc
-
+timing_obscmb=$(( $(date +%s) - $ts ))
 
 
 #------------------------------------------------------------
 # 3dvar
 #------------------------------------------------------------
 if [ $da_skip -eq 0 ]; then
+    ts=$(date +%s)
     echo ""
     echo "============================================================"
     echo "Running 3DVar..."
     echo "============================================================"
     aprun -n $da_nproc 3dvar
+    timing_3dvar=$(( $(date +%s) - $ts ))
 
     # update the restart
+    ts=$(date +%s)
     echo ""
     echo "Updating the restart files..."
-    $root_dir/tools/update_restart.py output.nc $exp_dir/RESTART
+#    time $root_dir/tools/update_restart.py output.nc $exp_dir/RESTART
+    ln -s $exp_dir/RESTART .
+    aprun -n 1 ./update_restart
+    timing_restart=$(( $(date +%s) - $ts ))
 
+    ts=$(date +%s)
     # move da output
     echo "Moving AI file..."
     d=$exp_dir/diag/ana_inc/$date_dir/${da_date_ana:0:4}
@@ -262,8 +281,10 @@ if [ $da_skip -eq 0 ]; then
     mv bgvar.nc $d/${da_date_ana}.nc
 
     # delete background files
-    echo "Deleting background..."
-    rm $exp_dir/bkg/* 
+#    echo "Deleting background..."
+#    rm $exp_dir/bkg/* 
+
+    timing_mvfiles=$(( $(date +%s) - $ts ))
 
 fi
 
@@ -285,3 +306,22 @@ mv $work_dir/obs.varqc.nc  $d/${da_date_ana}.varqc.nc
 
 # clean up
 rm -rf $work_dir
+
+timing_final=$(( $(date +%s) - $timing_start ))
+
+
+
+#Print out timing statistics summary
+echo ""
+echo "============================================================"
+echo "Data assimilation Timing (seconds)"
+echo "============================================================"
+echo " vertical localization distance (vtloc): $timing_vtloc"
+echo " Background error variance (bgvar)     : $timing_bgvar"
+echo " observation preparation (obsprep)     : $timing_obsprep"
+echo " observation operator (obsop)          : $timing_obsop"
+echo " observation file combination          : $timing_obscmb"
+echo " 3dvar solver (3dvar)                  : $timing_3dvar"
+echo " update restart file                   : $timing_restart"
+echo " move output files                     : $timing_mvfiles"
+echo "                               Total   : $timing_final"

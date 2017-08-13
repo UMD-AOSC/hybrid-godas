@@ -18,6 +18,8 @@ else()
 endif()
 
 include_directories($ENV{NETCDF_INCS})
+include_directories("../gsw/build")
+find_library(GSWLIB NAMES gsw_toolbox PATHS ../gsw/build)
 FIND_PACKAGE( OpenMP REQUIRED)
 
 # common objects
@@ -46,3 +48,8 @@ target_link_libraries(${EXE} $ENV{NETCDF_LIBS})
 set_target_properties(${EXE} PROPERTIES 
     COMPILE_FLAGS "${OpenMP_C_FLAGS}"
     LINK_FLAGS "${OpenMP_C_FLAGS}")
+
+# update_restart
+set(EXE update_restart)
+add_executable(${EXE} update_restart.f90)
+target_link_libraries(${EXE} util_common $ENV{NETCDF_LIBS} ${GSWLIB})
