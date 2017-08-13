@@ -4,18 +4,19 @@ program update_restart
   use gsw_mod_toolbox
   implicit none
 
-  real :: salt_min = 0.01
-  real :: salt_max = 50.0
-  real :: temp_min = -4.0
-  real :: temp_max = 40.0
-
-  integer :: nc_ai, nc_rst
-  integer :: v1, v2
-
-  integer :: x,y,z
+  ! TODO, move these to namelist
   integer :: grid_nx = 1440
   integer :: grid_ny = 1080
   integer :: grid_nz = 75
+  real :: salt_min = 0.01
+  real :: salt_max = 50.0
+  real :: temp_min = -3.0
+  real :: temp_max = 50.0
+
+
+  integer :: nc_ai, nc_rst
+  integer :: v1, v2
+  integer :: x,y,z
 
   real, allocatable :: grid_D(:,:)
   real, allocatable :: grid_dpth(:)

@@ -30,7 +30,7 @@
   use_t = T
   use_s = T
 
-  qc_max = 3.0
+  qc_max = 10.0
   inc_max_t = 10.0
   inc_max_s = 1.0
   obs_block_dx = 25
@@ -55,7 +55,7 @@
 !------------------------------------------------------------
 &g3dv_hzloc
   ! horizontal localization distance
-  hz_loc = 250e3, 50e3
+  hz_loc = 300e3, 50e3
   hz_loc_scale=2.5
 /
 
@@ -69,13 +69,13 @@
   time_loc = 120.0
 
   ! gradient tensors
-  tnsr_surf  = 0.1
+  tnsr_surf  = 0.05
   tnsr_coast_dist = 75e3
 !  tnsr_coast_min  = 0.3
 
 
 !  bgvar_t = 0.8
-  bgvar_s = 0.2
+  bgvar_s = 0.25
 /
 
 
@@ -86,7 +86,7 @@
   rho_delta = 0.125
   vtloc_min= 1.0
   vtloc_max = 250.0
-  gauss_iter = 5
+  gauss_iter = 3
   mld_only=T
 /
 
@@ -96,8 +96,8 @@
 !------------------------------------------------------------
 &bgvar_nml
   t_varmin_do = 0.098
-  t_varmin_surf_const = 0.25
+  t_varmin_surf_const = 0.5
   t_varmax = 1.8
   t_dz = 20.0
-  gauss_iter = 5
+  gauss_iter = 3
 /

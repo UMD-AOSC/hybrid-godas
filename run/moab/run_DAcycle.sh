@@ -62,6 +62,7 @@ fi
 #------------------------------------------------------------
 
 # run the forecast
+ts=$(date +%s)
 if [[ $(date +%s -d $last_date_fcst) -eq $(date +%s -d $date_cur) ]]; then
     fcst_start=$date_cur
     fcst_len=$da_interval
@@ -72,16 +73,29 @@ if [[ $(date +%s -d $last_date_fcst) -eq $(date +%s -d $date_cur) ]]; then
     (. $root_dir/run/subscripts/run_fcst.sh)
     if [ $? -gt 0 ]; then echo "ERROR running forecast."; exit 1; fi
 fi
+timing_fcst=$(( $(date +%s) - $ts ))
+
 
 # run the DA step
+ts=$(date +%s)
 t=$(($da_interval-1))
 da_date_ana=$(date "+%Y%m%d" -d "$date_cur + $t day")
 da_date_ob_end=$da_date_ana
 da_date_ob_start=$date_cur
 (. $root_dir/run/subscripts/run_da.sh)
 if [ $? -gt 0 ]; then echo "ERROR running DA."; exit 1; fi
-
 cp last_date_fcst last_date_da
+timing_da=$(( $(date +%s) - $ts ))
+
+
+echo ""
+echo "============================================================"
+echo " overall cycle timing (seconds)"
+echo "============================================================"
+echo " Forecast   : $timing_fcst"
+echo " 3DVar      : $timing_da"
+echo " "
+
 
 # submit another job if we aren't done yet
 date_cur=$(date "+%Y-%m-%d" -d "$date_cur + $da_interval day")

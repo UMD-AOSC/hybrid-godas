@@ -38,12 +38,15 @@ if [[ "$fcst_dailymean" -eq 0 ]]; then fcst_dailymean_dir=""; fi
 
 # saving of other model output (usually pentad data)
 #------------------------------
+v="$v fcst_save_rstyr"      # If 1, save restart files on Jan 1 of every year
 v="$v fcst_otherfiles"      # If save other output files from the model.
 v="$v fcst_otherfiles_dir"  # Directory to save other files to
 v="$v fcst_maskland"        # If 1, output undergoes an extra step to have a land mask applied
 
+fcst_save_rstyr=${fcst_save_rstyr:-1}
 fcst_maskland=${fcst_maskland:-1}
 if [[ "$fcst_otherfiles" -eq 0 ]]; then fcst_otherfiles_dir=""; fi
+
 
 envvars="$v"
 
@@ -106,6 +109,19 @@ ln -s $root_dir/run/config/mom_input/* INPUT/
 # restart files
 if [ "$restart" = 'r' ]; then
     ln -s $exp_dir/RESTART/* INPUT/
+    # save a backup of restart files once a year
+    # check to see if the year of the previous run would have been
+    # different than the year of this run
+    if [ "$fcst_save_rstyr" -gt 0 ]; then
+	y1=$(date "+%Y" -d "$fcst_start")
+	y2=$(date "+%Y" -d "$fcst_start -$fcst_len day")
+	if [ "$y1" -ne "$y2" ]; then
+	    d=$(date "+%Y%m%d" -d "$fcst_start")
+	    echo "Saving backup of restart files to ./RESTART_SAVE/$d ..."
+	    mkdir -p $exp_dir/RESTART_SAVE
+	    cp -r $exp_dir/RESTART $exp_dir/RESTART_SAVE/$d
+	fi
+    fi
 fi
 
 # Prepare the forcing files
