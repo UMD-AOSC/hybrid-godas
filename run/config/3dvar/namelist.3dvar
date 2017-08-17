@@ -68,6 +68,8 @@
   ! time localization
   time_loc = 120.0
 
+  vt_loc_diff_scale=1.0
+
   ! gradient tensors
   tnsr_surf  = 0.05
   tnsr_coast_dist = 75e3
