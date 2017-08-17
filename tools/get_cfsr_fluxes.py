@@ -17,18 +17,22 @@ fields = [
  ('DSWRF.sfc', 16, "f06"),
  ('DLWRF.sfc', 11, "f06"),
  ('PRATE',     31, "f06"),
- ('PRES.sfc',  40, "f*"),
- ('TMP.2m',    38, "f*"),
- ('SPFH.2m',   39, "f*"),
- ('UGRD.10m',  36, "f*"),
- ('VGRD.10m',  37, "f*"),
+ ('PRES.sfc',  40, "f0[0-6]"),
+ ('TMP.2m',    38, "f0[0-6]"),
+ ('SPFH.2m',   39, "f0[0-6]"),
+ ('UGRD.10m',  36, "f0[0-6]"),
+ ('VGRD.10m',  37, "f0[0-6]"),
  ]
 
-server     = "https://nomads.ncdc.noaa.gov/modeldata/"
-path_cfsr  = server+"/cmd_flxf/{0:.4}/{0:.6}/{0}/flxf{1:02d}.gdas.{0}{2:02d}.grb2\n"
-path_cfsv2 = server+"/cfsv2_analysis_flxf/{0:.4}/{0:.6}/{0}/cdas1.t{2:02d}z.sfluxgrbf{1:02d}.grib2\n"
+
+nomads_server     = "https://nomads.ncdc.noaa.gov/modeldata/"
+nomads_path_cfsr  = nomads_server+"/cmd_flxf/{0:.4}/{0:.6}/{0}/flxf{1:02d}.gdas.{0}{2:02d}.grb2\n"
+nomads_path_cfsv2 = nomads_server+"/cfsv2_analysis_flxf/{0:.4}/{0:.6}/{0}/cdas1.t{2:02d}z.sfluxgrbf{1:02d}.grib2\n"
+
 cfsr_end   = dt.date(2011,3,31)
 hires_date = dt.date(2011,1,1)
+
+toolsdir=os.path.dirname(os.path.realpath(__file__))
 
 
 # Get command line arguments 
@@ -43,24 +47,19 @@ parser.add_argument('end_date', nargs='?', help=(
 parser.add_argument('--outdir', default = 
     os.path.abspath(os.path.dirname(os.path.realpath(__file__))+'/../DATA/fluxes/cfsr'), help=(
     "Directory to save final fluxes to. Default: %(default)s"))
+parser.add_argument('--source', choices={'nomads','ucar'}, default='nomads', help=(
+     "source to download data from, default: %(default)s"))
+
                     
 args = parser.parse_args()
 if args.end_date == None:
     args.end_date = args.start_date
 
+args.outdir=os.path.realpath(args.outdir)
 args.tmpdir = 'tmp_'+args.start_date
 args.start_date = dt.datetime.strptime(args.start_date, "%Y%m%d").date()
 args.end_date   = dt.datetime.strptime(args.end_date,   "%Y%m%d").date()
 
-
-#min_date = dt.date(1979,1,1)
-#max_date = dt.date(2011,3,31)
-# if( args.start_date < min_date or args.start_date > max_date):
-#     print("start date out of range",str(max_date))
-#     sys.exit(1)
-# if( args.end_date < min_date or args.end_date > max_date):
-#     print("end date out of range, max date is ",str(max_date))
-#     sys.exit(1)
 
 # removte temporary directory if it already exists
 if os.path.exists(args.tmpdir):
@@ -71,27 +70,35 @@ if os.path.exists(args.tmpdir):
 #------------------------------------------------------------
 cdate = args.start_date
 while(cdate <= args.end_date):
-    hires = cdate >= hires_date
-    path = path_cfsr if cdate <= cfsr_end else path_cfsv2
-
     date = cdate.strftime("%Y%m%d")
-    outdir = args.outdir+'/{0:.4}/{0}/'.format(date)
 
-    # create temporary directory
+    print("************************************************************")
+    print("Processing date "+date)
+    print("************************************************************")
+
+    hires = cdate >= hires_date
+
+    # create temporary/output directory
+    outdir = args.outdir+'/{0:.4}/{0}/'.format(date)
     if not os.path.exists(outdir):
         os.makedirs(outdir)
+    os.makedirs(args.tmpdir)
 
     # get all the files needed
-    #------------------------------------------------------------
-    os.makedirs(args.tmpdir)
-    f = open(args.tmpdir+'/wgetfiles','w')
-    for i in range(1,7): # forecast hour (F01 - F06)
-        for hr in (0,6,12,18): # initial time (every 6 hours)
-            f.write(path.format(date,i,hr))
-    f.close()
-    sp.check_call('wget -nv -i wgetfiles',shell=True, cwd=args.tmpdir)
-            
-
+    #------------------------------------------------------------    
+    if(args.source == 'nomads'):
+        path = nomads_path_cfsr if cdate <= cfsr_end else nomads_path_cfsv2
+        f = open(args.tmpdir+'/wgetfiles','w')
+        for i in range(1,7): # forecast hour (F01 - F06)
+            for hr in (0,6,12,18): # initial time (every 6 hours)
+                f.write(path.format(date,i,hr))
+        f.close()
+        sp.check_call('wget -nv -i wgetfiles',shell=True, cwd=args.tmpdir)
+    else:
+        filename='{}/cdas1.{}.sfluxgrbf.tar'.format(date[:4],date)
+        sp.check_call(toolsdir+'/get_cfsr_fluxes.ucar '+filename, shell=True, cwd=args.tmpdir)
+        sp.check_call('tar -xaf *.tar', shell=True, cwd=args.tmpdir)
+        
     #process the fields
     #------------------------------------------------------------
     for field in fields:
@@ -160,9 +167,11 @@ while(cdate <= args.end_date):
         # convert to lower resolution, if needed
         if hires:
             sp.check_call('ncks --map="{}" {} tmp.nc'.format(
-                    "../get_cfsr_fluxes.data/esmf_CFSRhi2low_patch_weights.nc",
+                    toolsdir+"/get_cfsr_fluxes.data/esmf_CFSRhi2low_patch_weights.nc",
                     ncd_file), shell=True, cwd=args.tmpdir)
             sp.check_call('ncks -O -x -v gw,lat_bnds,lon_bnds,area tmp.nc '+ncd_file,
+                    shell=True, cwd=args.tmpdir)
+            sp.check_call('ncks -O --mk_rec_dmn time {0} {0}'.format(ncd_file),
                     shell=True, cwd=args.tmpdir)
             os.remove(args.tmpdir+'/tmp.nc')
 
