@@ -114,9 +114,11 @@ contains
 
   !============================================================
   !============================================================  
-  elemental real function cspline_interp(this, x) result(y)
+  elemental real function cspline_interp(this, x, check) result(y)
     class(cspline), intent(in) :: this
     real, intent(in) :: x
+    logical, optional, intent(in) :: check
+    real :: r
 
     real :: a,b,h
     integer :: i1, i2
@@ -139,6 +141,17 @@ contains
     y=a*this%y(i1)+b*this%y(i2)+&
          ((a*a*a-a)*this%y2(i1)+&
          (b*b*b-b)*this%y2(i2))*(h*h)/6.0
+
+    !check to make sure interpolated value is not outside the range of 
+    ! the values above and below it, it if is switch to simple
+    ! linear interpolation (useful for interpolating ocean profiles)
+    if(present(check) .and. check) then
+       if ( y > max(this%y(i1),this%y(i2)) .or. y < min(this%y(i1),this%y(i2))) then
+          
+          r = (x-this%x(i1)) / (this%x(i2)-this%x(i1))
+          y = (this%y(i2)-this%y(i1)) * r + this%y(i1)
+       end if
+    end if
   end function cspline_interp
   !============================================================
 

@@ -23,7 +23,7 @@ program obsop
   type(obsio_nc) :: obsio
 
   integer :: i
-  integer :: x, y
+  integer :: x, y, z
   integer :: prev_x, prev_y
   real :: s, pt, v
   integer :: unit
@@ -120,8 +120,22 @@ program obsop
            spline_t = cspline(grid_depths, state_t(x,y,:))
            spline_s = cspline(grid_depths, state_s(x,y,:))
         end if
-        pt  = spline_t%interp(obs(i)%dpth)
-        s   = spline_s%interp(obs(i)%dpth)
+        pt  = spline_t%interp(obs(i)%dpth, check=.true.)
+        s   = spline_s%interp(obs(i)%dpth, check=.true.)
+
+        ! double check to make sure the interpolation worked
+        if (pt == cspline_error .or. s ==cspline_error)  then
+           print *, "ERROR interpolating from spline."
+           print *, "bg profiles (depth, T, S)"
+           do z=1,size(grid_depths)
+              print *, grid_depths(z), state_t(x,y,z), state_s(x,y,z)
+           end do
+           print *, ""
+           print *,'interpolation (depth, pt, s)'
+           print *, obs(i)%dpth, pt, s
+           stop 1
+        end if
+        
      end if
 
 
