@@ -20,6 +20,7 @@ program obsop
   character(len=1024) :: nml_file
 
   type(observation), allocatable :: obs(:)
+  real, allocatable :: obs_inc(:)
   type(obsio_nc) :: obsio
 
   integer :: i
@@ -85,7 +86,7 @@ program obsop
   ! read in the observations
   call obsio%read(obsfile, obs)
   print *, size(obs),"observations read in"
-
+  allocate(obs_inc(size(obs)))
 
 
   ! process each observation
@@ -160,7 +161,8 @@ program obsop
         print *, "unkown observation id: ",obs(i)%id
         stop 1
      end if   
-     obs(i)%val = obs(i)%val - v
+
+     obs_inc(i) = obs(i)%val - v
 
      ! observation has passed this QC
      obs(i)%hr = time_offset
@@ -168,7 +170,7 @@ program obsop
   end do
 
   !done, write out observation
-  call obsio%write(outfile, obs)
+  call obsio%write(outfile, obs, obs_inc)
 
 
   

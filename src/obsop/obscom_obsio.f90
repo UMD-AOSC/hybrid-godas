@@ -68,10 +68,11 @@ contains
 
   
   !============================================================
-  subroutine obs_write_nc(self, file, obs)
+  subroutine obs_write_nc(self, file, obs, inc)
     class(obsio_nc) :: self
-    character(len=*), intent(in) :: file
+    character(len=*),  intent(in) :: file
     type(observation), intent(in) :: obs(:)
+    real, optional,    intent(in) :: inc(:)
     
     integer :: nobs, n
     integer :: ncid, dimid, varid
@@ -87,10 +88,10 @@ contains
     call check( nf90_create(file, nf90_clobber, ncid))
 
     call check( nf90_def_dim(ncid, "obs",  nf90_unlimited, dimid))
-    call check( nf90_def_var(ncid, "obid",    nf90_int,  dimid, varid))
+    call check( nf90_def_var(ncid, "obid",  nf90_short,  dimid, varid))
     call check( nf90_put_att(ncid, varid, "long_name", "observation ID number"))
 
-    call check( nf90_def_var(ncid, "plat",  nf90_int,  dimid, varid))
+    call check( nf90_def_var(ncid, "plat",  nf90_short,  dimid, varid))
     call check( nf90_put_att(ncid, varid, "long_name", "platform ID number"))
     call check( nf90_put_att(ncid, varid, "missing_value", 0))
     
@@ -111,10 +112,15 @@ contains
     call check( nf90_def_var(ncid, "val",   nf90_real, dimid, varid))
     call check( nf90_put_att(ncid, varid, "long_name", "observation value"))
 
+    if(present(inc)) then
+       call check( nf90_def_var(ncid, "inc", nf90_real, dimid, varid))
+       call check( nf90_put_att(ncid, varid, "long_name", "observation increment"))
+    end if
+
     call check( nf90_def_var(ncid, "err",   nf90_real, dimid, varid))
     call check( nf90_put_att(ncid, varid, "long_name", "observation error"))
 
-    call check( nf90_def_var(ncid, "qc",    nf90_int,  dimid, varid))
+    call check( nf90_def_var(ncid, "qc",    nf90_byte,  dimid, varid))
     call check( nf90_put_att(ncid, varid, "long_name", "quality control, 0=good, >0 is bas"))
 
     call check( nf90_enddef(ncid))
@@ -161,7 +167,12 @@ contains
     end do
     call check( nf90_inq_varid(ncid, "val", varid))
     call check( nf90_put_var(ncid, varid, tmp_r))
-    
+
+    if(present(inc)) then
+       call check( nf90_inq_varid(ncid, "inc", varid))
+       call check( nf90_put_var(ncid, varid, inc))
+    end if
+
     do n=1, nobs
        tmp_r(n) = obs(n)%err
     end do
