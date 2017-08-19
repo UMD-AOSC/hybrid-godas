@@ -156,14 +156,13 @@ do
     ln -s $root_dir/build/gsw_data_v3_0.nc .
 
     # conventional obs
+    obfile=$da_prof_dir/$(date "+%Y/%Y%m%d" -d $fdate)    
     if [[ "$da_prof_legacy" -eq 1 ]]; then
 	# are use using the legacy GODAS profiles, or 
 	# new ones (not yet implemented
 	obsprep_exec=obsprep_insitu_legacy
-	obfile=$da_prof_dir/$(date "+%Y/%Y%m%d" -d $fdate)    
     else
 	obsprep_exec=obsprep_insitu
-	obfile=$da_prof_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc
     fi
 
     if [[ ("$da_prof_use" -eq 1) ]]; then #&& (-f  $obfile) ]]; then

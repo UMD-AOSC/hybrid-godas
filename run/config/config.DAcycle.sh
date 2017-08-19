@@ -19,14 +19,14 @@ flux_cfsr_dir="$root_dir/DATA/fluxes/cfsr_corr"
 #  to be changed as well
 moab_acct=cpo_hyb_go
 moab_nodes=15
-da_nproc=64
+da_nproc=96
 da_threads=16
 moab_walltime="00:40:00"
 moab_queue="batch"
 
 # experiment start/end dates
-date_start=2003-01-01
-date_end=2003-02-01
+date_start=2000-01-01
+date_end=2001-01-01
 
 
 # experiment properties
@@ -34,8 +34,8 @@ date_end=2003-02-01
 
 da_sst_use=1
 da_prof_use=1
-da_prof_legacy=1
-da_prof_dir=$root_dir/DATA/obs/profile_legacy
+da_prof_legacy=0
+da_prof_dir=$root_dir/DATA/obs/profile_wod
 
 # skips 3dvar code if =1, instead doing just the obsop
 da_skip=0        
