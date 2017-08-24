@@ -12,10 +12,18 @@ program bgvar
   real :: hz_loc(2) = (/200e3, 20e3/)
   real :: hz_loc_scale = 2.5
 
-  real :: t_varmin_do = 0.098
-  real :: t_varmin_surf_const = 0.3
-  real :: t_varmax = 1.5
-  real :: t_dz = 20
+  real :: t_varmin_len        = -1
+  real :: t_varmin_do         = -1
+  real :: t_varmin_surf_const = -1
+  real :: t_varmax            = -1
+  real :: t_dz                = -1
+
+  real :: s_varmin_len        = -1
+  real :: s_varmin_do         = -1
+  real :: s_varmin_surf_const = -1
+  real :: s_varmax            = -1
+  real :: s_dz                = -1
+
   integer :: gauss_iter = 2
 
   ! data fields read in
@@ -32,8 +40,8 @@ program bgvar
   real,    allocatable :: grid_ld(:,:)
   real,    allocatable :: bgvar_t(:,:,:)
   real,    allocatable :: bgvar_s(:,:,:)
-
   real,    allocatable :: t_varmin_surf(:,:)
+  real,    allocatable :: s_varmin_surf(:,:)
 
   !OpenMP functions
   INTEGER :: OMP_GET_NUM_THREADS, OMP_GET_THREAD_NUM
@@ -43,7 +51,7 @@ program bgvar
   integer :: nc, nc_x, nc_y, nc_z, nc_v
   integer :: x, y, z, z2, btm
   real :: r, r3
-  real, allocatable :: r1(:)
+  real, allocatable :: t_r1(:), s_r1(:)
   real, allocatable :: r2(:)
 
   ! constants
@@ -53,7 +61,8 @@ program bgvar
 
   namelist /g3dv_grid/ grid_nx, grid_ny, grid_nz
   namelist /g3dv_hzloc/ hz_loc, hz_loc_scale
-  namelist /bgvar_nml/  t_varmin_do, t_varmin_surf_const, t_varmax, t_dz, gauss_iter
+  namelist /bgvar_nml/  t_varmin_len, t_varmin_do, t_varmin_surf_const, t_varmax, t_dz, &
+       s_varmin_len, s_varmin_do, s_varmin_surf_const, s_varmax, s_dz, gauss_iter
 
 
   print *, "------------------------------------------------------------"
@@ -147,21 +156,28 @@ program bgvar
      end do
   end do
 
+
   ! calculate surface minium 
   !----------------------------------------
+  ! TODO, use a horizontally varying varsurf read in from a file, eventually
   allocate(t_varmin_surf(grid_nx, grid_ny)) 
-  t_varmin_surf = t_varmin_surf_const   ! TODO, use a horizontally varying varsurf
+  allocate(s_varmin_surf(grid_nx, grid_ny)) 
+  t_varmin_surf = t_varmin_surf_const
+  s_varmin_surf = s_varmin_surf_const
 
 
   ! calculate dt/dz
   !------------------------------
   print *, "calculating vertical profiles..."
-  allocate(r1(grid_nz))
+  allocate(t_r1(grid_nz))
+  allocate(s_r1(grid_nz))
   allocate(r2(grid_nz))
   allocate(bgvar_t(grid_nx, grid_ny, grid_nz))
+  allocate(bgvar_s(grid_nx, grid_ny, grid_nz))
 
   bgvar_t = 0.0
-!$OMP PARALLEL DO PRIVATE(x,btm,z,r,r1,r2,r3,z2) SCHEDULE(static, 1)
+  bgvar_s = 0.0
+!$OMP PARALLEL DO PRIVATE(x,btm,z,r,t_r1,s_r1,r2) SCHEDULE(static, 1)
   do y=1,grid_ny
      do x=1,grid_nx
         btm = grid_btm(x,y)
@@ -170,7 +186,8 @@ program bgvar
         ! calculate profile minimums
         ! r1 = minimum values
         do z=1,grid_nz
-           r1(z) = t_varmin_do + (t_varmin_surf(x,y) - t_varmin_do)*exp((grid_dpth(1) - grid_dpth(z))/ 500.0)
+           t_r1(z) = t_varmin_do + (t_varmin_surf(x,y) - t_varmin_do)*exp((grid_dpth(1) - grid_dpth(z))/ t_varmin_len)
+           s_r1(z) = s_varmin_do + (s_varmin_surf(x,y) - s_varmin_do)*exp((grid_dpth(1) - grid_dpth(z))/ s_varmin_len)
         end do
 
         ! calculate dT/Dz
@@ -182,40 +199,19 @@ program bgvar
         end do
         r2(btm) = (bg_t(x,y,btm)-bg_t(x,y,btm-1)) / (grid_dpth(btm)-grid_dpth(btm-1))
         
-        r2 = min(abs(r2)*t_dz, t_varmax)
 
         !combine calculated dt/dz with the calculated minimums
-        r1(1:btm) = max(min(r2(1:btm), t_varmax), r1(1:btm))
+        t_r1(1:btm) = max(min(abs(r2(1:btm))*t_dz,t_varmax), t_r1(1:btm))
+        s_r1(1:btm) = max(min(abs(r2(1:btm))*s_dz,s_varmax), s_r1(1:btm))
+        
+
+        ! vertical smoothing
+        call vtsmooth(t_r1(1:btm), bg_vtloc(x,y,:))
+        call vtsmooth(s_r1(1:btm), bg_vtloc(x,y,:))
 
 
-        ! perform vertical smoothing
-        r2 = 0.0
-        do z =1,btm
-           r3 = 0.0
-
-           
-           do z2 = z,1,-1
-              r = loc_gc(abs(grid_dpth(z)-grid_dpth(z2)), &
-                   (bg_vtloc(x,y,z)+bg_vtloc(x,y,z2))/2.0)
-              if(r == 0) exit
-              r2(z) = r2(z) + r1(z2)*r
-              r3 = r + r3              
-           end do
-
-           do z2 = z+1,btm
-              r = loc_gc(abs(grid_dpth(z)-grid_dpth(z2)), &
-                   (bg_vtloc(x,y,z)+bg_vtloc(x,y,z2))/2.0)
-!                   bg_vtloc(x,y,z))
-!                   sqrt(bg_vtloc(x,y,z)*bg_vtloc(x,y,z2)))
-              if(r==0) exit
-              r2(z) = r2(z) + r1(z2)*r
-              r3 = r + r3
-           end do
-
-           r2(z) = r2(z) / r3
-        end do
-
-        bgvar_t(x,y,:) = r2 
+        bgvar_t(x,y,1:btm) = t_r1(1:btm)
+        bgvar_s(x,y,1:btm) = s_r1(1:btm)
      end do
   end do
 !$OMP END PARALLEL DO
@@ -224,6 +220,7 @@ program bgvar
   ! perform hoziaontal smoothing
   print *, "gaussian smoother..."
   call hzsmooth_gauss(bgvar_t, grid_lat, grid_lon, grid_btm, grid_ld, gauss_iter)
+  call hzsmooth_gauss(bgvar_s, grid_lat, grid_lon, grid_btm, grid_ld, gauss_iter)
 
 
   ! write the output
@@ -249,6 +246,9 @@ program bgvar
   
   call check(nf90_inq_varid(nc, "bgvar_t", nc_v))
   call check(nf90_put_var(nc, nc_v, bgvar_t))
+
+  call check(nf90_inq_varid(nc, "bgvar_s", nc_v))
+  call check(nf90_put_var(nc, nc_v, bgvar_s))
 
   call check(nf90_inq_varid(nc, "x", nc_v))
   call check(nf90_put_var(nc, nc_v, grid_lon(:,1)))
@@ -318,6 +318,45 @@ contains
             hz_loc_scale*2.6/(2*omega*abs(sin(lat*pi/180.0))) ))
     end if
   end function bgcov_hzdist
+
+
+
+  subroutine vtsmooth(col, vtloc)
+    real, intent(inout) :: col(:)
+    real, intent(in)    :: vtloc(:)
+
+    real :: col2(size(col))
+    
+    integer :: z, z2, btm
+    real :: r, r3
+    
+    btm = size(col)
+    col2 = 0.0
+    
+    !r2 = 0.0
+    do z = 1,btm
+       r3 = 0.0
+       do z2 = z,1,-1
+          r = loc_gc(abs(grid_dpth(z)-grid_dpth(z2)), &
+               (vtloc(z)+vtloc(z2))/2.0)
+          if(r == 0) exit
+          col2(z) = col2(z) + col(z2)*r
+          r3 = r + r3              
+       end do
+       
+       do z2 = z+1,btm
+          r = loc_gc(abs(grid_dpth(z)-grid_dpth(z2)), &
+               (vtloc(z)+vtloc(z2))/2.0)
+          if(r==0) exit
+          col2(z) = col2(z) + col(z2)*r
+          r3 = r + r3
+       end do
+       
+       col2(z) = col2(z) / r3
+    end do    
+    col = col2
+  end subroutine vtsmooth
+
 
 
 end program bgvar

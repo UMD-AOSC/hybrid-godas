@@ -21,8 +21,14 @@ cat << EOF
 &obsprep_sst_nml
   obsfile="$obsfile_in"
   outfile="$obsfile_out"
-  min_wind=6
+  obid=2210
+  platid=1000
+
+  min_wind=5
   bias_adj=0.13
+
+  err_base = 1.0
+  err_superob=0.0
 /
 
 &obsop_nml

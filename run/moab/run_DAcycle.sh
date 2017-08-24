@@ -64,6 +64,9 @@ fi
 # run the forecast
 ts=$(date +%s)
 if [[ $(date +%s -d $last_date_fcst) -eq $(date +%s -d $date_cur) ]]; then
+    # clear out old background fields first
+    rm -f $exp_dir/bkg/*.nc
+
     fcst_start=$date_cur
     fcst_len=$da_interval
     fcst_dailymean=1
