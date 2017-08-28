@@ -20,7 +20,7 @@ flux_cfsr_dir="$root_dir/DATA/fluxes/cfsr_corr"
 moab_acct=cpo_hyb_go
 moab_nodes=15
 da_nproc=96
-da_threads=16
+da_threads=24
 moab_walltime="00:40:00"
 moab_queue="batch"
 
@@ -48,5 +48,10 @@ fcst_leapadj=1
 
 # leave as 1
 fcst_otherfiles=1
+
+# dont bother masking land for now, it just 
+# slows down the DA cycle (need to convert the program from 
+# python to fortran)
+fcst_maskland=0
 
 EOF

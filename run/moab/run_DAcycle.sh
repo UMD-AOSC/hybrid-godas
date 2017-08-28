@@ -72,7 +72,7 @@ if [[ $(date +%s -d $last_date_fcst) -eq $(date +%s -d $date_cur) ]]; then
     fcst_dailymean=1
     fcst_dailymean_dir=$exp_dir/bkg/
     fcst_otherfiles="${fcst_otherfiles:-0}"
-    fcst_otherfiles_dir="${fcst_otherfiles_dir:-$exp_dir/output/%Y/}"
+    fcst_otherfiles_dir="${fcst_otherfiles_dir:-$exp_dir/output/bkg_pent/%Y/}"
     (. $root_dir/run/subscripts/run_fcst.sh)
     if [ $? -gt 0 ]; then echo "ERROR running forecast."; exit 1; fi
 fi

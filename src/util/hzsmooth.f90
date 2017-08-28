@@ -16,7 +16,7 @@ contains
 
 
    
-  pure subroutine hzsmooth_gauss(data, grid_lat, grid_lon, grid_btm, grid_hzloc, gauss_iter)
+  subroutine hzsmooth_gauss(data, grid_lat, grid_lon, grid_btm, grid_hzloc, gauss_iter)
     real,    intent(inout) :: data(:,:,:)
     real,    intent(in)    :: grid_lat(:,:)
     real,    intent(in)    :: grid_lon(:,:)

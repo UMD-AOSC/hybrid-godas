@@ -142,7 +142,7 @@ timing_obprep=$(( $(date +%s) - $ts ))
 # run the forecast
 #------------------------------------------------------------
 ts=$(date +%s)
-aprun -n $PBS_NP MOM6
+aprun -n $PBS_NP ./MOM6
 echo "exit code $?"
 if [ $? -gt 0 ]; then
     echo "ERROR running forecast."

@@ -50,7 +50,7 @@ program update_restart
 
 
   ! open restart and analysis increment files
-  call check(nf90_open('output.nc', NF90_NOWRITE, nc_ai))
+  call check(nf90_open('ana_inc.nc', NF90_NOWRITE, nc_ai))
   call check(nf90_open('RESTART/MOM.res.nc', NF90_WRITE, nc_rst))
   allocate(d1(grid_nx, grid_ny, grid_nz))
   allocate(d2(grid_nx, grid_ny, grid_nz))

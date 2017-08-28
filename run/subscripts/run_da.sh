@@ -105,7 +105,7 @@ echo "============================================================"
 echo "Vertical Localization distance"
 echo ""
 ts=$(date +%s)
-OMP_NUM_THREADS=$da_threads aprun -cc depth -n 1 -d $da_threads time  vtloc
+OMP_NUM_THREADS=$da_threads aprun -cc depth -n 1 -d $da_threads time  ./vtloc
 timing_vtloc=$(( $(date +%s) - $ts ))
 
 
@@ -117,7 +117,7 @@ echo "============================================================"
 echo "background variance"
 echo ""
 ts=$(date +%s)
-OMP_NUM_THREADS=$da_threads aprun -cc depth -n 1 -d $da_threads time bgvar
+OMP_NUM_THREADS=$da_threads aprun -cc depth -n 1 -d $da_threads time ./bgvar
 timing_bgvar=$(( $(date +%s) - $ts ))
 
 
@@ -248,7 +248,7 @@ if [ $da_skip -eq 0 ]; then
     echo "============================================================"
     echo "Running 3DVar..."
     echo "============================================================"
-    aprun -n $da_nproc 3dvar
+    aprun -n $da_nproc ./3dvar
     timing_3dvar=$(( $(date +%s) - $ts ))
 
     # update the restart
@@ -263,10 +263,14 @@ if [ $da_skip -eq 0 ]; then
     ts=$(date +%s)
     # move da output
     echo "Moving AI file..."
-    d=$exp_dir/diag/ana_inc/$date_dir/${da_date_ana:0:4}
+    d=$exp_dir/output/ana_inc/$date_dir/${da_date_ana:0:4}
     mkdir -p $d
-    mv output.nc $d/${da_date_ana}.nc
+    mv ana_inc.nc $d/${da_date_ana}.nc
 
+    d=$exp_dir/diag/misc/$date_dir/${da_date_ana:0:4}
+    mkdir -p $d
+    mv ana_diag.nc $d/${da_date_ana}.nc
+    
     # vtloc file
     d=$exp_dir/diag/vtloc/$date_dir/${da_date_ana:0:4}
     mkdir -p $d
@@ -277,9 +281,14 @@ if [ $da_skip -eq 0 ]; then
     mkdir -p $d
     mv bgvar.nc $d/${da_date_ana}.nc
 
-    # delete background files
-#    echo "Deleting background..."
-#    rm $exp_dir/bkg/* 
+    # background files
+    d=$exp_dir/output/bkg_inst/$date_dir/${da_date_ana:0:4}
+    mkdir -p $d
+    mv $exp_dir/bkg/${da_date_ana}.nc $d/${da_date_ana}.nc
+
+    # delete background files    
+    echo "Deleting background..."
+    rm $exp_dir/bkg/* 
 
     timing_mvfiles=$(( $(date +%s) - $ts ))
 
@@ -295,7 +304,7 @@ fi
 echo ""
 echo "Creating observation space statistics..."
 date_dir=${da_date_ana:0:4}
-d=$exp_dir/diag/OmF/$date_dir
+d=$exp_dir/output/bkg_omf/$date_dir
 mkdir -p $d
 mv $work_dir/INPUT/obs.nc  $d/${da_date_ana}.nc
 mv $work_dir/obs.varqc.nc  $d/${da_date_ana}.varqc.nc
