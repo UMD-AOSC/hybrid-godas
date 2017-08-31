@@ -23,6 +23,7 @@ program update_restart
   real, allocatable :: grid_btm(:,:)
   real, allocatable :: d1(:,:,:)
   real, allocatable :: d2(:,:,:)
+  real, allocatable :: ice(:,:,:)
 
   ! initialize / read in grid
   call gsw_saar_init(.true.)
@@ -49,7 +50,19 @@ program update_restart
   end do
 
 
+  ! get the ice concentrations
+  ! (for now because we don't want to do any increments where there is ice)
+  print *, "Loading ice..."
+  call check(nf90_open('RESTART/ice_model.res.nc', NF90_NOWRITE, nc_rst))
+  allocate(ice(grid_nx,grid_ny,5))
+  call check(nf90_inq_varid(nc_rst, 'h_ice', v1))
+  call check(nf90_get_var(nc_rst, v1, ice))
+  call check(nf90_close(nc_rst))
+  ice(:,:,1) = sum(ice,dim=3) ! add up ice on all layers
+
+
   ! open restart and analysis increment files
+  print *, "Opening restart and ana_inc files..."
   call check(nf90_open('ana_inc.nc', NF90_NOWRITE, nc_ai))
   call check(nf90_open('RESTART/MOM.res.nc', NF90_WRITE, nc_rst))
   allocate(d1(grid_nx, grid_ny, grid_nz))
@@ -63,9 +76,11 @@ program update_restart
   call check(nf90_inq_varid(nc_rst, 'Temp', v2))
   call check(nf90_get_var(nc_ai, v1, d1))
   call check(nf90_get_var(nc_rst, v2, d2))
-  d2 = d2 + d1
   do y=1,grid_ny
      do x=1,grid_nx
+        if( ice(x,y,1) > 0) cycle ! don't do any increments if there is ice
+
+        d2(x,y,:) = d2(x,y,:) + d1(x,y,:)
         do z=1,grid_btm(x,y)
            if(d2(x,y,z) < temp_min) d2(x,y,z) = temp_min
            if(d2(x,y,z) > temp_max) d2(x,y,z) = temp_max
@@ -82,9 +97,12 @@ program update_restart
   call check(nf90_inq_varid(nc_rst, 'Salt', v2))
   call check(nf90_get_var(nc_ai, v1, d1))
   call check(nf90_get_var(nc_rst, v2, d2))
-  d2 = d2 + d1
+
   do y=1,grid_ny
      do x=1,grid_nx
+        if( ice(x,y,1) > 0) cycle ! don't do any increments if there is ice
+
+        d2(x,y,:) = d2(x,y,:) + d1(x,y,:)
         do z= 1,grid_btm(x,y)
            if(d2(x,y,z) < salt_min) d2(x,y,z) = salt_min
            if(d2(x,y,z) > salt_max) d2(x,y,z) = salt_max
