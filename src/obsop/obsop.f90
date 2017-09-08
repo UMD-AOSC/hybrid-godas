@@ -16,6 +16,7 @@ program obsop
   integer :: obid_pt = 2211
   integer :: obid_s  = 2220
   real :: time_offset = 0
+  real :: lat_bounds(2) = (/-65,90/)
   
   character(len=1024) :: nml_file
 
@@ -35,7 +36,7 @@ program obsop
 
 
   namelist /obsop_nml/ obsfile, outfile, statefile, obid_t, obid_pt, obid_s, &
-       time_offset
+       time_offset, lat_bounds
 
   
   print *, "------------------------------------------------------------"
@@ -97,6 +98,9 @@ program obsop
      ! set as a bad observation unless we make
      ! it to the end of this loop
      obs(i)%qc = 1
+
+     ! check lat bounds
+     if( obs(i)%lat < lat_bounds(1) .or. obs(i)%lat > lat_bounds(2) ) cycle
 
      ! get the closest ocean grid point
      call grid_ll2xy(obs(i)%lat, obs(i)%lon, x, y)

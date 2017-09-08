@@ -36,6 +36,7 @@ cat << EOF
   outfile="$obsfile_out"
   statefile="obsop_bkg.nc"
   time_offset=$obsop_hr
+  lat_bounds= -65, 90
 /
 
 &obsprep_insitu_legacy_nml
