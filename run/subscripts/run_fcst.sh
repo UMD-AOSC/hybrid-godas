@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+echo "Running on $(hostname)"
+
 # Hybrid-GODAS forecast run script
 
 timing_start=$(date +%s)
@@ -20,6 +22,7 @@ v="$v root_dir"   # Path to the top level directory for the hybrid-godas code.
 v="$v work_dir"   # A temporary working directory to use when running the forecast, the location
                   # needs to be accessible from all computational nodes.
 v="$v exp_dir"    # Top level directory of the experiment  
+v="$v flux_cfsr_dir" # Path to the daily cfsr fluxes
 
 # forecast time start /stop
 #------------------------------
@@ -35,7 +38,7 @@ v="$v fcst_dailymean_dir" # directory to save daily mean files to
 
 fcst_dailymean="${fcst_dailymean:-0}"
 fcst_dailymean_int=${fcst_dailymean_int:-1}
-if [[ "$fcst_dailymean" -eq 0 ]]; then fcst_dailymean_dir=""; fi
+if [[ "$fcst_dailymean" -eq 0 ]]; then fcst_dailymean_dir=" "; fi
 
 # saving of other model output (usually pentad data)
 #------------------------------
@@ -46,7 +49,7 @@ v="$v fcst_maskland"        # If 1, output undergoes an extra step to have a lan
 
 fcst_save_rstyr=${fcst_save_rstyr:-1}
 fcst_maskland=${fcst_maskland:-1}
-if [[ "$fcst_otherfiles" -eq 0 ]]; then fcst_otherfiles_dir=""; fi
+if [[ "$fcst_otherfiles" -eq 0 ]]; then fcst_otherfiles_dir=" "; fi
 
 
 envvars="$v"
@@ -179,7 +182,7 @@ if [ "$fcst_otherfiles" -gt 0 ]; then
     # mask the land on the files first
    if [ "$fcst_maskland" = 1 ]; then
 	echo "Masking land of output files..."
-	$root_dir/tools/mask_output.py $pfx.ocean_*.nc
+	aprun -n 1 $root_dir/tools/mask_output.py $work_dir/$pfx.ocean_*.nc --rootdir $root_dir
    fi
 
     # move the files

@@ -13,18 +13,18 @@ parser = argparse.ArgumentParser(description=(
   "Masks out the areas on land for the 3d fields of MOM6 output."))
 parser.add_argument('file', nargs='+', help=(
   "one or more files to modify in place"))
+parser.add_argument('--rootdir')
 args = parser.parse_args()
 
-
-rootdir = os.path.abspath(os.path.dirname(os.path.realpath(__file__))+'/../')
-
+if args.rootdir is None:
+    args.rootdir = os.path.abspath(os.path.dirname(os.path.realpath(__file__))+'/../')
 
 # read in the grid
-ncd = nc.Dataset(rootdir+'/DATA/grid/ocean_geometry.nc', 'r')
+ncd = nc.Dataset(args.rootdir+'/DATA/grid/ocean_geometry.nc', 'r')
 grid_D = ncd.variables['D'][:]
 ncd.close()
 
-ncd = nc.Dataset(rootdir+'/DATA/grid/Vertical_coordinate.nc', 'r')
+ncd = nc.Dataset(args.rootdir+'/DATA/grid/Vertical_coordinate.nc', 'r')
 grid_lvls = ncd.variables['Layer'][:]
 ncd.close()
 

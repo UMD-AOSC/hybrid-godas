@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+echo "running on $(hostname)"
 
 # Hybrid-GODAS data assimilation step scripts
 
@@ -219,7 +220,7 @@ do
     d=$work_dir/obsop_$fdate
     cd $d
     echo "  obsop for $fdate..."
-    aprun ../obsop > obsop.log &
+    aprun -n 1 ../obsop > obsop.log &
     fdate=$(date "+%Y%m%d" -d "$fdate - 1 day")    
 done
 echo "waiting for completion..."

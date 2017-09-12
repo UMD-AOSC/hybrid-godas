@@ -5,7 +5,9 @@ set -e
 envvars="flux_cfsr_dir "
 for v in ${envvars}; do
     if [ -z "${!v}" ]; then echo "ERROR: env var $v not set."; exit 1; fi
+    echo " $v = ${!v}"
 done
+echo ""
 
 # command line arguments
 date_start=$1  #in YYYYMMDD format
