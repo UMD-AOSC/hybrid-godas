@@ -188,7 +188,9 @@ contains
     real :: t
     real(kind=8) :: ct, p, sa
 
-    p = gsw_p_from_z(z*1d0, lat*1d0)
+    !NOTE: gsw takes HEIGHT not DEPTH (so negative depth)... 
+    ! a feature I didn't notice for months, which means all my temperatures were wrong... ugh
+    p = gsw_p_from_z(-z*1d0, lat*1d0)
     sa = gsw_sa_from_sp(sp*1d0, p, lon*1d0, lat*1d0) 
     ct = gsw_ct_from_pt(sa, pt*1d0)
     t = real(gsw_t_from_ct(sa, ct, p))
@@ -201,7 +203,9 @@ contains
     real, intent(in) :: t, sp, z, lat, lon
     real :: pt
     real(kind=8) :: sa, p
-    p = gsw_p_from_z(z*1d0, lat*1d0)
+
+    !NOTE: gsw takes HEIGHT not DEPTH (so negative depth)... 
+    p = gsw_p_from_z(-z*1d0, lat*1d0)
     sa = gsw_sa_from_sp(sp*1d0, p, lon*1d0, lat*1d0)
     pt = real(gsw_pt0_from_t(sa, t*1d0, p))
   end function t2pt
