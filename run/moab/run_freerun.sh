@@ -30,7 +30,7 @@ function submitJob()
     echo "  runtime: $moab_walltime"
     echo "  queue:   $moab_queue"    
     cd $exp_dir
-    msub $exp_dir/run_freerun.sh -N MOM6_GODAS_FREERUN -E -A $moab_acct -l partition=c3,nodes=$moab_nodes,walltime=$moab_walltime -q $moab_queue -j oe -o $exp_dir/logs/dacycle_$date_cur.log -d $exp_dir
+    msub $exp_dir/run_freerun.sh -N MOM6_GODAS_FREERUN -E -A $moab_acct -l partition=c4,nodes=$moab_nodes,walltime=$moab_walltime -q $moab_queue -j oe -o $exp_dir/logs/dacycle_$date_cur.log -d $exp_dir
 }
 if [ -z "${MOAB_JOBNAME}" ]; then
     submitJob
@@ -44,9 +44,9 @@ fi
 # run the forecast
 fcst_start=$date_cur
 fcst_dailymean="${fcst_dailymean:-1}"
-fcst_dailymean_dir="${fcst_dailymean_dir:-$exp_dir/output/%Y/}"
+fcst_dailymean_dir="${fcst_dailymean_dir:-$exp_dir/output/unprocessed/%Y%m%d}"
 fcst_otherfiles="${fcst_otherfiles:-0}"
-fcst_otherfiles_dir="${fcst_otherfiles_dir:-$exp_dir/output/%Y/}"
+fcst_otherfiles_dir="${fcst_otherfiles_dir:-$exp_dir/output/unprocessed/%Y%m%d}"
 fcst_leapadj="${fcst_leapadj:-1}"
 
 # determine if leap day is an issue, if so, add a day to the forecast run

@@ -96,8 +96,8 @@ cat <<EOF
 
 ## MLD
 #------------------------------------------------------------
-#"ocean_model", "mld_003",   "mld_003",    "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
-#"ocean_model", "mld_0125",  "mld_0125",   "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ocean_model", "mld_003",   "mld_003",    "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
+"ocean_model", "mld_0125",  "mld_0125",   "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
 "ocean_model", "epbl_h_ml", "epbl_h_ml",  "ocean_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
 
 ## Ice / snow

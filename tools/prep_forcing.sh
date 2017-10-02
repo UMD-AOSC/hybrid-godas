@@ -32,7 +32,7 @@ do
     while [ $(date -d "$date_cur" +%s) -le $(date -d "$date_end" +%s) ]
     do
 	date_next=$(date "+%Y%m%d" -d "$date_cur + 1 day")
-	file=$flux_cfsr_dir/$(date "+%Y/%Y%m%d/cfsr.%Y%m%d" -d "$date_cur").${arg}.nc
+	file=$flux_cfsr_dir/$(date "+%Y/%Y%m%d/*.%Y%m%d" -d "$date_cur").${arg}.nc
 	files="$files $file"
 	date_cur=$date_next
     done

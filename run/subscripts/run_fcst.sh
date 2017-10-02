@@ -179,28 +179,32 @@ fi
 if [ "$fcst_otherfiles" -gt 0 ]; then
     pfx=$(date "+%Y%m%d" -d "$fcst_start")
 
-    # mask the land on the files first
-   if [ "$fcst_maskland" = 1 ]; then
-	echo "Masking land of output files..."
-	aprun -n 1 $root_dir/tools/mask_output.py $work_dir/$pfx.ocean_*.nc --rootdir $root_dir
-   fi
+   #  # mask the land on the files first
+   # if [ "$fcst_maskland" = 1 ]; then
+   # 	echo "Masking land of output files..."
+   # 	aprun -n 1 $root_dir/tools/mask_output.py $work_dir/$pfx.ocean_*.nc --rootdir $root_dir
+   # fi
+    
+    # # move the files
+    # echo "Moving other output files..."
+    # cd $work_dir
+    # fdate=$(date "+%Y%m%d" -d "$fcst_end - 1 day")
+    # for f in $pfx.*.nc.*
+    # do
+    # 	ending=${f##*.}
+    # 	ofdate=$(echo "${f: -18:10}" | tr _ -)
+    # 	ofname="${f: 9:$((${#f}-28))}"
 
-    # move the files
-    echo "Moving other output files..."
-    cd $work_dir
-    fdate=$(date "+%Y%m%d" -d "$fcst_end - 1 day")
-    for f in $pfx.*.nc
-    do
-	echo "Moving $f"
-	ofdate=$(echo "${f: -13:10}" | tr _ -)
-	ofname="${f: 9:$((${#f}-23))}"
+    # 	out_dir=$(date -d $ofdate "+$fcst_otherfiles_dir")
+    # 	mkdir -p $out_dir
 
- 	out_dir=$(date -d $ofdate "+$fcst_otherfiles_dir")
- 	mkdir -p $out_dir
+    # 	dst_file=$out_dir/$ofname.$(date "+%Y%m%d" -d "$ofdate").nc.$ending
+    # 	mv $f $dst_file &
+    # done
 
- 	dst_file=$out_dir/$ofname.$(date "+%Y%m%d" -d "$ofdate").nc
- 	mv $f $dst_file
-    done
+    out_dir=$(date -d $fcst_start "+$fcst_otherfiles_dir")
+    mkdir -p $out_dir
+    mv $work_dir/$pfx.* $out_dir/
 fi
 
 # move the restart files

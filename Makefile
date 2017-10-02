@@ -1,4 +1,4 @@
-.PHONY: all fms mom gsw obsop 3dvar util model da
+.PHONY: all fms mom gsw obsop 3dvar util model da patch
 
 
 all: 
@@ -8,6 +8,8 @@ all:
 da: gsw obsop util 3dvar
 model: fms mom
 
+patch:
+	(cd src/MOM6/src/coupler; patch -p1 < ../../../MOM6.coupler.patch)
 
 fms:
 	rm -rf src/MOM6/build/intel/*
@@ -18,7 +20,6 @@ fms:
 
 mom:
 	mkdir -p src/MOM6/build/intel/ice_ocean_SIS2/repro/
-	(cd src/MOM6/src/coupler; patch -p1 < ../../../MOM6.coupler.patch)
 	(cd src/MOM6/build/intel/ice_ocean_SIS2/repro/; rm -f path_names; ../../../../src/mkmf/bin/list_paths ./ ../../../../src/MOM6/config_src/{dynamic,coupled_driver} ../../../../src/MOM6/src/{*,*/*}/ ../../../../src/{atmos_null,coupler,land_null,ice_ocean_extras,icebergs,SIS2,FMS/coupler,FMS/include}/)
 	(cd src/MOM6/build/intel/ice_ocean_SIS2/repro/; ../../../../src/mkmf/bin/mkmf -t ../../../../src/mkmf/templates/ncrc-intel.mk -o '-I../../shared/repro' -p MOM6 -l '-L../../shared/repro -lfms' -c '-Duse_libMPI -Duse_netCDF -DSPMD -Duse_AM3_physics -D_USE_LEGACY_LAND_' path_names )
 	(source config/env; cd src/MOM6/build/intel/ice_ocean_SIS2/repro/; make NETCDF=3 REPRO=1 MOM6 -j)	

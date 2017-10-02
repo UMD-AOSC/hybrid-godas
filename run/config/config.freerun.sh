@@ -13,13 +13,13 @@ cat << EOF
 # NOTE: the work_dir is a temporary space, and should be moved to a swept lustre location
 root_dir="$root_dir"
 work_dir="$root_dir/WRK/g3dv_$(echo $exp_dir | md5sum | cut -c 1-6)"
-flux_cfsr_dir="$root_dir/DATA/fluxes/cfsr_corr_rad"
+flux_cfsr_dir="$root_dir/DATA/fluxes/cfsr
 
 # Job submission system properties
 # NOTE: if number of nodes is changed, the MOM configuration file will need
 #  to be changed as well
 moab_acct=cpo_hyb_go
-moab_nodes=15
+moab_nodes=20
 moab_walltime="00:30:00"
 moab_queue="batch"
 
