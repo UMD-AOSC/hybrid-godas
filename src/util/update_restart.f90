@@ -4,12 +4,14 @@ program update_restart
 
   implicit none
 
-  ! variables (to be) read in from namelist
-!  integer :: rst_layout(2) = (/36,18/)
+  ! variables (to be eventually) read in from namelist
   integer :: rst_layout(2) = (/6,6/)
   integer :: ai_layout(2)  = (/1,1/)
   character(len=1024) :: rst_filename = "RESTART/MOM.res.nc"
   character(len=1024) :: ai_filename = "ana_inc.nc"
+  real :: salt_bounds(2) = (/0.0, 50.0/)
+  real :: temp_bounds(2) = (/-3.0, 50.0/)
+
 
   ! other vars
   integer :: nxyz(3)
@@ -140,6 +142,8 @@ program update_restart
         call check(nf90_get_var(ncid, vid, rst))
         call mpi_recv(xfer, size(xfer), mpi_real, 0, 1, mp_comm, status, ierr)
         rst = rst + xfer
+        where (rst < temp_bounds(1)) rst = temp_bounds(1)
+        where (rst > temp_bounds(2)) rst = temp_bounds(2)
         call check(nf90_put_var(ncid, vid, rst))
 
         ! apply salinity AI
@@ -147,6 +151,8 @@ program update_restart
         call check(nf90_get_var(ncid, vid, rst))                
         call mpi_recv(xfer, size(xfer), mpi_real, 0, 2, mp_comm, status, ierr)
         rst = rst + xfer
+        where (rst < salt_bounds(1)) rst = salt_bounds(1)
+        where (rst > salt_bounds(2)) rst = salt_bounds(2)
         call check(nf90_put_var(ncid, vid, rst))
 
         ! all done with this file
