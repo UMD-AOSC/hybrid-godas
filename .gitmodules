@@ -1,9 +1,12 @@
 [submodule "godas-3dvar"]
 	path = src/3dvar
-	url = git@github.com:UMD-AOSC/godas-3dvar.git
+	url = https://github.com/UMD-AOSC/godas-3dvar.git
 [submodule "MOM6"]
 	path = src/MOM6
 	url = https://github.com/NOAA-GFDL/MOM6-examples.git
 [submodule "src/gsw/GSW-Fortran"]
 	path = src/gsw/GSW-Fortran
 	url = https://github.com/TEOS-10/GSW-Fortran.git
+[submodule "src/datetime/datetime-fortran"]
+	path = src/datetime/datetime-fortran
+	url = https://github.com/wavebitscientific/datetime-fortran.git

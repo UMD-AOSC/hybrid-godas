@@ -2,6 +2,7 @@
 # MOM6-GODAS data assimilation cycle script
 set -e
 
+
 # setup environemnt
 if [ -z "${MOAB_SUBMITDIR}" ]; then
     exp_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -38,7 +39,7 @@ function submitJob()
     echo "  runtime: $moab_walltime"
     echo "  queue:   $moab_queue"    
     cd $exp_dir
-    msub $exp_dir/run_DAcycle.sh -N MOM6_GODAS_DACYCLE -E -A $moab_acct -l partition=c3,nodes=$moab_nodes,walltime=$moab_walltime -q $moab_queue -j oe -o $exp_dir/logs/dacycle_$date_cur.log -d $exp_dir
+    msub $exp_dir/run_DAcycle.sh -N MOM6_GODAS_DACYCLE -E -A $moab_acct -l partition=c4,nodes=$moab_nodes,walltime=$moab_walltime -q $moab_queue -j oe -o $exp_dir/logs/dacycle_$date_cur.log -d $exp_dir
 }
 if [[ -z "${MOAB_JOBNAME}" ]]; then
     submitJob
@@ -62,6 +63,7 @@ fi
 #------------------------------------------------------------
 
 # run the forecast
+#------------------------------------------------------------
 ts=$(date +%s)
 if [[ $(date +%s -d $last_date_fcst) -eq $(date +%s -d $date_cur) ]]; then
     # clear out old background fields first
@@ -69,17 +71,32 @@ if [[ $(date +%s -d $last_date_fcst) -eq $(date +%s -d $date_cur) ]]; then
 
     fcst_start=$date_cur
     fcst_len=$da_interval
-    fcst_dailymean=1
-    fcst_dailymean_dir=$exp_dir/bkg/
-    fcst_otherfiles="${fcst_otherfiles:-0}"
-    fcst_otherfiles_dir="${fcst_otherfiles_dir:-$exp_dir/output/bkg_pent/%Y/}"
+    fcst_diag_daily=1
+    fcst_diag_pentad=1
+    fcst_diag_dir=$exp_dir/bkg/
+    fcst_diag_combine=1
     (. $root_dir/run/subscripts/run_fcst.sh)
     if [ $? -gt 0 ]; then echo "ERROR running forecast."; exit 1; fi
+
+    # move the background files to the correct location
+    # TODO, this should really be in one of the subscripts instead
+    for f in bkg/*ocean_daily*.nc; do
+	f2=$(echo $f | cut -d. -f 2 | cut -d_ -f 3-5 --output-delimiter='').nc
+	mv $f bkg/$f2	
+    done
+    for f in bkg/*pentad*.nc; do
+	f2=$(echo $f | cut -d. -f 2 | cut -d_ -f 1-2)
+	d=$(date -d "$date_cur + 2 days" "+%Y%m%d")
+	mkdir -p output/bkg_pent/${d:0:4}
+	mv $f output/bkg_pent/${d:0:4}/$f2.$d.nc
+    done
+	
 fi
 timing_fcst=$(( $(date +%s) - $ts ))
 
 
 # run the DA step
+#------------------------------------------------------------
 ts=$(date +%s)
 t=$(($da_interval-1))
 da_date_ana=$(date "+%Y%m%d" -d "$date_cur + $t day")

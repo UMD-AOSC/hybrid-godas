@@ -20,7 +20,7 @@ EOF
 #------------------------------------------------------------
 # Files needed for data assimilation
 #------------------------------------------------------------
-if [ "$fcst_dailymean" = 1 ]; then
+if [ "$fcst_diag_daily" = 1 ]; then
 cat <<EOF
 
 "ocean_daily%4yr%2mo%2dy",     1,"days",1,"days","time",1,"days"
@@ -47,7 +47,7 @@ fi
 #------------------------------------------------------------
 #"ocean_pentad%4yr%2mo%2dy",    ${fcst_len}, "days", 1, "days", "time", ${fcst_len}, "days"
 
-if [ "$fcst_otherfiles" = 1 ]; then
+if [ "$fcst_diag_pentad" = 1 ]; then
 cat <<EOF
 
 "ocean_pentad%4yr%2mo%2dy",    ${fcst_len}, "days", 1, "days", "time", ${fcst_len}, "days"

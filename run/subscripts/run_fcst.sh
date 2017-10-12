@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-echo "Running on $(hostname)"
-
 # Hybrid-GODAS forecast run script
 
 timing_start=$(date +%s)
@@ -14,7 +12,8 @@ timing_start=$(date +%s)
 # by this script to make sure it is defined.
 v=""
 
-v="$v PBS_NP"   # number of processors
+v="$v PBS_NP"      # number of processors
+v="$v PBS_NUM_PPN" # number ofr cores per node
 
 # directory paths
 #------------------------------
@@ -31,25 +30,31 @@ v="$v fcst_len"   # Length of forecast in days.
 
 # saving of daily mean values (for data assimilation)
 #------------------------------
-v="$v fcst_dailymean"     # If 1, save the daily mean files required by the DA step, (Default: 0)
-v="$v fcst_dailymean_int" # interval of daily mean files to save. E.g. if 1, saves every day
+v="$v fcst_diag_combine" #
+v="$v fcst_diag_dir"
+v="$v fcst_diag_daily"
+v="$v fcst_diag_daily_int"
+v="$v fcst_diag_pentad"
+#v="$v fcst_dailymean_int" # interval of daily mean files to save. E.g. if 1, saves every day
                           # if 5, saves every 5th day counting back from and including the end date
-v="$v fcst_dailymean_dir" # directory to save daily mean files to
+#v="$v fcst_dailymean_dir" # directory to save daily mean files to
 
-fcst_dailymean="${fcst_dailymean:-0}"
-fcst_dailymean_int=${fcst_dailymean_int:-1}
-if [[ "$fcst_dailymean" -eq 0 ]]; then fcst_dailymean_dir=" "; fi
+fcst_diag_combine="${fcst_diag_combine:-0}"
+fcst_diag_daily="${fcst_diag_daily:-0}"
+fcst_diag_daily_int="${fcst_diag_daily_int:-1}"
+fcst_diag_pentad="${fcst_diag_pentad:-1}"
+#if [[ "$fcst_diag_daily" -eq 0 ]]; then fcst_dailymean_dir=" "; fi
 
 # saving of other model output (usually pentad data)
 #------------------------------
 v="$v fcst_save_rstyr"      # If 1, save restart files on Jan 1 of every year
-v="$v fcst_otherfiles"      # If save other output files from the model.
-v="$v fcst_otherfiles_dir"  # Directory to save other files to
+#v="$v fcst_otherfiles"      # If save other output files from the model.
+#v="$v fcst_otherfiles_dir"  # Directory to save other files to
 v="$v fcst_maskland"        # If 1, output undergoes an extra step to have a land mask applied
 
 fcst_save_rstyr=${fcst_save_rstyr:-1}
 fcst_maskland=${fcst_maskland:-1}
-if [[ "$fcst_otherfiles" -eq 0 ]]; then fcst_otherfiles_dir=" "; fi
+#if [[ "$fcst_otherfiles" -eq 0 ]]; then fcst_otherfiles_dir=" "; fi
 
 
 envvars="$v"
@@ -64,12 +69,16 @@ echo ""
 echo "============================================================"
 echo "   Running MOM6 forecast..."
 echo "============================================================"
+echo "Running on $(hostname)"
 
 ts=$(date +%s)
 
-# check required environment variables
+PBS_NUM_PPN_M1=$(($PBS_NUM_PPN-1))
+
+# check required environment variables, if any that dont have a default
+# are not defined, exit with an error
 for v in ${envvars}; do
-    if [ -z "${!v}" ]; then echo "ERROR: env var $v not set."; exit 1; fi
+    if [[ -z "${!v}" ]]; then echo "ERROR: env var $v not set."; exit 1; fi
     echo "  $v = ${!v}"
 done
 echo ""
@@ -80,8 +89,9 @@ echo ""
 
 
 # are we running a restart?
+# if not the model will initialize with climatological T/S at rest
 restart="r"
-if [ ! -d "$exp_dir/RESTART" ]; then
+if [[ ! -d "$exp_dir/RESTART" ]]; then
     echo "Initializing NEW experiment without restart on $fcst_start"
     restart="n"
 fi
@@ -101,6 +111,7 @@ cd $work_dir
 mkdir -p OUTPUT
 mkdir -p RESTART
 ln -s $root_dir/build/MOM6 .
+ln -s $root_dir/build/mppnccombine .
 
 # namelist files
 cp $exp_dir/config/mom/* .
@@ -112,110 +123,110 @@ mkdir -p INPUT
 ln -s $root_dir/run/config/mom_input/* INPUT/
 
 # restart files
-if [ "$restart" = 'r' ]; then
+if [[ "$restart" = 'r' ]]; then
     ln -s $exp_dir/RESTART/* INPUT/
-    # save a backup of restart files once a year
-    # check to see if the year of the previous run would have been
-    # different than the year of this run
-    if [ "$fcst_save_rstyr" -gt 0 ]; then
-	y1=$(date "+%Y" -d "$fcst_start")
-	y2=$(date "+%Y" -d "$fcst_start -$fcst_len day")
-	if [ "$y1" -ne "$y2" ]; then
-	    d=$(date "+%Y%m%d" -d "$fcst_start")
-	    echo "Saving backup of restart files to ./RESTART_SAVE/$d ..."
-	    mkdir -p $exp_dir/RESTART_SAVE
-	    cp -r $exp_dir/RESTART $exp_dir/RESTART_SAVE/$d
-	fi
-    fi
 fi
+
 timing_setup=$(( $(date +%s) - $ts ))
 
+
 # Prepare the forcing files
+#------------------------------------------------------------
 # forcing start needs to be 1 day earlier because forcing is
 # centered at 12Z, and fcst_start/fcst_end are at 0Z
 ts=$(date +%s)
+
 mkdir -p FORC
 cd FORC
 forc_start=$(date "+%Y-%m-%d" -d "$fcst_start - 1 day")
 forc_end=$fcst_end
 (. $root_dir/tools/prep_forcing.sh $forc_start $forc_end)
 cd ..
+
 timing_obprep=$(( $(date +%s) - $ts ))
+
 
 # run the forecast
 #------------------------------------------------------------
 ts=$(date +%s)
+
 aprun -n $PBS_NP ./MOM6
 echo "exit code $?"
-if [ $? -gt 0 ]; then
+if [[ $? -gt 0 ]]; then
     echo "ERROR running forecast."
     exit 1
 fi
+
 timing_fcst=$(( $(date +%s) - $ts ))
 
 
-ts=$(date +%s)
-# Move the output files needed for DA
+# Combine the output files
+# TODO: really shouldn't be done on the computational nodes
+# TODO: should also get the DA code to take in bkg files in patches
 #------------------------------------------------------------
-if [ "$fcst_dailymean" -gt 0 ]; then
-    echo "Moving daily mean files..."
-    fdate=$(date "+%Y%m%d" -d "$fcst_end - 1 day")
-    pfx=$work_dir/$(date "+%Y%m%d" -d "$fcst_start")
-    while [ $(date -d $fdate +%s) -ge $(date -d $fcst_start +%s) ]
-    do
-	out_dir=$(date -d $fdate "+$fcst_dailymean_dir")
-	mkdir -p $out_dir
-	
-	src_file=$pfx.ocean_daily_$(date "+%Y_%m_%d" -d "$fdate").nc
-	dst_file=$out_dir/$(date "+%Y%m%d" -d "$fdate").nc
-	mv $src_file $dst_file
-	
-	fdate=$(date "+%Y%m%d" -d "$fdate - $fcst_dailymean_int day")
-    done
-fi
+ts=$(date +%s)
 
-
-# move any other user defined files that might be there
-if [ "$fcst_otherfiles" -gt 0 ]; then
-    pfx=$(date "+%Y%m%d" -d "$fcst_start")
-
-   #  # mask the land on the files first
-   # if [ "$fcst_maskland" = 1 ]; then
-   # 	echo "Masking land of output files..."
-   # 	aprun -n 1 $root_dir/tools/mask_output.py $work_dir/$pfx.ocean_*.nc --rootdir $root_dir
-   # fi
+pfx=$(date "+%Y%m%d" -d "$fcst_start")
+if [[ "$fcst_diag_combine" -gt 0 ]]; then
+    echo "combining MOM output patches"
     
-    # # move the files
-    # echo "Moving other output files..."
-    # cd $work_dir
-    # fdate=$(date "+%Y%m%d" -d "$fcst_end - 1 day")
-    # for f in $pfx.*.nc.*
-    # do
-    # 	ending=${f##*.}
-    # 	ofdate=$(echo "${f: -18:10}" | tr _ -)
-    # 	ofname="${f: 9:$((${#f}-28))}"
-
-    # 	out_dir=$(date -d $ofdate "+$fcst_otherfiles_dir")
-    # 	mkdir -p $out_dir
-
-    # 	dst_file=$out_dir/$ofname.$(date "+%Y%m%d" -d "$ofdate").nc.$ending
-    # 	mv $f $dst_file &
-    # done
-
-    out_dir=$(date -d $fcst_start "+$fcst_otherfiles_dir")
-    mkdir -p $out_dir
-    mv $work_dir/$pfx.* $out_dir/
+    f=$(ls $pfx.*.nc.???? | rev | cut -d. -f 2- | uniq | rev)
+    for f2 in $f
+    do
+	echo $f2
+#	aprun -n 1 -cc depth -d $PBS_NUM_PPN_M1 ./mppnccombine -m $f2 $f2.???? &  
+	aprun -n 1 ./mppnccombine -m $f2 $f2.???? &  
+    done
+    wait
 fi
+
+timing_combine=$(( $(date +%s) - $ts ))
+
+
+# Move the output files
+#------------------------------------------------------------
+ts=$(date +%s)
+
+out_dir=$(date -d $fcst_start "+$fcst_diag_dir")
+mkdir -p $out_dir
+if [[ "$fcst_diag_combine" -gt 0 ]]; then
+    mv $work_dir/$pfx.*.nc $out_dir/
+else
+    mv $work_dir/$pfx.*.nc* $out_dir/
+fi
+
 
 # move the restart files
+#------------------------------------------------------------
 rm -rf $exp_dir/RESTART_old
-if [ -d $exp_dir/RESTART ]; then mv $exp_dir/RESTART $exp_dir/RESTART_old; fi
+if [[ -d $exp_dir/RESTART && "$fcst_save_rstyr" -gt 0 ]]; then 
+    # save a permanent backup of restart files once a year
+    # check to see if the year of the previous run would have been
+    # different than the year of this run
+    y1=$(date "+%Y" -d "$fcst_start")
+    y2=$(date "+%Y" -d "$fcst_start -$fcst_len day")
+    if [[ "$y1" -ne "$y2" ]]; then
+	d=$(date "+%Y%m%d" -d "$fcst_start")
+	echo "Saving backup of restart files to ./RESTART_SAVE/$d ..."
+	mkdir -p $exp_dir/RESTART_SAVE
+	mv $exp_dir/RESTART $exp_dir/RESTART_SAVE/$d
+    fi
+fi
+if [[ -d $exp_dir/RESTART ]]; then
+    # otherwise, move the old restart folder as a temporary backup
+    mv $exp_dir/RESTART $exp_dir/RESTART_old; 
+fi
+# move over the new restart
 mv $work_dir/RESTART $exp_dir/RESTART
+
+timing_mv=$(( $(date +%s) - $ts ))
+
+
+#------------------------------------------------------------
 
 
 # update the "last_date" file
 echo $fcst_end > $exp_dir/last_date_fcst
-timing_mv=$(( $(date +%s) - $ts ))
 
 
 # clean up working directory
@@ -230,5 +241,6 @@ echo "============================================================"
 echo " setup           : $timing_setup"
 echo " sbc prep        : $timing_obprep"
 echo " forecast        : $timing_fcst"
+echo " output combine  : $timing_combine"
 echo " output move     : $timing_mv"
 echo "           total : $timing_total"

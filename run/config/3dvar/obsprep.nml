@@ -1,6 +1,3 @@
-#!/bin/bash
-
-cat << EOF
 &grid_nml
   grid_file="INPUT/grid.nc"
   grid_lon_dim="lonq"
@@ -14,29 +11,30 @@ cat << EOF
 /
 
 &obsprep_insitu_nml
-  obsfile="$obsfile_in"
-  outfile="$obsfile_out"
+  obid_t=2210
+  obid_s=2220
+  se_t=1.0,2.0
+  se_s=0.05,0.2
+/
+
+&obsprep_combine_nml
+ collate=0
+ thinning=0
+ thinning_eq=10
 /
 
 &obsprep_sst_nml
-  obsfile="$obsfile_in"
-  outfile="$obsfile_out"
   obid=2210
   platid=1000
-
-  min_wind=5
-  bias_adj=0.13
-
-  err_base = 1.0
-  err_superob=0.0
+  bias_adj=0.0
+  err_base=0.2
+  err_sses=1.0
+  err_superob=1.0
 /
 
 &obsop_nml
-  obsfile="$obsfile_in"
-  outfile="$obsfile_out"
   statefile="obsop_bkg.nc"
-  time_offset=$obsop_hr
-  lat_bounds= -65, 90
+  lat_bounds= -90, 90
 /
 
 &obsprep_insitu_legacy_nml
@@ -46,6 +44,3 @@ cat << EOF
   densityvar="rhopot0"
   density_sigma=0.125
 /
-
-
-EOF

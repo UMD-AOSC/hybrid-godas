@@ -3,17 +3,20 @@ program obsprep_insitu
   use obscom_grid
   use cubic_spline
   use netcdf
+  use datetime_module
 
   implicit none
 
   !parameters read in from namelist
-  character(len=:), allocatable :: obsfile
-  character(len=:), allocatable :: outfile
   integer :: obid_t=2210
   integer :: obid_s=2220
   real   :: se_t(2) = (/1.0,2.0/)
   real   :: se_s(2) = (/0.05, 0.2/)
 
+  ! variables read in from the command line
+  character(len=1024) :: obsfile
+  character(len=1024) :: outfile
+   
   ! variables read in from obs file
   integer ::prf_num
   character(len=:), allocatable :: prf_type
@@ -32,6 +35,7 @@ program obsprep_insitu
   integer            :: obsout_num
 
   ! other misc variables
+  type(datetime) :: basedate
   integer :: unit, i, j, p, v, z, idx1, idx2, cnt, prflen
   type(obsio_nc) :: obsio
   character(len=1) :: var
@@ -40,8 +44,10 @@ program obsprep_insitu
   type(cspline) :: spline
   real :: err(1000)
   real :: se(2)
+  character(len=1024) :: tmp_str
+  integer :: yr,mn,dy
 
-  namelist /obsprep_insitu_nml/ obsfile, outfile
+  namelist /obsprep_insitu_nml/ obid_t, obid_s, se_t, se_s
 
   print *, "------------------------------------------------------------"
   print *, " insitu observation preparation "
@@ -49,13 +55,21 @@ program obsprep_insitu
 
   call grid_init("obsprep.nml")
 
+  ! read in commane line arguments
+  i = command_argument_count()
+  if (i /= 2) then
+     print *, 'ERROR: call with "obsprep_insitu <inputfile> <outputfile>" '
+     stop 1
+  end if
+  call get_command_argument(1, value=obsfile)
+  call get_command_argument(2, value=outfile)
+  print *, "In:  ", trim(obsfile)
+  print *, "Out: ", trim(outfile)
+  print *, ""
+  
   !read the namelist
-  allocate(character(len=1024) :: obsfile)
-  allocate(character(len=1024) :: outfile)
   open(newunit=unit, file="obsprep.nml")
   read(unit, obsprep_insitu_nml)
-  obsfile=trim(obsfile)
-  outfile=trim(outfile)
   close(unit)
   print *, ""
   print obsprep_insitu_nml
@@ -81,6 +95,12 @@ program obsprep_insitu
      print *,"READING ",trim(obsfile)//"."//var//".nc"
      call check(nf90_open(trim(obsfile)//"."//var//".nc", nf90_nowrite, ncid))
 
+     call check(nf90_get_att(ncid, nf90_global, "date", tmp_str))
+     read (tmp_str(1:4), *) yr
+     read (tmp_str(5:6), *) mn
+     read (tmp_str(7:8), *) dy
+     basedate=datetime(yr,mn,dy,0)
+     
      call check(nf90_inq_dimid(ncid, 'obs', nc_v))
      call check(nf90_inquire_dimension(ncid, nc_v, len=obs_num))     
      call check(nf90_inq_dimid(ncid, 'prfs', nc_v))
@@ -163,7 +183,7 @@ program obsprep_insitu
   end do
 
   print *, "Writing to output file...",trim(outfile)
-  call obsio%write(outfile,obsout(1:obsout_num))
+  call obsio%write(outfile,obsout(1:obsout_num), basedate)
 
 
 contains

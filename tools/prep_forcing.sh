@@ -25,8 +25,7 @@ echo "Preparing forcing files from $date_start to $date_end"
 file_types="PRATE PRES.sfc TMP.2m SPFH.2m UGRD.10m VGRD.10m DLWRF.sfc DSWRF.sfc"
 for arg in $file_types
 do
-    echo ""
-    echo $arg
+    echo "  $arg"
     files=""
     date_cur=$date_start
     while [ $(date -d "$date_cur" +%s) -le $(date -d "$date_end" +%s) ]

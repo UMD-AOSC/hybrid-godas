@@ -1,25 +1,29 @@
 program obsop
   ! TODO, horizontal interpolation
+  ! TODO, make sure the datetimes given are in range of the model state given
   use obscom_obsio
   use obscom_grid
   use netcdf
   use gsw_mod_toolbox
   use cubic_spline
-  
+  use datetime_module
+
   implicit none
 
   ! read in from namelist
-  character(len=:), allocatable :: obsfile
-  character(len=:), allocatable :: outfile
   character(len=:), allocatable :: statefile
   integer :: obid_t  = 2210
   integer :: obid_pt = 2211
   integer :: obid_s  = 2220
-  real :: time_offset = 0
-  real :: lat_bounds(2) = (/-65,90/)
+  real :: lat_bounds(2) = (/-90,90/)
+
+  ! read in from command line
+  character(len=1024) :: obsfile
+  character(len=1024) :: outfile
   
   character(len=1024) :: nml_file
 
+  type(datetime) :: basedate
   type(observation), allocatable :: obs(:)
   real, allocatable :: obs_inc(:)
   type(obsio_nc) :: obsio
@@ -35,8 +39,7 @@ program obsop
   integer :: ncid, vid
 
 
-  namelist /obsop_nml/ obsfile, outfile, statefile, obid_t, obid_pt, obid_s, &
-       time_offset, lat_bounds
+  namelist /obsop_nml/ statefile, obid_t, obid_pt, obid_s, lat_bounds
 
   
   print *, "------------------------------------------------------------"
@@ -45,22 +48,31 @@ program obsop
   print *, "------------------------------------------------------------"
   
   
-  nml_file = "obsop.nml"
-  call grid_init(nml_file)
+  nml_file = "obsprep.nml"
+  
+  ! read command line arguments
+  i = command_argument_count()
+  if (i/=2) then
+     print *, 'ERROR: command line arguments'
+     stop 1
+  end if
+  call get_command_argument(1, value=obsfile)
+  call get_command_argument(2, value=outfile)
+  print *, "In:  ", trim(obsfile)
+  print *, "Out: ", trim(outfile)
 
   ! read the namelist
-  allocate(character(len=1024) :: obsfile)
-  allocate(character(len=1024) :: outfile)
   allocate(character(len=1024) :: statefile)
   open(newunit=unit, file=nml_file)
   read(unit, obsop_nml)
   close(unit)
-  obsfile=trim(obsfile)
-  outfile=trim(outfile)
   statefile=trim(statefile)
   print *, ""
   print obsop_nml
   print *, ""
+
+  ! read in the grid
+  call grid_init(nml_file)
 
   ! read in the model state
   call check(nf90_open(statefile, nf90_nowrite, ncid))
@@ -85,7 +97,7 @@ program obsop
   call gsw_saar_init(.true.)
 
   ! read in the observations
-  call obsio%read(obsfile, obs)
+  call obsio%read(obsfile, obs, basedate)
   print *, size(obs),"observations read in"
   allocate(obs_inc(size(obs)))
 
@@ -169,12 +181,11 @@ program obsop
      obs_inc(i) = obs(i)%val - v
 
      ! observation has passed this QC
-     obs(i)%hr = time_offset
      obs(i)%qc = 0
   end do
 
   !done, write out observation
-  call obsio%write(outfile, obs, obs_inc)
+  call obsio%write(outfile, obs, basedate, obs_inc)
 
 
   

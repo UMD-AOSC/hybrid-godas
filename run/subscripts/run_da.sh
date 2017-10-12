@@ -1,12 +1,12 @@
 #!/bin/bash
 set -e
+shopt -s nullglob
 
 echo "running on $(hostname)"
 
 # Hybrid-GODAS data assimilation step scripts
 
 timing_start=$(date +%s)
-
 
 #================================================================================
 #================================================================================
@@ -15,10 +15,11 @@ timing_start=$(date +%s)
 # to make sure it has been defined
 v=""
 
-v="$V PBS_NP"     # number of processors given by job scheduler
-v="$v da_nproc"   # number of processors we actually want to use
-v="$v da_threads" # number of thread to use for the non-mpi openmp jobs
-v="$v da_skip"    # If = 1, skip the 3DVar code (but still do obsop for O-F stats)
+v="$V PBS_NP"      # number of processors given by job scheduler
+v="$v PBS_NUM_PPN" # number of cores per node
+v="$v da_nproc"    # number of processors we actually want to use
+v="$v da_threads"  # number of thread to use for the non-mpi openmp jobs
+v="$v da_skip"     # If = 1, skip the 3DVar code (but still do obsop for O-F stats)
 
 # directory paths
 #------------------------------
@@ -37,26 +38,16 @@ v="$v da_date_ob_end"    # The end date of observation window
 
 # Observation types
 #------------------------------
-# da_sst_use:     If = 1, use SST observations
-da_sst_use=${da_sst_use:-1}
-v="$v da_sst_use"   
+v="$v da_sst_use"     # If = 1, use SST observations
+v="$v da_sst_dir"     # Directory to AVHRR SST observation
 
-# da_sst_dir:     Directory to AVHRR SST observation
-da_sst_dir=${da_sst_dir:-$root_dir/DATA/obs/sst_pathfinder}
-v="$v da_sst_dir"   
+v="$v da_prof_use"    # If = 1, use profile observations
+v="$v da_prof_dir"    # Directory to T/S profile observations
+v="$v da_prof_legacy" # If = 1 , use "dave's obs" from legacy GODAS
 
-# da_prof_use:    If = 1, use profile observations
-da_prof_use=${da_prof_use:-1}
-v="$v da_prof_use"  
-
-# da_prof_dir:    Directory to T/S profile observations
-da_prof_dir=${da_prof_dir:-$root_dir/DATA/obs/profile}
-v="$v da_prof_dir"  
-
-# da_prof_legacy: If = 1 , use "dave's obs" from legacy GODAS
 da_prof_legacy=${da_prof_legacy:-0}
-v="$v da_prof_legacy"
 
+#------------------------------
 
 envvars="$v"
 
@@ -106,7 +97,7 @@ echo "============================================================"
 echo "Vertical Localization distance"
 echo ""
 ts=$(date +%s)
-OMP_NUM_THREADS=$da_threads aprun -cc depth -n 1 -d $da_threads time  ./vtloc
+OMP_NUM_THREADS=$PBS_NUM_PPN aprun -cc depth -n 1 -d $PBS_NUM_PPN time  ./vtloc
 timing_vtloc=$(( $(date +%s) - $ts ))
 
 
@@ -118,7 +109,7 @@ echo "============================================================"
 echo "background variance"
 echo ""
 ts=$(date +%s)
-OMP_NUM_THREADS=$da_threads aprun -cc depth -n 1 -d $da_threads time ./bgvar
+OMP_NUM_THREADS=$PBS_NUM_PPN aprun -cc depth -n 1 -d $PBS_NUM_PPN time ./bgvar
 timing_bgvar=$(( $(date +%s) - $ts ))
 
 
@@ -136,9 +127,7 @@ echo "Preparing Observations (SST/insitu)"
 
 #run the obs prep programs
 #------------------------------------------------------------
-# TODO: move everythin to work on /dev/shm for speed improvement ?
 ts=$(date +%s)
-toffset=0
 fdate=$da_date_ob_end
 while [ $(date -d $fdate +%s) -ge $(date -d $da_date_ob_start +%s) ]
 do
@@ -146,55 +135,43 @@ do
     d=$work_dir/obsop_$fdate
     mkdir -p $d
     cd $d
-    export obsop_hr=$toffset
     export fdate
 
     # link required files    
     ln -s ../INPUT .
     ln -sf $exp_dir/bkg/$fdate.nc obsop_bkg.nc
     ln -s $root_dir/build/gsw_data_v3_0.nc .
+    ln -s ../obsprep.nml .
 
     # conventional obs
-    obfile=$da_prof_dir/$(date "+%Y/%Y%m%d" -d $fdate)    
-    if [[ "$da_prof_legacy" -eq 1 ]]; then
-	# are use using the legacy GODAS profiles, or 
-	# new ones (not yet implemented
-	obsprep_exec=obsprep_insitu_legacy
-    else
-	obsprep_exec=obsprep_insitu
-    fi
-
-    if [[ ("$da_prof_use" -eq 1) ]]; then #&& (-f  $obfile) ]]; then
-	echo "  obsprep_insitu $fdate"
-    	export obsfile_in=$obfile
-    	export obsfile_out=obprep.insitu.nc
-    	source ../obsop.nml.sh > obsprep.nml
-#    	source ../obsop.nml.sh > obsprep_insitu.nml	
-	aprun -n 1 ../$obsprep_exec > obsprep_insitu.log &
+    obfile=$da_prof_dir/$(date "+%Y/%Y%m%d" -d $fdate)
+    if [[ ("$da_prof_use" -eq 1) && (-f $obfile.T.nc || -f $obfile.S.nc) ]]; then
+	if [[ "$da_prof_legacy" -eq 1 ]]; then
+	    # are we using the legacy GODAS profiles, or new ones
+	    obsprep_exec=obsprep_insitu_legacy
+	else
+	    obsprep_exec=obsprep_insitu
+	fi
+	echo "  obsprep_insitu $fdate"	
+	aprun -n 1 time ../$obsprep_exec $obfile obsprep.insitu.nc > obsprep_insitu.log &
     fi    
 
     # SST obs
     obfile=$da_sst_dir/$(date "+%Y/%Y%m/%Y%m%d" -d $fdate).nc    
     if [[ ("$da_sst_use" -eq 1) &&  (-f $obfile) ]]; then
 	echo "  obsprep_sst    $fdate"
-    	export obsfile_in=$obfile
-    	export obsfile_out=obprep.sst.nc
-    	source ../obsop.nml.sh > obsprep_sst.nml
-    	aprun -n 1 ../obsprep_sst > obsprep_sst.log &
+#    	aprun -n 1 ../obsprep_sst > obsprep_sst.log &
+	ln -s $obfile obsprep.sst.nc
     fi
 
-    # obsop file (used in later step)
-    export obsfile_in=obprep.nc
-    export obsfile_out=obsop.nc
-    source ../obsop.nml.sh > obsop.nml
-
     fdate=$(date "+%Y%m%d" -d "$fdate - 1 day")    
-    toffset=$(($toffset -24))
 done
 echo "Waiting for completetion..."
 wait
+
 cd $work_dir
-cat obsop_????????/obsprep*.log
+for f in obsop_????????/obsprep*.log; do cat $f; done 
+
 timing_obsprep=$(( $(date +%s) - $ts ))
 
 
@@ -208,19 +185,21 @@ fdate=$da_date_ob_end
 while [ $(date -d $fdate +%s) -ge $(date -d $da_date_ob_start +%s) ]
 do
     d=$work_dir/obsop_$fdate
+    d2=$(date -d "$fdate" "+%Y,%m,%d,0,0,0")
     cd $d
     echo "  concatenating $fdate..."
-    ncrcat --no_tmp_fl obprep.*.nc obprep.nc &
+    aprun -n 1 time ../obsprep_combine -basedate $d2  obsprep.*.nc obsprep.nc > obsprep_combine.log &
     fdate=$(date "+%Y%m%d" -d "$fdate - 1 day")    
 done
 wait
+
 fdate=$da_date_ob_end
 while [ $(date -d $fdate +%s) -ge $(date -d $da_date_ob_start +%s) ]
 do
     d=$work_dir/obsop_$fdate
     cd $d
     echo "  obsop for $fdate..."
-    aprun -n 1 ../obsop > obsop.log &
+    aprun -n 1 time ../obsop obsprep.nc obsop.nc > obsop.log &
     fdate=$(date "+%Y%m%d" -d "$fdate - 1 day")    
 done
 echo "waiting for completion..."
@@ -236,7 +215,8 @@ cd $work_dir
 echo ""
 echo "============================================================"
 echo "Combining all obs into single file..."
-ncrcat --no_tmp_fl obsop_????????/obsop.nc INPUT/obs.nc
+d2=$(date -d "$da_date_ana" "+%Y,%m,%d,12,0,0")
+aprun -n 1 time ./obsprep_combine -basedate $d2 obsop_????????/obsop.nc INPUT/obs.nc
 timing_obscmb=$(( $(date +%s) - $ts ))
 
 
@@ -249,57 +229,56 @@ if [ $da_skip -eq 0 ]; then
     echo "============================================================"
     echo "Running 3DVar..."
     echo "============================================================"
-    aprun -n $da_nproc ./3dvar
+    aprun -n $da_nproc time ./3dvar
     timing_3dvar=$(( $(date +%s) - $ts ))
 
-    # update the restart
-    ts=$(date +%s)
-    echo ""
-    echo "Updating the restart files..."
-#    time $root_dir/tools/update_restart.py output.nc $exp_dir/RESTART
-    ln -s $exp_dir/RESTART .
-    aprun -n 1 ./update_restart
-    timing_restart=$(( $(date +%s) - $ts ))
+     # update the restart
+     ts=$(date +%s)
+     echo ""
+     echo "Updating the restart files..."
+     ln -s $exp_dir/RESTART .
+     aprun -n $PBS_NUM_PPN ./update_restart
+     timing_restart=$(( $(date +%s) - $ts ))
 
-    ts=$(date +%s)
-    # move da output
-    echo "Moving AI file..."
-    d=$exp_dir/output/ana_inc/$date_dir/${da_date_ana:0:4}
-    mkdir -p $d
-    mv ana_inc.nc $d/${da_date_ana}.nc
+     ts=$(date +%s)
+     # move da output
+     echo "Moving AI file..."
+     d=$exp_dir/output/ana_inc/$date_dir/${da_date_ana:0:4}
+     mkdir -p $d
+     mv ana_inc.nc $d/${da_date_ana}.nc
 
-    d=$exp_dir/diag/misc/$date_dir/${da_date_ana:0:4}
-    mkdir -p $d
-    mv ana_diag.nc $d/${da_date_ana}.nc
+     d=$exp_dir/diag/misc/$date_dir/${da_date_ana:0:4}
+     mkdir -p $d
+     mv ana_diag.nc $d/${da_date_ana}.nc
     
-    # vtloc file
-    d=$exp_dir/diag/vtloc/$date_dir/${da_date_ana:0:4}
-    mkdir -p $d
-    mv vtloc.nc $d/${da_date_ana}.nc
+     # vtloc file
+     d=$exp_dir/diag/vtloc/$date_dir/${da_date_ana:0:4}
+     mkdir -p $d
+     mv vtloc.nc $d/${da_date_ana}.nc
 
-    #bgvar file
-    d=$exp_dir/diag/bgvar/$date_dir/${da_date_ana:0:4}
-    mkdir -p $d
-    mv bgvar.nc $d/${da_date_ana}.nc
+     #bgvar file
+     d=$exp_dir/diag/bgvar/$date_dir/${da_date_ana:0:4}
+     mkdir -p $d
+     mv bgvar.nc $d/${da_date_ana}.nc
 
-    # background files
-    d=$exp_dir/output/bkg_inst/$date_dir/${da_date_ana:0:4}
-    mkdir -p $d
-    mv $exp_dir/bkg/${da_date_ana}.nc $d/${da_date_ana}.nc
+     # # background files
+     # d=$exp_dir/output/bkg_inst/$date_dir/${da_date_ana:0:4}
+     # mkdir -p $d
+     # mv $exp_dir/bkg/${da_date_ana}.nc $d/${da_date_ana}.nc
 
-    # delete background files    
-    echo "Deleting background..."
-    rm $exp_dir/bkg/* 
+#     # # delete background files    
+#     # echo "Deleting background..."
+#     # rm $exp_dir/bkg/* 
 
-    timing_mvfiles=$(( $(date +%s) - $ts ))
-
+     timing_mvfiles=$(( $(date +%s) - $ts ))
 fi
 
 
 
-#------------------------------------------------------------
-# post processing
-#------------------------------------------------------------
+
+# #------------------------------------------------------------
+# # post processing
+# #------------------------------------------------------------
 
 # O-B
 echo ""

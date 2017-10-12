@@ -1,5 +1,6 @@
 module obscom_obsio
   use netcdf
+  use datetime_module
 
   implicit none
   private
@@ -68,16 +69,19 @@ contains
 
   
   !============================================================
-  subroutine obs_write_nc(self, file, obs, inc)
+  subroutine obs_write_nc(self, file, obs, basedate, inc)
     class(obsio_nc) :: self
     character(len=*),  intent(in) :: file
     type(observation), intent(in) :: obs(:)
+    type(datetime),    intent(in) :: basedate
     real, optional,    intent(in) :: inc(:)
     
     integer :: nobs, n
     integer :: ncid, dimid, varid
     integer,  allocatable :: tmp_i(:)
     real(4), allocatable :: tmp_r(:)
+
+    type(timedelta) :: td
 
 
     nobs = size(obs)
@@ -86,6 +90,11 @@ contains
 
     ! create file definition
     call check( nf90_create(file, nf90_clobber, ncid))
+
+    call check( nf90_def_dim(ncid, "time", 1, dimid))
+    call check( nf90_def_var(ncid, "time", nf90_int, dimid, varid))
+    call check( nf90_put_att(ncid, varid, "long_name", "reference time of observation file"))
+    call check( nf90_put_att(ncid, varid, "units", "seconds since 1970-01-01 00:00:00"))
 
     call check( nf90_def_dim(ncid, "obs",  nf90_unlimited, dimid))
     call check( nf90_def_var(ncid, "obid",  nf90_short,  dimid, varid))
@@ -107,8 +116,9 @@ contains
     call check( nf90_put_att(ncid, varid, "long_name", "depth/height"))
     
     call check( nf90_def_var(ncid, "hr",  nf90_real, dimid, varid))
+    call check( nf90_put_att(ncid, varid, "long_name", "time difference from reference time"))
     call check( nf90_put_att(ncid, varid, "units", "hours"))
-    
+
     call check( nf90_def_var(ncid, "val",   nf90_real, dimid, varid))
     call check( nf90_put_att(ncid, varid, "long_name", "observation value"))
 
@@ -121,9 +131,14 @@ contains
     call check( nf90_put_att(ncid, varid, "long_name", "observation error"))
 
     call check( nf90_def_var(ncid, "qc",    nf90_byte,  dimid, varid))
-    call check( nf90_put_att(ncid, varid, "long_name", "quality control, 0=good, >0 is bas"))
+    call check( nf90_put_att(ncid, varid, "long_name", "quality control, 0=good, >0 is bad"))
 
     call check( nf90_enddef(ncid))
+
+    !============================================================
+    call check( nf90_inq_varid(ncid, "time", varid))
+    td = basedate-datetime(1970,1,1,0)
+    call check( nf90_put_var(ncid, varid, td%total_seconds()))
 
     ! write observations
     do n=1, nobs
@@ -197,12 +212,14 @@ contains
 
 
   !============================================================
-  subroutine obs_read_nc(self, file, obs)
+  subroutine obs_read_nc(self, file, obs, basedate, inc)
     class(obsio_nc) :: self
-    character(len=*), intent(in) :: file
+    character(len=*),  intent(in) :: file
     type(observation), allocatable, intent(out) :: obs(:)
+    type(datetime),    intent(out) :: basedate
+    real, optional,allocatable,    intent(out) :: inc(:)
 
-     integer :: nobs, n
+     integer :: nobs, n , stat
      integer :: ncid, dimid, varid
      integer, allocatable :: tmp_i(:)
      real(4), allocatable :: tmp_r(:)
@@ -219,6 +236,10 @@ contains
      allocate(obs(nobs))
 
      ! read in the variables
+     call check( nf90_inq_varid(ncid, "time", varid))
+     call check( nf90_get_var(ncid, varid, n))
+     basedate=datetime(1970,1,1,0)+timedelta(seconds=n)
+
      call check( nf90_inq_varid(ncid, "obid", varid))
      call check( nf90_get_var(ncid, varid, tmp_i))
      do n=1,nobs
@@ -260,6 +281,14 @@ contains
      do n=1,nobs
         obs(n)%val = tmp_r(n)
      end do
+
+     if (present(inc)) then
+        stat = nf90_inq_varid(ncid, "inc", varid)
+        if(stat == nf90_noerr) then
+           allocate(inc(nobs))
+           call check(nf90_get_var(ncid, varid, inc))
+        end if
+     end if
 
      call check( nf90_inq_varid(ncid, "err", varid))
      call check( nf90_get_var(ncid, varid, tmp_r))

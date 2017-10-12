@@ -1,11 +1,13 @@
-.PHONY: all fms mom gsw obsop 3dvar util model da patch
+.PHONY: all model fms mom da gsw obsop 3dvar util patch datetime
 
+# TODO, there has to be a better way of doing the MOM6 patches
 
 all: 
-	@echo "select individual component to build. (fms, mom, gsw, obsop, 3dvar, util)"
+	@echo "select individual component to build. (fms, mom, gsw, obsop, 3dvar, util, datetime)"
 	@echo "or the entire mom or da system (model da)"
+	@echo "or the mom6 patchfile (patch)"
 
-da: gsw obsop util 3dvar
+da: gsw datetime obsop util 3dvar
 model: fms mom
 
 patch:
@@ -27,10 +29,13 @@ mom:
 gsw:
 	cd src/gsw; make
 
-obsop:
+datetime:
+	cd src/datetime; make
+
+obsop: gsw datetime
 	cd src/obsop; make
 
-util:
+util: 
 	cd src/util; make
 
 3dvar:

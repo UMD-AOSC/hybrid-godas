@@ -96,7 +96,7 @@ contains
     
 
     ! read namelist file
-    print *, trim(nml_file)
+!    print *, trim(nml_file)
     allocate(character(len=1024) :: grid_file)
     allocate(character(len=1024) :: grid_lon_dim)
     allocate(character(len=1024) :: grid_lat_dim)

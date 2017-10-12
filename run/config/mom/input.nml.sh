@@ -47,6 +47,9 @@ cat <<EOF
             concurrent = .false.     
             use_lag_fluxes=.false.    
             check_stocks = 0
+            do_endpoint_chksum=.false.
+! restart_interval=0,0,0,0,0,0
+
 /
 
  &diag_manager_nml

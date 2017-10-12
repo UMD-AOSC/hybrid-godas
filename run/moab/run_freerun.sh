@@ -43,10 +43,10 @@ fi
 
 # run the forecast
 fcst_start=$date_cur
-fcst_dailymean="${fcst_dailymean:-1}"
-fcst_dailymean_dir="${fcst_dailymean_dir:-$exp_dir/output/unprocessed/%Y%m%d}"
-fcst_otherfiles="${fcst_otherfiles:-0}"
-fcst_otherfiles_dir="${fcst_otherfiles_dir:-$exp_dir/output/unprocessed/%Y%m%d}"
+fcst_diag_daily="${fcst_diag_daily:-0}"
+fcst_diag_dir="${fcst_diag_dir:-$exp_dir/output/unprocessed/%Y%m%d}"
+#fcst_otherfiles="${fcst_otherfiles:-0}"
+#fcst_otherfiles_dir="${fcst_otherfiles_dir:-$exp_dir/output/unprocessed/%Y%m%d}"
 fcst_leapadj="${fcst_leapadj:-1}"
 
 # determine if leap day is an issue, if so, add a day to the forecast run

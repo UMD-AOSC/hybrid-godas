@@ -18,21 +18,22 @@ flux_cfsr_dir="$root_dir/DATA/fluxes/cfsr_corr_rad"
 # NOTE: if then umber of nodes is changed, the MOM configuration file will need
 #  to be changed as well
 moab_acct=cpo_hyb_go
-moab_nodes=15
+moab_nodes=20
 da_nproc=144
-da_threads=24
-moab_walltime="00:40:00"
+da_threads=35
+moab_walltime="00:20:00"
 moab_queue="batch"
 
 # experiment start/end dates
-date_start=2000-01-01
-date_end=2001-01-01
+date_start=2003-01-01
+date_end=2003-01-01
 
 
 # experiment properties
 # ------------------------------------------------------------
 
 da_sst_use=1
+da_sst_dir=$root_dir/DATA/obs/sst_acspo_avhrr/thinned
 da_prof_use=1
 da_prof_legacy=0
 da_prof_dir=$root_dir/DATA/obs/profile_wod
@@ -41,13 +42,10 @@ da_prof_dir=$root_dir/DATA/obs/profile_wod
 da_skip=0        
 
 # da cycle, in days
-da_interval=5    
+da_interval=5 
 
 # if 1 a "pentad" is 6 days if there is a leap day
 fcst_leapadj=1   
-
-# leave as 1
-fcst_otherfiles=1
 
 # dont bother masking land for now, it just 
 # slows down the DA cycle (need to convert the program from 

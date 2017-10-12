@@ -52,7 +52,7 @@ set_target_properties(${EXE} PROPERTIES
 # update_restart
 set(EXE update_restart)
 add_executable(${EXE} update_restart.f90)
-target_link_libraries(${EXE} util_common $ENV{NETCDF_LIBS} ${GSWLIB})
+target_link_libraries(${EXE} util_common $ENV{NETCDF_LIBS})
 
 set(EXE mppnccombine)
 add_executable(${EXE} mppnccombine.c)
