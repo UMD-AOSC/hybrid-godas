@@ -41,6 +41,8 @@ for s in args.sat:
         ftp.cwd(args.ftpdir+'/{}/{}/{}'.format(s,args.lvl,y))
         days = ftp.nlst()
         satDates[s]+=[y+d for d in days]
+ftp.quit()
+
 
 # for each date we want to download
 cdate = args.start_date
@@ -56,18 +58,30 @@ while cdate <= args.end_date:
         if yrday not in satDates[s]:
             continue
         filedir=args.ftpdir+'/{}/{}/{}/{:03d}'.format(s,args.lvl,cdate.year,daynum)
-        ftp.cwd(filedir)
-        files=ftp.nlst()
+
+        try:
+            ftp=ftplib.FTP(args.ftpsite)
+            ftp.login()
+            ftp.cwd(filedir)
+            files=ftp.nlst()
+            ftp.quit()
+        except:
+            print ("*****ERROR: unable to open directory ",filedir)
+            continue
+
         for f in sorted(files):
             fname=f[:10]+'.'+s+'.nc'
             print(fname)
             try:
+                ftp=ftplib.FTP(args.ftpsite)
+                ftp.login()
+                ftp.cwd(filedir)
                 with open(outdir+'/'+fname, 'wb') as outfile:
                     ftp.retrbinary('RETR '+f,outfile.write)
                     outfile.close()
+                ftp.quit()
             except:
                 print('*** ERROR: unable to download ***************************')
                 if os.path.exists(outdir+'/'+fname):
                     os.remove(outdir+'/'+fname)
-
     cdate += dt.timedelta(days=1)

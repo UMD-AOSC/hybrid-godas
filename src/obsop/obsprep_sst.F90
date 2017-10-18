@@ -105,17 +105,35 @@ program obsprep_sst
   bin_err = 0.0
   bin_m2  = 0.0
   bin_lat = 0.0
-  bin_lon = 0.0 !TODO, handle lons that wrap around
+  bin_lon = 0.0
   bin_time= 0.0
   do i=1, size(obsin)
      ! get the closest grid point to the ob
      call grid_ll2xy(obsin(i)%lat, obsin(i)%lon, x, y)
+
+     ! in case the lon has wrapped around
+     if (bin_cnt(x,y) .gt. 0 .and. abs(obsin(i)%lon - bin_lon(x,y)) > 180) then
+        if (obsin(i)%lon < bin_lon(x,y)) then
+           obsin(i)%lon = obsin(i)%lon + 360.0
+        else if (obsin(i)%lon > bin_lon(x,y)) then
+           obsin(i)%lon = obsin(i)%lon - 360.0
+        end if
+     end if
+
+!     if (bin_cnt(x,y) .gt. 0 .and. abs(obsin(i)%lon - bin_lon(x,y)) > 180) then
+!        print *, obsin(i)%lon, bin_lon(x,y)
+!        stop 1
+!     end if
+
      bin_cnt(x,y) = bin_cnt(x,y) + 1
      r = obsin(i)%val - bin_val(x,y)
      bin_val(x,y) = bin_val(x,y) + r/bin_cnt(x,y)
+     bin_m2(x,y)  = bin_m2(x,y)  + r*(obsin(i)%val - bin_val(x,y))
      bin_err(x,y) = bin_err(x,y) + (obsin(i)%err - bin_err(x,y))/bin_cnt(x,y)
      bin_time(x,y)= bin_time(x,y)+ (obsin(i)%time- bin_time(x,y))/bin_cnt(x,y)
-     bin_m2(x,y)  = bin_m2(x,y)  + r*(obsin(i)%val - bin_val(x,y))
+     bin_lon(x,y) = bin_lon(x,y) + (obsin(i)%lon - bin_lon(x,y))/bin_cnt(x,y)
+     bin_lat(x,y) = bin_lat(x,y) + (obsin(i)%lat - bin_lat(x,y))/bin_cnt(x,y)
+
   end do
 
  
@@ -152,9 +170,11 @@ program obsprep_sst
         i = i + 1
         obsout(i)%id   = obid
         obsout(i)%plat = platid
-        obsout(i)%lat  = grid_lats(x,y)
-        obsout(i)%lon  = grid_lons(x,y)
-        obsout(i)%dpth = 0.0
+        obsout(i)%lat  = bin_lat(x,y)
+        obsout(i)%lon  = bin_lon(x,y)
+        ! obsout(i)%lat  = grid_lats(x,y) !if we just want the grid center
+        ! obsout(i)%lon  = grid_lons(x,y)
+        obsout(i)%dpth = 0.0    
         obsout(i)%hr   = bin_time(x,y)
         obsout(i)%val  = bin_val(x,y) - 273.15 + bias_adj
 
