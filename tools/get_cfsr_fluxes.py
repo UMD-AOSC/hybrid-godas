@@ -8,6 +8,8 @@ import os, shutil, sys
 import datetime as dt
 from glob import glob
 
+# TODO, need to add the code for converting from surface pressure to SLP
+
 
 fields = [ 
  # List of all fields that should be extracted
@@ -17,11 +19,11 @@ fields = [
  ('DSWRF.sfc', 16, "f06"),
  ('DLWRF.sfc', 11, "f06"),
  ('PRATE',     31, "f06"),
- ('PRES.sfc',  40, "f0[0-6]"),
- ('TMP.2m',    38, "f0[0-6]"),
- ('SPFH.2m',   39, "f0[0-6]"),
- ('UGRD.10m',  36, "f0[0-6]"),
- ('VGRD.10m',  37, "f0[0-6]"),
+ ('PRES.sfc',  40, "f0[1-6]"),
+ ('TMP.2m',    38, "f0[1-6]"),
+ ('SPFH.2m',   39, "f0[1-6]"),
+ ('UGRD.10m',  36, "f0[1-6]"),
+ ('VGRD.10m',  37, "f0[1-6]"),
  ]
 
 

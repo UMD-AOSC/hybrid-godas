@@ -22,7 +22,7 @@ echo "Preparing forcing files from $date_start to $date_end"
 
 
 
-file_types="PRATE PRES.sfc TMP.2m SPFH.2m UGRD.10m VGRD.10m DLWRF.sfc DSWRF.sfc"
+file_types="PRATE SLP TMP.2m SPFH.2m UGRD.10m VGRD.10m DLWRF.sfc DSWRF.sfc"
 for arg in $file_types
 do
     echo "  $arg"

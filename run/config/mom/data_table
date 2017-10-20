@@ -1,5 +1,5 @@
-"ATM" , "p_surf"        , "PRES.sfc"     , "./FORC/PRES.sfc.nc"           , "bilinear" ,  1.0
-"ATM" , "p_bot"         , "PRES.sfc"     , "./FORC/PRES.sfc.nc"           , "bilinear" ,  1.0
+"ATM" , "p_surf"        , "SLP"          , "./FORC/SLP.nc"                , "bilinear" ,  1.0
+"ATM" , "p_bot"         , "SLP"          , "./FORC/SLP.nc"                , "bilinear" ,  1.0
 "ATM" , "t_bot"         , "TMP.2m"       , "./FORC/TMP.2m.nc"             , "bilinear" ,  1.0
 "ATM" , "sphum_bot"     , "SPFH.2m"      , "./FORC/SPFH.2m.nc"            , "bilinear" ,  1.0
 "ATM" , "u_bot"         , "UGRD.10m"     , "./FORC/UGRD.10m.nc"           , "bicubic",   1.0
