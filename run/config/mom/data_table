@@ -11,8 +11,8 @@
 "ICE" , "sw_flux_vis_dif_dn", "DSWRF.sfc", "./FORC/DSWRF.sfc.nc"          , "bilinear" ,  0.285
 "ICE" , "sw_flux_nir_dir_dn", "DSWRF.sfc", "./FORC/DSWRF.sfc.nc"          , "bilinear" ,  0.215
 "ICE" , "sw_flux_nir_dif_dn", "DSWRF.sfc", "./FORC/DSWRF.sfc.nc"          , "bilinear" ,  0.215
-"ICE" , "lprec"         , "PRATE"       , "./FORC/PRATE.nc"               , "bilinear" ,  0.9933
-"ICE" , "fprec"         , "SNOW"        , "./INPUT/ncar_precip.clim.nc"   , "bilinear" ,  0.9933
+"ICE" , "lprec"         , "PRATE"       , "./FORC/PRATE.nc"               , "bilinear" ,  1.0
+#"ICE" , "fprec"         , ""            , ""                            , "none" ,  0.0
 "ICE" , "runoff"        , "runoff"      , "./INPUT/runoff.daitren.clim.v2011.02.10a.1440x1080.nc", "none" ,  1.0
 "ICE" , "calving"       , ""            , ""                             , "none"  ,  0.0
 "ICE" , "dhdt"          , ""            , ""                             , "none"  , 80.0

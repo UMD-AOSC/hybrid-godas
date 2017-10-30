@@ -1,8 +1,10 @@
 #!/bin/bash
-# Required variables:
-#  $fcst_start   start date in YYYY-MM-DD format
-#  $restart      either 'r' or 'n'
-#  $fcst_len     integration length, in days
+
+# This is a script file that generates the main input.nml file required by MOM for forecast runs.
+# The following environment variables need to be set by the caller:
+#  fcst_start   start date in YYYY-MM-DD format
+#  restart      either 'r' or 'n'
+#  fcst_len     integration length, in days
 
 cat <<EOF
 
@@ -65,6 +67,7 @@ cat <<EOF
             debug_stocks = .FALSE.
             divert_stocks_report = .TRUE.            
             do_area_weighted_flux = .FALSE.
+            partition_fprec_from_lprec=.TRUE.
 /
 
  &fms_io_nml
