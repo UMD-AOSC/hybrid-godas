@@ -6,18 +6,19 @@
 "ATM" , "v_bot"         , "VGRD.10m"     , "./FORC/VGRD.10m.nc"           , "bicubic",   1.0
 "ATM" , "z_bot"         , ""             , ""                             , "bilinear" , 10.0
 "ATM" , "gust"          , ""             , ""                             , "bilinear" ,  1.0e-4
+"ATM" , "lprec"         , "PRATE"       , "./FORC/PRATE.nc"               , "bilinear" ,  1.0
+
 "ICE" , "lw_flux_dn"    , "DLWRF.sfc"    , "./FORC/DLWRF.sfc.nc"          , "bilinear" ,  1.0
 "ICE" , "sw_flux_vis_dir_dn", "DSWRF.sfc", "./FORC/DSWRF.sfc.nc"          , "bilinear" ,  0.285
 "ICE" , "sw_flux_vis_dif_dn", "DSWRF.sfc", "./FORC/DSWRF.sfc.nc"          , "bilinear" ,  0.285
 "ICE" , "sw_flux_nir_dir_dn", "DSWRF.sfc", "./FORC/DSWRF.sfc.nc"          , "bilinear" ,  0.215
 "ICE" , "sw_flux_nir_dif_dn", "DSWRF.sfc", "./FORC/DSWRF.sfc.nc"          , "bilinear" ,  0.215
-"ICE" , "lprec"         , "PRATE"       , "./FORC/PRATE.nc"               , "bilinear" ,  1.0
-#"ICE" , "fprec"         , ""            , ""                            , "none" ,  0.0
 "ICE" , "runoff"        , "runoff"      , "./INPUT/runoff.daitren.clim.v2011.02.10a.1440x1080.nc", "none" ,  1.0
 "ICE" , "calving"       , ""            , ""                             , "none"  ,  0.0
 "ICE" , "dhdt"          , ""            , ""                             , "none"  , 80.0
 "ICE" , "dedt"          , ""            , ""                             , "none"  ,  2.0e-6
 "ICE" , "drdt"          , ""            , ""                             , "none"  ,  10.0
+
 "LND" , "t_surf"        , ""            , ""                             , "none"  ,  273.0
 "LND" , "t_ca"          , ""            , ""                             , "none"  ,  273.0
 "LND" , "q_ca"          , ""            , ""                             , "none"  ,  0.0
