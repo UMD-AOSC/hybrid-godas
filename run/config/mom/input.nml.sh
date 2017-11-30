@@ -2,16 +2,21 @@
 
 # This is a script file that generates the main input.nml file required by MOM for forecast runs.
 # The following environment variables need to be set by the caller:
-#  fcst_start   start date in YYYY-MM-DD format
-#  restart      either 'r' or 'n'
-#  fcst_len     integration length, in days
+#  FCST_START_TIME   start date in YYYYMMDDZHH format
+#  FCST_RESTART      1 if starting from a restart, otherwise 0
+#  FCST_LEN          integration length, in hours
+
+
+restart='n'
+if [[ "$FCST_RESTART" == 1 ]]; then restart='r'; fi
+
 
 cat <<EOF
 
  &MOM_input_nml
          output_directory = 'OUTPUT',
          input_filename = '$restart'
-         restart_input_dir = 'INPUT',
+         restart_input_dir = 'RESTART_IN',
          restart_output_dir = 'RESTART',
          parameter_filename = 'MOM_input',
                               'MOM_layout',
@@ -22,8 +27,8 @@ cat <<EOF
  &SIS_input_nml
         output_directory = 'OUTPUT',
         input_filename = '$restart'
-        restart_input_dir = 'INPUT/',
-        restart_output_dir = 'RESTART/',
+        restart_input_dir = 'RESTART_IN',
+        restart_output_dir = 'RESTART',
         parameter_filename = 'SIS_input',
                              'SIS_layout',
                              'SIS_override' /
@@ -34,9 +39,9 @@ cat <<EOF
 
  &coupler_nml
             months = 0,
-            days   = $fcst_len,
-            hours  = 0,
-            current_date = $(date "+%Y,%m,%d" -d "$fcst_start"),0,0,0,
+            days   = 0,
+            hours  = $FCST_LEN,
+            current_date = $(date "+%Y,%m,%d,%H" -d "$FCST_START_TIME"),0,0,
             calendar = 'julian',
             dt_cpld = 1800,
             dt_atmos = 1800,

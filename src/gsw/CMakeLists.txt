@@ -15,3 +15,6 @@ file(GLOB MD_SRCS "GSW-Fortran/modules/*.[f,F]90")
 
 set(SRCS ${TB_SRCS} ${MD_SRCS})
 add_library(gsw_toolbox STATIC ${SRCS})
+set_target_properties(gsw_toolbox PROPERTIES
+    COMPILE_FLAGS "$ENV{SRC_UTIL_COMPILE_FLAGS}")
+				  

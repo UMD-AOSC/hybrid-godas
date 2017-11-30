@@ -1,0 +1,3 @@
+#!/bin/bash
+
+rocotostat -d config/rocoto/hybridgodas.rocoto.db -w config/rocoto/hybridgodas.rocoto.xml -c :

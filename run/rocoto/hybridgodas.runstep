@@ -1,0 +1,109 @@
+#!/bin/bash
+
+# determine the exp directory
+exp_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+exp_dir="$(readlink -f $exp_dir)"
+
+
+# Load in all user and system env configurations
+config_file="$exp_dir/config/hybridgodas.config"
+set -a
+source $config_file
+set +a   
+
+
+# other file locations
+rocoto_file="$exp_dir/config/rocoto/hybridgodas.rocoto.xml"
+rocoto_db="$exp_dir/config/rocoto/hybridgodas.rocoto.db"
+rocoto_template=$ROOT_DIR/run/rocoto/hybridgodas.template.xml
+
+
+# determine if the rocoto xml file needs to be regnerated
+#------------------------------------------------------------
+mkdir -p config/rocoto
+make_xml=0
+if [[ ! -f "$rocoto_file" ]]; then
+    # if rocoto xml file is missing
+    make_xml=1
+else
+    # if rocoto xml file is older than the main config file
+    d1=($(stat --printf="%Y" $config_file))
+    d2=($(stat --printf="%Y" $rocoto_file))
+    d3=($(stat --printf="%Y" $rocoto_template))
+    if [[ $d1 -gt $d2 ]]; then 
+	make_xml=1
+    fi  
+    if [[ $d3 -gt $d2 ]]; then 
+	make_xml=1
+    fi  
+
+fi
+
+
+
+
+# If a new XML file needs to be generated
+#------------------------------------------------------------
+if [[ "$make_xml" == 1 ]]; then
+    echo "Generating new ROCOTO XML file..."
+
+    export MEM_LIST="$(seq -s ' ' -f "%04g" 1 $ENS_SIZE)"
+
+    if [[ $ENS_SIZE -gt 1 ]]; then
+	export IF_LETKF_START=""
+	export IF_LETKF_END=""
+	export IF_NOT_LETKF_START="<!-- enable only if NOT doing ensemble DA"
+	export IF_NOT_LETKF_END="-->"
+
+    else
+	export IF_LETKF_START="<!-- enabled only if doing ensemble DA"
+	export IF_LETKF_END="-->"
+	export IF_NOT_LETKF_START=""
+	export IF_NOT_LETKF_END=""
+    fi
+
+    if [[ ($ENS_SIZE -eq 1) || ($HYBRID -ne 0) ]]; then
+	export IF_3DVAR_START=""
+	export IF_3DVAR_END=""
+	export IF_NOT_3DVAR_START="<!-- enabled only if NOT doing 3dvar"
+	export IF_NOT_3DVAR_END="-->"
+
+    else
+	export IF_3DVAR_START="<!-- not enabled if not doing 3dvar"
+	export IF_3DVAR_END="-->"
+	export IF_NOT_3DVAR_START=""
+	export IF_NOT_3DVAR_END=""
+    fi
+
+    if [[ ($ENS_SIZE -gt 1) && ($HYBRID -ne 0) ]]; then
+	export IF_HYBRID_START=""
+	export IF_HYBRID_END=""
+	export IF_NOT_HYBRID_START="<!-- enabled only if NOT doing hybrid DA"
+	export IF_NOT_HYBRID_END="-->"
+
+    else
+	export IF_HYBRID_START="<!-- enabled only if doing hybrid DA"
+	export IF_HYBRID_END="-->"
+	export IF_NOT_HYBRID_START=""
+	export IF_NOT_HYBRID_END=""
+    fi
+
+    
+    # TODO: check this calculation
+    s1=$(( $DA_WNDW_OFST / 24 -  ($DA_TIMESLOTS-1)/2))  
+    export DA_WNDW_SLOTS=$(seq -s ' ' -f "%+02g" $s1 $(($s1 + $DA_TIMESLOTS -1)) )
+
+
+    cat $rocoto_template | envsubst > $rocoto_file
+fi
+
+
+# If this is the first time running, create a timestamp file of the NEXT cycle that should run
+if [[ ! -f "$exp_dir/cycle_status" ]]; then
+    echo "$CYCLE_START" > cycle_status
+fi
+
+
+# run a rocoto step
+#------------------------------------------------------------
+rocotorun -d $rocoto_db -w $rocoto_file -v 5

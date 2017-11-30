@@ -7,8 +7,8 @@ program update_restart
   ! variables (to be eventually) read in from namelist
   integer :: rst_layout(2) = (/6,6/)
   integer :: ai_layout(2)  = (/1,1/)
-  character(len=1024) :: rst_filename = "RESTART/MOM.res.nc"
-  character(len=1024) :: ai_filename = "ana_inc.nc"
+  character(len=1024) :: rst_filename      != "RESTART/MOM.res.nc"
+  character(len=1024) :: ai_filename       != "ana_inc.nc"
   real :: salt_bounds(2) = (/0.0, 50.0/)
   real :: temp_bounds(2) = (/-3.0, 50.0/)
 
@@ -38,6 +38,9 @@ program update_restart
   integer, allocatable :: pa_rst(:) ! processor assignment for restart file I/O
 
   ! ------------------------------------------------------------
+
+  call get_command_argument(1, value=ai_filename)
+  call get_command_argument(2, value=rst_filename)
 
   ! initialize MPI
   call mpi_init(ierr)

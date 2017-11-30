@@ -6,7 +6,10 @@
 #  $fcst_diag_daily   if 1, daily mean ouput files are saved (needed for data assimilation)
 #  $fcst_diag_pentad  if 1, pentad (or 6 day pentad if leap day) files are saved
 
-
+#TODO : fix this
+fcst_diag_daily=1
+fcst_diag_pentad=0
+fcst_len=$(($FCST_LEN / 24 ))
 
 # file header
 #------------------------------------------------------------
