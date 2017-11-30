@@ -89,16 +89,21 @@ if [[ "$make_xml" == 1 ]]; then
     fi
 
     
-    # TODO: check this calculation
+    # TODO: check this calculation, move the logic for this into the common script
+    # TODO: change DA_TIMESLOTS to be in units of hours instead of days (in case we want sub daily DA cycles)
+    # TODO: is there a variable already for the width, in hours, of each timeslot?
     s1=$(( $DA_WNDW_OFST / 24 -  ($DA_TIMESLOTS-1)/2))  
     export DA_WNDW_SLOTS=$(seq -s ' ' -f "%+02g" $s1 $(($s1 + $DA_TIMESLOTS -1)) )
 
 
+    # All done defining variables, generate the rocoto XML file that is used to manage the jobs
     cat $rocoto_template | envsubst > $rocoto_file
 fi
 
 
 # If this is the first time running, create a timestamp file of the NEXT cycle that should run
+# (Needed because of special logic in the subscripts to handle the leap day issue that rocoto
+#   can't handle on its own)
 if [[ ! -f "$exp_dir/cycle_status" ]]; then
     echo "$CYCLE_START" > cycle_status
 fi

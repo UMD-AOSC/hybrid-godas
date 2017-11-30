@@ -1,3 +1,5 @@
 #!/bin/bash
 
-rocotostat -d config/rocoto/hybridgodas.rocoto.db -w config/rocoto/hybridgodas.rocoto.xml -c :
+# TODO: have it show more that 1 cycle, but only the most recent active cycles
+rocotostat -d config/rocoto/hybridgodas.rocoto.db -w config/rocoto/hybridgodas.rocoto.xml  
+

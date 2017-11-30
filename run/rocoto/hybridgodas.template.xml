@@ -6,6 +6,7 @@
 <!ENTITY EXP_DIR         "${EXP_DIR}">
 <!ENTITY EXP_NAME        "${EXP_NAME}">
 <!ENTITY MEM             "${MEM_LIST}">
+<!ENTITY CYCLE_START     "${CYCLE_START}">
 
 <!-- fixed directory locations -->
 <!ENTITY ROOT_DIR        "${ROOT_DIR}">
@@ -44,7 +45,9 @@
 <!-- ============================================================ -->
 
 <!-- rocoto parameters -->
-<!ENTITY MAXTRIES        "10">
+<!ENTITY MAXTRIES        "2">
+<!ENTITY MAX_CYCLES      "1">
+
 
 <!-- fixed directory locations -->
 <!ENTITY SCRIPT_DIR      "&ROOT_DIR;/run/subscripts">
@@ -57,6 +60,9 @@
 
 <!-- common environment blocks -->
 <!ENTITY CYCLE           "<cyclestr>@Y@m@dZ@H</cyclestr>">
+<!ENTITY CYCLE_NO_Z      "<cyclestr>@Y@m@d@H</cyclestr>">
+<!-- NOTE: most of the subscripts are happier with the "Z" there to separate the hour, but 
+some small places are not, hence "CYCLE_NO_Z".. TODO: need to pick one format for everything-->
 <!ENTITY ENV_COMMON "
   <envar>
     <name>ROOT_DIR</name>
@@ -73,6 +79,10 @@
   <envar>
     <name>CYCLE</name>
     <value>&CYCLE;</value>
+  </envar>
+  <envar>
+    <name>CYCLE_NO_Z</name>
+    <value>&CYCLE_NO_Z;</value>
   </envar>
   <envar>
     <name>CYCLE_LEN</name>
@@ -106,10 +116,10 @@
 <!-- ============================================================ -->
 
 
-<workflow realtime="F" scheduler="&SCHED;" cyclethrottle="2">
+<workflow realtime="F" scheduler="&SCHED;" cyclethrottle="&MAX_CYCLES;">
 
   <!-- TODO : need to be able to handle leap days -->
-  <cycledef>${CYCLE_START}00  ${CYCLE_END}00 &CYCLE_LEN;:00:00</cycledef>
+  <cycledef>&CYCLE_START;00  ${CYCLE_END}00 &CYCLE_LEN;:00:00</cycledef>
 
   <log verbosity="10"><cyclestr>&LOG_PREFIX;.workflow.log</cyclestr></log>
 
@@ -153,6 +163,10 @@
       &ENV_COMMON;
       &ENV_MEM;
       &ENV_FCST;
+      <envar>
+	<name>FCST_RESTART</name>
+	<value>-1</value>
+      </envar>
 
     </task>
   </metatask>
@@ -197,7 +211,7 @@
 	    <!--TODO, need to pick a format for time and stick with it (with or without the Z)-->
 	    f = "&EXP_DIR;/cycle_status"
 	    d=File.open(f,"r").gets.strip
-	    d == ymdh || d == "&CYCLE;"
+	    d == ymdh || d == "&CYCLE_NO_Z;"
 	  </rb>
   	</and>
       </dependency>

@@ -30,6 +30,10 @@ envar+=("FORCING_DIR")  # path to the daily flux files
 envar+=("FORCING_HR")   # The hour at which forcing is specified (usually 12Z)
 envar+=("FCST_DIR")     # The directory that the forecast will be setup in
 envar+=("RST_DIR")
+envar+=("FCST_RESTART") # =1 is yes, =0 is no, =-1 is figure out based on CYCLE_START
+                        # and whether the cycle_status file exists
+envar+=("CYCLE")
+envar+=("CYCLE_NO_Z")
 #
 # Required AUTOMATICALLY defined environment variables:
 #  * The following are required but should already be defined by all.common.sh 
@@ -68,12 +72,12 @@ mkdir -p OUTPUT
 mkdir -p RESTART
 ln -s $ROOT_DIR/build/MOM6 .
 
-# Are we doing a restart? Assume no if the restart path does not exist
-# TODO: need better logic here, in case we WANT to restart but the restart dir is
-#   accidentally missing
-FCST_RESTART=1
-if [[ ! -f $RST_DIR ]]; then
-    FCST_RESTART=0
+# Are we doing a restart? Or initializing from climatology
+# TODO: i don't like this, clean it up
+if [[ "$FCST_RESTART" -eq "-1" ]]; then    
+    # start from climatology (FCST_RESTART=0) if this cycle is the first cycle AND a restart directory
+    # does not already exist
+    [[ "$CYCLE_START" -eq "$CYCLE_NO_Z" &&  (! -f "$RST_DIR") ]] && FCST_RESTART=0 || FCST_RESTART=1
 fi
 
 # namelist files

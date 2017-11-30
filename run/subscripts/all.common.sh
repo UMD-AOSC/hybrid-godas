@@ -48,7 +48,7 @@ envar2+=("FCST_RST_OFST")   # offset between center of DA/cycle window and forec
 envar2+=("FCST_LEAP_ADJ")  
 
 
-# the following are the environment variables that are CREATE UPON EXIT of this script
+# the following are the environment variables that are CREATED UPON EXIT of this script
 #--------------------------------------------------------------------------------
 local envar3=()
 envar3+=("CYCLE_NEXT")
@@ -111,7 +111,9 @@ DATE_FMT="%Y%m%dZ%H"
 
 # datetime of next cycle
 # TODO : adjust for leap day 
+# TODO : get rid of the "NO_Z" nonsense
 CYCLE_NEXT=$(date "+$DATE_FMT" -d "$CYCLE + $CYCLE_LEN hours")
+CYCLE_NEXT_NO_Z=$(date "+%Y%m%d%H" -d "$CYCLE + $CYCLE_LEN hours")
 
 # data assimilation window
 DA_WNDW_LEN=$CYCLE_LEN

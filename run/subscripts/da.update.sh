@@ -67,4 +67,4 @@ echo "0" > $status_file
 aprun -n $NPROC $ROOT_DIR/build/update_restart $var_dir/ana_inc.nc $rst_dir/MOM.res.nc
 echo "1" > $status_file
 
-echo "$CYCLE_NEXT" > $EXP_DIR/cycle_status
+echo "$CYCLE_NEXT_NO_Z" > $EXP_DIR/cycle_status
