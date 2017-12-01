@@ -62,7 +62,7 @@ if [[ "$make_xml" == 1 ]]; then
 	export IF_NOT_LETKF_END=""
     fi
 
-    if [[ ($ENS_SIZE -eq 1) || ($HYBRID -ne 0) ]]; then
+    if [[ ($ENS_SIZE -eq 1) || ($ENSEMBLE -ne 0) ]]; then
 	export IF_3DVAR_START=""
 	export IF_3DVAR_END=""
 	export IF_NOT_3DVAR_START="<!-- enabled only if NOT doing 3dvar"
@@ -75,17 +75,17 @@ if [[ "$make_xml" == 1 ]]; then
 	export IF_NOT_3DVAR_END=""
     fi
 
-    if [[ ($ENS_SIZE -gt 1) && ($HYBRID -ne 0) ]]; then
-	export IF_HYBRID_START=""
-	export IF_HYBRID_END=""
-	export IF_NOT_HYBRID_START="<!-- enabled only if NOT doing hybrid DA"
-	export IF_NOT_HYBRID_END="-->"
+    if [[ ($ENS_SIZE -gt 1) && ($ENSEMBLE -ne 0) ]]; then
+	export IF_ENSEMBLE_START=""
+	export IF_ENSEMBLE_END=""
+	export IF_NOT_ENSEMBLE_START="<!-- enabled only if NOT doing hybrid DA"
+	export IF_NOT_ENSEMBLE_END="-->"
 
     else
-	export IF_HYBRID_START="<!-- enabled only if doing hybrid DA"
-	export IF_HYBRID_END="-->"
-	export IF_NOT_HYBRID_START=""
-	export IF_NOT_HYBRID_END=""
+	export IF_ENSEMBLE_START="<!-- enabled only if doing hybrid DA"
+	export IF_ENSEMBLE_END="-->"
+	export IF_NOT_ENSEMBLE_START=""
+	export IF_NOT_ENSEMBLE_END=""
     fi
 
     

@@ -26,7 +26,7 @@
 <!ENTITY SCHED_P_ARGS                "-l partition=c4">
 <!ENTITY SCHED_P_QUEUE               "${SCHED_QUEUE}">
 
-<!ENTITY fcst.prep_WALLTIME          "2:00">
+<!ENTITY fcst.prep_WALLTIME          "5:00">
 <!ENTITY fcst.run_NODES              "20">
 <!ENTITY fcst.run_SCHED_NATIVE       "&SCHED_P_ARGS; -l size=&fcst.run_NODES;">
 <!ENTITY fcst.run_SCHED_QUEUE        "&SCHED_P_QUEUE;">
@@ -52,15 +52,18 @@
 <!-- fixed directory locations -->
 <!ENTITY SCRIPT_DIR      "&ROOT_DIR;/run/subscripts">
 
+<!-- cycle info -->
+<!ENTITY CYCLE           "<cyclestr>@Y@m@dZ@H</cyclestr>">
+<!ENTITY CYCLE_NO_Z      "<cyclestr>@Y@m@d@H</cyclestr>">
+
 <!-- generated directory locations -->
 <!ENTITY LOG_DIR         "&EXP_DIR;/log">
 <!ENTITY LOG_PREFIX      "&LOG_DIR;/@Y/@Y@m@d@H/@Y@m@d@H">
 <!ENTITY LOG_PREFIX_ENS  "&LOG_DIR;/@Y/@Y@m@d@H/mem_#mem#/@Y@m@d@H">
-<!ENTITY FCST_DIR        "&WORK_DIR;/fcst_<cyclestr>@Y@m@d@H</cyclestr>/#mem#">
+<!ENTITY FCST_DIR        "&WORK_DIR;/fcst_&CYCLE_NO_Z;/mem_#mem#">
+<!ENTITY FORC_DIR        "&WORK_DIR;/forc_&CYCLE_NO_Z;">
 
 <!-- common environment blocks -->
-<!ENTITY CYCLE           "<cyclestr>@Y@m@dZ@H</cyclestr>">
-<!ENTITY CYCLE_NO_Z      "<cyclestr>@Y@m@d@H</cyclestr>">
 <!-- NOTE: most of the subscripts are happier with the "Z" there to separate the hour, but 
 some small places are not, hence "CYCLE_NO_Z".. TODO: need to pick one format for everything-->
 <!ENTITY ENV_COMMON "
@@ -124,52 +127,36 @@ some small places are not, hence "CYCLE_NO_Z".. TODO: need to pick one format fo
   <log verbosity="10"><cyclestr>&LOG_PREFIX;.workflow.log</cyclestr></log>
 
 
-  <!--************************************************************-->
-  <!-- Common forecast preparation-->
-  <!--   (calculation of forcing perturbation mean) -->
-  <!--************************************************************-->
-  ${IF_LETKF_START}
-  <task name="fcst.prep.common">
-    <account>&SCHED_ACCT;</account>
-    <native>&SCHED_S_ARGS;</native>
-    <queue>&SCHED_S_QUEUE; </queue>
-    <cores>1</cores>
-    <walltime>1:00</walltime>
-    <join><cyclestr>&LOG_PREFIX;.fcst.prep.common.log</cyclestr></join>
-    <command></command>
-  </task>
-  ${IF_LETKF_END}
-
-
 
   <!--************************************************************-->
   <!-- ensemble forecast preparation-->
   <!--   (directory setup and ensemble member surface forcing) -->
   <!--************************************************************-->
-  <metatask name="fcst.prep.all">
-    <var name="mem">&MEM;</var>
-    <task name="fcst.prep.#mem#" maxtries="&MAXTRIES;">
+  <task name="fcst.prep" maxtries="&MAXTRIES;">
 
-      <jobname>&EXP_NAME;.fcst.prep.#mem#</jobname>
-      <command>&SCRIPT_DIR;/fcst.prep.sh</command>
-      <join><cyclestr>&LOG_PREFIX_ENS;.fcst.prep.#mem#.log</cyclestr></join>       
+    <jobname>&EXP_NAME;.fcst.prep</jobname>
+    <command>&SCRIPT_DIR;/fcst.prep.sh</command>
+    <join><cyclestr>&LOG_PREFIX;.fcst.prep.log</cyclestr></join>       
+    
+    <account>&SCHED_ACCT;</account>
+    <queue>&SCHED_S_QUEUE; </queue>
+    <cores>1</cores>
+    <native>&SCHED_S_ARGS;</native>
+    <walltime>&fcst.prep_WALLTIME;</walltime>
+    
+    &ENV_COMMON;
+    &ENV_MEM;
+    &ENV_FCST;
+    <envar>
+      <name>FCST_RESTART</name>
+      <value>-1</value>
+    </envar>    
+    <envar>
+      <name>FORC_DIR</name>
+      <value>&FORC_DIR;</value>
+    </envar>
 
-      <account>&SCHED_ACCT;</account>
-      <queue>&SCHED_S_QUEUE; </queue>
-      <cores>1</cores>
-      <native>&SCHED_S_ARGS;</native>
-      <walltime>&fcst.prep_WALLTIME;</walltime>
-
-      &ENV_COMMON;
-      &ENV_MEM;
-      &ENV_FCST;
-      <envar>
-	<name>FCST_RESTART</name>
-	<value>-1</value>
-      </envar>
-
-    </task>
-  </metatask>
+  </task>
 
 
 
@@ -204,7 +191,7 @@ some small places are not, hence "CYCLE_NO_Z".. TODO: need to pick one format fo
 
       <dependency>
   	<and>
-  	  <taskdep task="fcst.prep.#mem#"/>
+  	  <taskdep task="fcst.prep"/>
 	  <!-- must be the first date of a cycle, or
 	       previous analysis must have finished -->
 	  <rb>
@@ -257,7 +244,7 @@ some small places are not, hence "CYCLE_NO_Z".. TODO: need to pick one format fo
   	<dependency>
   	  <and>
   	    <!-- fcst.prep should have finished for this member -->
-  	    <taskdep task="fcst.prep.#mem#"/>
+  	    <taskdep task="fcst.prep"/>
   	    <!-- the forecast should have indicated it's started  -->
   	    <datadep>&FCST_DIR;/time_stamp.out</datadep>
   	    <!-- the fcst.combine script needs to check if all files are good and ready -->
@@ -274,23 +261,24 @@ some small places are not, hence "CYCLE_NO_Z".. TODO: need to pick one format fo
   <!-- ensemble forecast daily output mean-->
   <!-- TODO, enable only if doing ensembles -->
   <!--************************************************************-->
-  ${IF_HYBRID_START}
-  <metatask name="fcst.cmb.alldays.mean">
-    <var name="day">&DAYS;</var>
-    <task name="fcst.cmb.t#day#.mean" maxtries="&MAXTRIES;">
-      <account>&SCHED_ACCT;</account>
-      <native>&SCHED_P_ARGS;</native>
-      <queue>&SCHED_P_QUEUE;</queue>
-      <cores>1</cores>
-      <walltime>1:00</walltime>
-      <join><cyclestr>&LOGPREFIX_ENSM;.fcst.cmb.t#day#.mean.log</cyclestr></join>
-      <command>&ROOTDIR;/test.sh</command>
-      <dependency>
-  	<metataskdep metatask="fcst.cmb.t#day#.allmem"/>
-      </dependency>
-    </task>
-  </metatask>
-  ${IF_HYBRID_END}
+  ${IF_ENSEMBLE_START}
+  ${IF_ENSEMBLE_END}
+  <!-- <metatask name="fcst.cmb.alldays.mean"> -->
+  <!--   <var name="day">&DAYS;</var> -->
+  <!--   <task name="fcst.cmb.t#day#.mean" maxtries="&MAXTRIES;"> -->
+  <!--     <account>&SCHED_ACCT;</account> -->
+  <!--     <native>&SCHED_P_ARGS;</native> -->
+  <!--     <queue>&SCHED_P_QUEUE;</queue> -->
+  <!--     <cores>1</cores> -->
+  <!--     <walltime>1:00</walltime> -->
+  <!--     <join><cyclestr>&LOGPREFIX_ENSM;.fcst.cmb.t#day#.mean.log</cyclestr></join> -->
+  <!--     <command>&ROOTDIR;/test.sh</command> -->
+  <!--     <dependency> -->
+  <!-- 	<metataskdep metatask="fcst.cmb.t#day#.allmem"/> -->
+  <!--     </dependency> -->
+  <!--   </task> -->
+  <!-- </metatask> -->
+
 
 
   <!--************************************************************-->
