@@ -4,10 +4,11 @@
 
 IO_LAYOUT = 6,6
 
+! NOTE: "LAYOUT" is controlled by the compile time settings now
 ! settings for 15 nodes on c4
 !LAYOUT = 36,18
 !MASKTABLE = "mask_table.108.36x18" 
 
 ! settings for 20 nodes on c4
-LAYOUT = 36,24
+!LAYOUT = 36,24
 MASKTABLE = "mask_table.144.36x24"

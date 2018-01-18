@@ -1,6 +1,31 @@
-! Blank file in which we can put "overrides" for parameters
-!VERBOSITY = 9
+!================================================================================
+! The following are the Hybrid-GODAS specific overrides
+! over the default OM4_025 configuration from GFDL for MOM
+!================================================================================
+
+
+! use Z* vertical coordinates instead of hybrid coords
+!------------------------------------------------------------
 #override REGRIDDING_COORDINATE_MODE = "Z*"
 #override ALE_COORDINATE_CONFIG="FILE:vgrid_75_2m.nc,dz"
 #override THERMO_SPANS_COUPLING = False
 #override DT_THERM = 900.0
+
+
+! change how the SSS restoration and freshwater balances are handled
+!------------------------------------------------------------
+#override SRESTORE_AS_SFLUX = True
+#override ADJUST_NET_SRESTORE_BY_SCALING = True
+#override ADJUST_NET_FRESH_WATER_BY_SCALING = True
+#override MAX_DELTA_RESTORE=1.0
+!#override MASK_SRESTORE_UNDER_ICE=True
+
+
+! other parameters that are probably wrong in OM4_025
+!------------------------------------------------------------
+#override MAX_P_SURF=3.e4
+
+
+! other tweaks
+!------------------------------------------------------------
+#override USE_IDEAL_AGE_TRACER=False

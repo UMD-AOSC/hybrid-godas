@@ -130,7 +130,8 @@ cat <<EOF
 /
 
  &surface_flux_nml
-            ncar_ocean_flux = .true.
+!            ncar_ocean_flux = .true.
+            coare4_ocean_flux = .true.
 	    raoult_sat_vap = .true.
             fixed_z_atm_tq = 2.0
             fixed_z_atm_uv = 10.0

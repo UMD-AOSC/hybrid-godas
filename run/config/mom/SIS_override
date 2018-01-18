@@ -1,2 +1,12 @@
-! Blank file in which we can put "overrides" for parameters
 ADD_DIURNAL_SW = True ! This must ONLY be used in the ice-ocean mode, NOT fully coupled mode.
+
+!================================================================================
+! the following are the Hybrid-GODAS specific overrides
+! over the default OM4_025 configuration from GFDL for SIS2
+!================================================================================
+
+! variable ice salinity is wrong in OM4_025 given the current
+! state of the code
+!------------------------------------------------------------
+#override ICE_BULK_SALINITY = 5.0
+#override ICE_RELATIVE_SALINITY = 0.0

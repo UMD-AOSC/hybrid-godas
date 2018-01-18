@@ -191,10 +191,11 @@ cat <<EOF
 ## salt flux
 #------------------------------------------------------------
 "ice_model",   "saltf",                  "saltf",                 "ice_pentad%4yr%2mo%2dy",   "all", "mean", "none", 2
-"ocean_model", "salt_flux_global_restoring_adjustment",      "salt_flux_global_restoring_adjustment",     "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 "ocean_model", "salt_flux",              "salt_flux",             "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 "ocean_model", "salt_flux_added",        "salt_flux_added",       "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 "ocean_model", "total_salt_flux",        "total_salt_flux",       "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model", "salt_flux_global_restoring_adjustment",   "salt_flux_global_restoring_adjustment",  "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model", "salt_flux_global_restoring_scaling",      "salt_flux_global_restoring_scaling",     "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 
 
 
@@ -210,11 +211,12 @@ cat <<EOF
 "ocean_model", "PRCmE",     "PRCmE",     "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 "ocean_model", "precip",    "precip",    "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # Don't need this, as its just a sum of {l,f,v}prec ?
 
-"ocean_model", "net_fresh_water_global_adjustment", "net_fresh_water_global_adjustment", "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "ave_wfo",   "ave_wfo",   "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # global mean prcme
-"ocean_model", "ave_evs",   "ave_evs",   "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # global mean evap
-"ocean_model", "precip_ga", "precip_ga", "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # global mean precip
+"ocean_model", "ave_wfo",    "ave_wfo",     "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # global mean prcme
+"ocean_model", "ave_evs",    "ave_evs",     "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # global mean evap
+"ocean_model", "precip_ga",  "precip_ga",   "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # global mean precip
 "ocean_model", "total_vprec","total_vprec", "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model", "net_fresh_water_global_adjustment", "net_fresh_water_global_adjustment", "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model", "net_fresh_water_global_scaling",    "net_fresh_water_global_scaling",    "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 
 "ice_model",   "snowfl",    "snowfl",    "ice_pentad%4yr%2mo%2dy",   "all", "mean", "none", 2  #redundant with ocn_model:fprec ?
 "ice_model",   "rain",      "rain",      "ice_pentad%4yr%2mo%2dy",   "all", "mean", "none", 2
