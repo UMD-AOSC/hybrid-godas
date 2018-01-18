@@ -120,7 +120,7 @@ use   monin_obukhov_mod, only: mo_drag, mo_profile, monin_obukhov_init
 use  sat_vapor_pres_mod, only: escomp, descomp
 use       constants_mod, only: cp_air, hlv, stefan, rdgas, rvgas, grav, vonkarm
 use             mpp_mod, only: input_nml_file, FATAL, mpp_error
-
+use           coare40vn, only: coare40vn_ocean_fluxes
 implicit none
 private
 
@@ -175,6 +175,10 @@ logical :: ncar_ocean_flux_orig  = .false. !< Use NCAR climate model turbulent f
                                            !! contains a bug in the specification of the exchange coefficient for the sensible
                                            !! heat.  This option is available for legacy purposes, and is not recommended for
                                            !! new experiments.
+logical :: coare4_ocean_flux     = .false. !< use COARE4 ocean fluxes, which is a vectorized version of COARE3 code
+                                           !! (Fairall et al, 2003) with modifications based on the CLIMODE, MBL, and 
+                                           !! CBLAST experiments (Edson et al., 2011)
+                                           !! The cool skin option is retained but warm layer and surface wave options removed.
 logical :: raoult_sat_vap        = .false. !< Reduce saturation vapor pressure to account for seawater
 logical :: do_simple             = .false.
 real    :: fixed_z_atm_tq        = -1      !< a fixed value in meters to use for the atmospheric T/q heights
@@ -191,6 +195,7 @@ namelist /surface_flux_nml/ no_neg_q,             &
                             use_mixing_ratio,     &
                             ncar_ocean_flux,      &
                             ncar_ocean_flux_orig, &
+                            coare4_ocean_flux,    &
                             raoult_sat_vap,       &
                             do_simple,            &
                             fixed_z_atm_uv,       &
@@ -267,7 +272,7 @@ subroutine surface_flux_1d (                                           &
        t_surf0,  t_surf1,  u_dif,     v_dif,               &
        rho_drag, drag_t,    drag_m,   drag_q,    rho,      &
        q_atm,    q_surf0,  dw_atmdu,  dw_atmdv,  w_gust,   &
-       t_atm_uv, q_atm_uv, z_atm_tq,  z_atm_uv, t_star
+       t_atm_moved, q_atm_moved, z_atm_tq,  z_atm_uv, t_star
 
   integer :: i, nbad
 
@@ -377,36 +382,51 @@ subroutine surface_flux_1d (                                           &
      endwhere
   endif
 
-  ! initialize first guess of t/q at wind level with t/q given at t/q level
-  ! these values will change after calling mo_drag and ncar_ocean_fluxes
-  ! as t/q are properly moved to wind levels.
-  t_atm_uv = t_atm
-  q_atm_uv = q_atm
 
   ! monin-obukhov similarity theory
   ! do 2 iterations
+  ! TODO, this does not correctly account for t/q at different level from u/v !!!
   call mo_drag (thv_atm, thv_surf, z_atm_uv,               &
        rough_mom, rough_heat, rough_moist, w_atm,          &
        cd_m, cd_t, cd_q, u_star, b_star, avail             )
+
   where(avail)
-     ! NOTE, this is only guaranteed to be accurate if mo_drag was run with
-     ! neutral stability
+     ! move T/q values from their level level of the wind
+     ! NOTE, this is only guaranteed to be accurate if mo_drag was run with neutral stability
      t_star = (cd_t/sqrt(cd_m))*(t_atm-t_surf0)
      q_star = (cd_q/sqrt(cd_m))*(q_atm-q_surf0)
-     t_atm_uv = t_atm - t_star*log(z_atm_tq/z_atm_uv)/vonkarm
-     q_atm_uv = q_atm - q_star*log(z_atm_tq/z_atm_uv)/vonkarm
+     t_atm_moved = t_atm - t_star*log(z_atm_tq/z_atm_uv)/vonkarm
+     q_atm_moved = q_atm - q_star*log(z_atm_tq/z_atm_uv)/vonkarm
+
   end where
 
-  ! override with ocean fluxes from NCAR calculation
+
+  ! override with ocean fluxes from NCAR
   if (ncar_ocean_flux .or. ncar_ocean_flux_orig) then
+    ! if z_atm_tq /= z_atm_uv, the Large-Yeager scheme will determine the T/q moved
+    ! to the 10m wind level (t_atm_moved and q_atm_moved) and will produce transfer coefficients
+    ! valid at 10m
     call  ncar_ocean_fluxes (w_atm, th_atm, t_surf0, q_atm, q_surf0, z_atm_tq, z_atm_uv, &
-                             seawater, cd_m, cd_t, cd_q, u_star, b_star, t_atm_uv, q_atm_uv )
+                             seawater, cd_m, cd_t, cd_q, u_star, b_star, t_atm_moved, q_atm_moved )
+       
+  else if (coare4_ocean_flux) then
+    ! override with ocean fluxes from COARE4
+    ! coare4 code is setup to produce transfer coefficients for the variables at their measured
+    ! level (in contrast to the above ncar_ocean_fluxes code)
+    call coare40vn_ocean_fluxes(w_atm, th_atm, t_surf0, q_atm, q_surf0, z_atm_tq, z_atm_uv, &
+          seawater, cd_m, cd_t, cd_q, u_star, b_star ) 
+    where (seawater)
+     t_atm_moved = t_atm
+     q_atm_moved = q_atm
+    end where
   end if
 
+
   where (avail)
-     !update with t/q values that were moved to the wind level
-     tv_atm  = t_atm_uv  * (1.0 + d608*q_atm_uv)  ! virtual temperature
-     th_atm  = t_atm_uv  * p_ratio                ! potential T, using p_surf as refernce
+     ! t_atm_moved and q_atm_moved might have changed (by moving t/q from 2m to 10m)
+     ! so recalculate tv/th/thv
+     tv_atm  = t_atm_moved  * (1.0 + d608*q_atm_moved)  ! virtual temperature
+     th_atm  = t_atm_moved  * p_ratio                ! potential T, using p_surf as refernce
      thv_atm = tv_atm * p_ratio                   ! virt. potential T, using p_surf as reference
 
      ! scale momentum drag coefficient on orographic roughness
@@ -427,7 +447,7 @@ subroutine surface_flux_1d (                                           &
 
      ! evaporation
      rho_drag  =  drag_q * rho
-     flux_q    =  rho_drag * (q_surf0 - q_atm_uv) ! flux of water vapor  (Kg/(m**2 s))
+     flux_q    =  rho_drag * (q_surf0 - q_atm_moved) ! flux of water vapor  (Kg/(m**2 s))
 
      where (land)
         dedq_surf = rho_drag
@@ -441,7 +461,7 @@ subroutine surface_flux_1d (                                           &
 
      q_star = flux_q / (u_star * rho)             ! moisture scale
      ! ask Chris and Steve K if we still want to keep this for diagnostics
-     q_surf = q_atm_uv + flux_q / (rho*cd_q*w_atm)   ! surface specific humidity
+     q_surf = q_atm_moved + flux_q / (rho*cd_q*w_atm)   ! surface specific humidity
 
      ! upward long wave radiation
      flux_r    =   stefan*t_surf**4               ! (W/m**2)
