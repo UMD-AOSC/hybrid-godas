@@ -69,3 +69,10 @@ target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS} ${GSWLIB} ${DATETIME
 set_target_properties(${EXE} PROPERTIES
     COMPILE_FLAGS "$ENV{SRC_OBSOP_COMPILE_FLAGS}")		      
 
+# obs2dat
+set(SRCS obsprep_nc2dat.f90)
+set(EXE obsprep_nc2dat)
+add_executable(${EXE} ${SRCS})
+target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS} ${DATETIMELIB})
+set_target_properties(${EXE} PROPERTIES
+    COMPILE_FLAGS "$ENV{SRC_OBSOP_COMPILE_FLAGS}")
