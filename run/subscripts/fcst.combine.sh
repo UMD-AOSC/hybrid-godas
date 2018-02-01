@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 cat << \#\#
 
 #================================================================================
@@ -8,7 +8,6 @@ cat << \#\#
 #   MOM6 output file processing
 #================================================================================
 ##
-# Travis.Sluka@noaa.gov / tsluka.umd.edu
 #
 # Command line arguments:
 #  * a "-check" flag can be passed, in which case the scripts determines if the 
@@ -22,51 +21,50 @@ cat << \#\#
 #  * The output file for the given timeslot of the given ensemble member forecast
 #    will be combined and placed at $BKG_FILE
 #
-# Required MANUALLY defined environment variables:
-#  * The following need to be specified by the caller of this script
-envar+=("ROOT_DIR")     # The path to the hybrid-godas root code/source directory
-envar+=("DA_SLOT")      # The offset (in days) from the analysis time
-                        # (e.g.  "-5" or "+0")
-envar+=("FCST_DIR")     # The directory that the forecast is runnin in
-envar+=("CYCLE")        # The datetime of the current cycle and analysis time (YYYYMMDDZHH)
-envar+=("FCST_IO_PROC") # The number of processors used for the MOM6 output and 
-                        # therefore the max number of files that need to be combined
-envar+=("FCST_IO_MISS") # id's of the output files that will be missing (due to
-                        # blocks being entirely on land) (e.g. ".0024")
-envar+=("BKG_FILE")     # filename the the combined output file should be moved to
-envar+=("FCST_FILE_MINAGE")  # Minimum age, in seconds, a file should be before
-                             # trying to use it.
-envar+=("FCST_FILE_MINSIZE") # Minimum size, in bytes, a file should be before
-                             # trying to use it.
-#
-# Required AUTOMATICALLY defined environment variables:
-#  * The following are required but should already be defined by all.common.sh
-envar+=("FCST_START_TIME") # datetime for the start of the forecast (YYYYMMDDZHH)
+# Required environment variables:
+ envar=()
+ envar+=("ROOT_GODAS_DIR")    # Path to the hybrid-godas root code/source directory
+ envar+=("CYCLE")             # The datetime of the current cycle and analysis time (YYYYMMDDHH)
+ envar+=("DA_SLOT")           # The offset (in days) from the analysis time
+                              # (e.g.  "-5" or "+0")
+ envar+=("FCST_DIR")          # The directory that the forecast is runnin in
+ envar+=("BKG_FILE")          # filename the the combined output file should be moved to 
+ envar+=("FCST_IO_PROC")      # The number of processors used for the MOM6 output and 
+                              # therefore the max number of files that need to be combined
+ envar+=("FCST_IO_MISS")      # id's of the output files that will be missing (due to
+                              # blocks being entirely on land) (e.g. ".0024")
+ envar+=("FCST_FILE_MINAGE")  # Minimum age, in seconds, a file should be before
+                              # trying to use it.
+ envar+=("FCST_FILE_MINSIZE") # Minimum size, in bytes, a file should be before
+                              # trying to use it.
+ envar+=("FCST_START_TIME")   # datetime for the start of the forecast (YYYYMMDDHH)
 #================================================================================
 #================================================================================
 
 
-# run common script setup
-set -e
-scriptsdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source ${scriptsdir}/all.common.sh
-envar_check "${envar[@]}"
+# make sure the required env vars exist
+for v in ${envar[@]}; do
+    if [[ -z "${!v}" ]]; then
+	echo "ERROR: env var $v is not set. ${!v}"; exit 1
+    fi
+    echo " $v = ${!v}"
+done
 set -u
+echo ""
 
 
-#--------------------------------------------------------------------------------
-#--------------------------------------------------------------------------------
+dtz(){ echo ${1:0:8}Z${1:8:10};  }
 
 
 # determine which file(s) we should be looking at
 #  the result will be placed in the "files" array
-fdate=$(date "+%Y%m%d" -d "$CYCLE + $DA_SLOT days")
-file_base="$(date "+%Y%m%d" -d "$FCST_START_TIME").ocean_daily_$(date "+%Y_%m_%d" -d "$fdate").nc"
+fdate=$(date "+%Y%m%d" -d "$(dtz $CYCLE) + $DA_SLOT days")
+file_base="$(date "+%Y%m%d" -d "$(dtz $FCST_START_TIME)").ocean_daily_$(date "+%Y_%m_%d" -d "$fdate").nc"
 files=()
 if [[ $FCST_IO_PROC -gt 1 ]]; then
     for f in $(seq -f "%04g" 0 $(($FCST_IO_PROC-1)) ); do
 	valid=true
-	for g in ${FCST_IO_MISS[@]}; do
+	for g in $FCST_IO_MISS; do
 	    if [[ "$f" == "$g" ]]; then valid=false; break; fi
 	done
 	if [[ $valid == false ]]; then continue; fi
@@ -140,11 +138,11 @@ cd $FCST_DIR
 if [[ "$FCST_IO_PROC" -gt 1 ]]; then
 
     # remove the output file if it already exists
-    if [[ -f $file_base ]]; then
-	error "Removing already existing output file $file_base"
-	rm $file_base;
+    if [[ -f $outputfile ]]; then
+	echo "WARNING: Removing already existing output file $outputfile"
+	rm $outputfile;
     fi    
 
     echo "Performing mppncombine"
-    $ROOT_DIR/build/mppnccombine -m -64 $outputfile ${files[@]}
+    $ROOT_GODAS_DIR/build/mppnccombine -m -64 $outputfile ${files[@]}
 fi

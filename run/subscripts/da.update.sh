@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 cat << \#\#
 
 #================================================================================
@@ -8,63 +8,91 @@ cat << \#\#
 #   Post EnKF/3DVar step (restart file updates, etc)
 #================================================================================
 ##
-# Travis.Sluka
 #
 # Prerequisites:
 #
 # Results:
 #
-# Required MANUALLY defined environment variables:
-#  * The following need to be defined by the caller of this script:
-envar+=("ROOT_DIR")
-envar+=("EXP_DIR")
-envar+=("NPROC")
-
-envar+=("CYCLE_NEXT")
-envar+=("FCST_RST_TIME")
+# TODO: 
+#  * replace EXP_DIR to allow explicit definition of where each file goes
+#  * allow rst_dir to be configurable
+#  * make this work for hybrid
+#  * allow this to be run in parallel
+#  * move the full restart instead of linking (in case of running fcst on a swept partition)
 #
-# Required AUTOMATICALLY defined environment variables:
-#  * The following are required but should already be defined by all.common.sh
+# Required environment variables:
+  envar=()
+  envar+=("ROOT_GODAS_DIR")
+  envar+=("ROOT_EXP_DIR")
+  envar+=("ENS_LIST")
+  envar+=("JOB_WORK_DIR")
+#  envar+=("BKG_RST_DIR")
+#  envar+=("NPROC")
+  envar+=("FCST_RST_TIME")
+#  envar+=("DA_DIR")
+#================================================================================
 #================================================================================
 
 
-# run common script setup
-set -e
-scriptsdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source ${scriptsdir}/all.common.sh
-envar_check "${envar[@]}"
+# make sure required env vars exist
+for v in ${envar[@]}; do
+    if [[ -z "${!v}" ]]; then
+	echo "ERROR: env var $v is not set."; exit 1
+    fi
+    echo " $v = ${!v}"
+done
 set -u
+echo ""
 
 
-#--------------------------------------------------------------------------------
-#--------------------------------------------------------------------------------
+# # directory definitions
+# # TODO: handle hybrid
+# var_dir=$DA_DIR/var
+
+# puts the "Z" in datetime strings to make "date" tool happy
+dtz(){ echo ${1:0:8}Z${1:8:10}; }
 
 
-# Check to make sure the restart directory has not already had an analysis increment applied
-# TODO : allow rst_dir to be configurable
-rst_dir=$EXP_DIR/fcst_rst/mem_0001/%Y%m%d%H
-rst_dir=$(date "+$rst_dir" -d "$FCST_RST_TIME")
-status_file=$rst_dir/da_update
-echo "Updating restart in directory:"
-echo " $rst_dir"
-if [[ -f "$status_file" ]]; then
-    error "It appears the analysis increment has already been applied to the given restart directory"
-    # TODO : test to see if AI was SUCCESSFULLY applied (check value in the status_file)
-    exit 1
-fi
+# todo, use properly defined working directories
+rst_dir=$ROOT_EXP_DIR/fcst_rst/mem_#mem#/%Y%m%d%H
+ana_files=$JOB_WORK_DIR/da.letkf/OUTPUT/#mem#.nc    #Temp,Salt
+bkg_files=$JOB_WORK_DIR/da.prep/bkg_rst/mem_#mem#/MOM.res.nc
+prev_files=$JOB_WORK_DIR/fcst.run/mem_#mem#/RESTART/
+
+rst_dir=$(date "+$rst_dir" -d "$(dtz $FCST_RST_TIME)")
 
 
-# TODO : 3dvar directory configurable
-var_dir=$WORK_DIR/3dvar_$CYCLE
+for m in $ENS_LIST; do
+    if [[ -d "$rst_dir" ]]; then
+	echo "ERROR: restart directory already exists: $rst_dir"
+	exit 1
+    fi
+    echo ""
+    echo "creating new restart files for $m"
 
-# move output files
-# - ana_inc, ana_diag, bgvar, vtloc, obs.varqc.nc
+    r=${rst_dir//\#mem\#/$m}
+    p=${prev_files//\#mem\#/$m}
+    b=${bkg_files//\#mem\#/$m}
+    a=${ana_files//\#mem\#/$m}
 
-# create status file to indicate we are starting the AI update
-echo "0" > $status_file
 
-# apply restart update
-aprun -n $NPROC $ROOT_DIR/build/update_restart $var_dir/ana_inc.nc $rst_dir/MOM.res.nc
-echo "1" > $status_file
+    if [[ -d $r ]]; then
+	echo "Removing old restart directory."
+	rm $r -r
+    fi
+    mkdir -p $r
 
-echo "$CYCLE_NEXT_NO_Z" > $EXP_DIR/cycle_status
+    # link files that we aren't going to modify
+    # TODO, need to copy, not link
+    for f in $p/*; do
+	ln -s $f $r/${f##*/}
+    done
+
+    # update restart files that need to be modified
+    rm $r/MOM.res.nc.*
+    $ROOT_GODAS_DIR/tools/rst_update.py $b $a $r/MOM.res.nc -vars Temp,Salt
+done 
+
+
+# All done, make sure everything is ready to start the next cycle
+# TODO

@@ -10,3 +10,6 @@
 [submodule "src/datetime/datetime-fortran"]
 	path = src/datetime/datetime-fortran
 	url = https://github.com/wavebitscientific/datetime-fortran.git
+[submodule "src/letkf"]
+	path = src/letkf
+	url = https://github.com/travissluka/UMD-LETKF.git

@@ -1,32 +1,44 @@
 #!/bin/bash
+set -e
+set -u
 
-# determine the exp directory
+#================================================================================
+#================================================================================
+# NCEP Hybrid-GODAS  -  hybridgodas.runstep
+#   Using a supplied configuration file, generates a rocoto xml file
+#   that is then used to launch the jobs for the hybrid-GODAS
+#================================================================================
+
+# determine the experiment directory
+#  (should be the same directory this file, or a link to the file, is in)
 exp_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 exp_dir="$(readlink -f $exp_dir)"
 
 
-# Load in all user and system env configurations
+# Load in all user and system environment configurations
 config_file="$exp_dir/config/hybridgodas.config"
-set -a
 source $config_file
-set +a   
 
 
 # other file locations
 rocoto_file="$exp_dir/config/rocoto/hybridgodas.rocoto.xml"
 rocoto_db="$exp_dir/config/rocoto/hybridgodas.rocoto.db"
-rocoto_template=$ROOT_DIR/run/rocoto/hybridgodas.template.xml
+rocoto_template="$ROOT_DIR/run/rocoto/hybridgodas.template.xml"
+
 
 
 # determine if the rocoto xml file needs to be regnerated
+#  &make_xml will be set to 1 if a new file is to be generated
 #------------------------------------------------------------
 mkdir -p config/rocoto
+
 make_xml=0
 if [[ ! -f "$rocoto_file" ]]; then
     # if rocoto xml file is missing
     make_xml=1
 else
-    # if rocoto xml file is older than the main config file
+    # if rocoto xml file is older than the main config file or
+    # the template xml file
     d1=($(stat --printf="%Y" $config_file))
     d2=($(stat --printf="%Y" $rocoto_file))
     d3=($(stat --printf="%Y" $rocoto_template))
@@ -35,8 +47,7 @@ else
     fi  
     if [[ $d3 -gt $d2 ]]; then 
 	make_xml=1
-    fi  
-
+    fi
 fi
 
 
@@ -44,17 +55,19 @@ fi
 
 # If a new XML file needs to be generated
 #------------------------------------------------------------
-if [[ "$make_xml" == 1 ]]; then
+if [[ "$make_xml" -eq 1 ]]; then
     echo "Generating new ROCOTO XML file..."
 
-    export MEM_LIST="$(seq -s ' ' -f "%04g" 1 $ENS_SIZE)"
+    # TODO : check for consistency in ensemble parameters
 
-    if [[ $ENS_SIZE -gt 1 ]]; then
-	export IF_LETKF_START=""
+    export ENS_LIST="$(seq -s ' ' -f "%04g" 1 $ENS_SIZE)"
+
+    # Flags for if LETKF should be enabled
+    if [[ $DA_MODE == "hyb" || $DA_MODE == "ekf" ]]; then
+     	export IF_LETKF_START=""
 	export IF_LETKF_END=""
 	export IF_NOT_LETKF_START="<!-- enable only if NOT doing ensemble DA"
 	export IF_NOT_LETKF_END="-->"
-
     else
 	export IF_LETKF_START="<!-- enabled only if doing ensemble DA"
 	export IF_LETKF_END="-->"
@@ -62,12 +75,12 @@ if [[ "$make_xml" == 1 ]]; then
 	export IF_NOT_LETKF_END=""
     fi
 
-    if [[ ($ENS_SIZE -eq 1) || ($ENSEMBLE -ne 0) ]]; then
+    # Flags for if 3DVar should be enabled
+    if [[ $DA_MODE = "var" || $DA_MODE = "hyb" ]]; then
 	export IF_3DVAR_START=""
 	export IF_3DVAR_END=""
 	export IF_NOT_3DVAR_START="<!-- enabled only if NOT doing 3dvar"
 	export IF_NOT_3DVAR_END="-->"
-
     else
 	export IF_3DVAR_START="<!-- not enabled if not doing 3dvar"
 	export IF_3DVAR_END="-->"
@@ -75,25 +88,16 @@ if [[ "$make_xml" == 1 ]]; then
 	export IF_NOT_3DVAR_END=""
     fi
 
-    if [[ ($ENS_SIZE -gt 1) && ($ENSEMBLE -ne 0) ]]; then
-	export IF_ENSEMBLE_START=""
-	export IF_ENSEMBLE_END=""
-	export IF_NOT_ENSEMBLE_START="<!-- enabled only if NOT doing hybrid DA"
-	export IF_NOT_ENSEMBLE_END="-->"
-
-    else
-	export IF_ENSEMBLE_START="<!-- enabled only if doing hybrid DA"
-	export IF_ENSEMBLE_END="-->"
-	export IF_NOT_ENSEMBLE_START=""
-	export IF_NOT_ENSEMBLE_END=""
-    fi
-
-    
-    # TODO: check this calculation, move the logic for this into the common script
-    # TODO: change DA_TIMESLOTS to be in units of hours instead of days (in case we want sub daily DA cycles)
-    # TODO: is there a variable already for the width, in hours, of each timeslot?
+     
+    # # TODO: check this calculation, move the logic for this into the common script
+    # # TODO: change DA_TIMESLOTS to be in units of hours instead of days (in case we want sub daily DA cycles)
+    # # TODO: is there a variable already for the width, in hours, of each timeslot?
     s1=$(( $DA_WNDW_OFST / 24 -  ($DA_TIMESLOTS-1)/2))  
     export DA_WNDW_SLOTS=$(seq -s ' ' -f "%+02g" $s1 $(($s1 + $DA_TIMESLOTS -1)) )
+
+
+    #TODO: fix cycledef for leapyears
+    export CYCLEDEF="<cycledef>${CYCLE_START}00 ${CYCLE_END}00 ${CYCLE_LEN}:00:00</cycledef>"
 
 
     # All done defining variables, generate the rocoto XML file that is used to manage the jobs
@@ -105,7 +109,7 @@ fi
 # (Needed because of special logic in the subscripts to handle the leap day issue that rocoto
 #   can't handle on its own)
 if [[ ! -f "$exp_dir/cycle_status" ]]; then
-    echo "$CYCLE_START" > cycle_status
+    echo "ini:$CYCLE_START" > cycle_status
 fi
 
 

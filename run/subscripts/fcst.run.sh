@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 cat << \#\#
 
 #================================================================================
@@ -9,12 +9,7 @@ cat << \#\#
 #================================================================================
 ##
 #
-# Travis.Sluka@noaa.gov / tsluka.umd.edu
-#
 # Prerequisites:
-#  * The $FCST_DIR location must already be setup by the fcst.prep.sh step with
-#    the MOM6 configuration and required files in place, including surface forcing
-#    files, and restart files (if doing a restart).
 #
 # Results:
 #  * MOM6 forecasts will run in the $FCST_DIR location.
@@ -22,32 +17,30 @@ cat << \#\#
 #  * other output files will NOT be moved out of the working directory by this
 #    script, other jobsteps handle that task
 #
-# Required MANUALLY defined environment variables:
-#  * The following need to be specified by the caller of this script
-envar+=("ROOT_DIR")    # The path to the hybrid-godas root code/source directory
-envar+=("EXP_DIR")     # The path to the experiment directory
-envar+=("FCST_DIR")    # The directory that the forecast will be run in
-envar+=("PPN")         # Number of cores per node (procs per node)
-envar+=("NODES")       # Number of nodes to use for MPI enabled forecast
-envar+=("RST_DIR")     # name of directory that the RESTART output should be moved to
-#
-# Required AUTOMATICALLY defined environment variables:
-#  * The following are required but should already be defined by all.common.sh
-#  <none>
+# Required environment variables:
+ envar=()
+ envar+=("FCST_DIR")         # The directory that the forecast will be run in
+ envar+=("FORC_DIR")         # directory for the generated surface forcings
+ envar+=("RST_DIR")
+ envar+=("PPN")              # Number of cores per node (procs per node)
+ envar+=("NODES")            # Number of nodes to use for MPI enabled forecast
+ envar+=("FCST_RST_TIME")    # datetime for forecast restart outptut (YYYYMMDDHH)
+ envar+=("FCST_START_TIME")  # datetime for start of forecast (YYYYMMDDHH)
+ envar+=("FCST_LEN")         # length of forecast (hours)
+ envar+=("FCST_RESTART")     # 1 if yes, 0 if no
 #================================================================================
 #================================================================================
 
 
-# run common script initialization, and make sure required env vars exist
-set -e
-scriptsdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source ${scriptsdir}/all.common.sh
-envar_check "${envar[@]}"
+# make sure required env vars exist
+for v in ${envar[@]}; do
+    if [[ -z "${!v}" ]]; then
+	echo "ERROR: env var $v is not set."; exit 1
+    fi
+    echo " $v = ${!v}"
+done
+echo ""
 set -u
-
-
-#--------------------------------------------------------------------------------
-#--------------------------------------------------------------------------------
 
 
 # calculate number of cores needed
@@ -55,18 +48,46 @@ NPROC=$(($PPN * $NODES))
 echo "Running with $NPROC cores"
 
 
-# run the forecast
+# setup the foreacst directory
+#------------------------------------------------------------
+echo "Setting up forecast working directory in:"
+echo " $FCST_DIR"
+if [[ -e "$FCST_DIR" ]]; then
+    echo "WARNING: $FCST_DIR already exists, removing."
+    rm -rf $FCST_DIR
+fi
+mkdir -p $FCST_DIR
 cd $FCST_DIR
+
+mkdir -p OUTPUT
+ln -s $FORC_DIR FORC
+ln -s $ROOT_GODAS_DIR/build/MOM6 .
+
+# namelist files
+cp $ROOT_EXP_DIR/config/mom/* .
+source diag_table.sh > diag_table
+source input.nml.sh > input.nml
+
+# static input files
+mkdir -p INPUT
+ln -s $ROOT_GODAS_DIR/run/config/mom_input/* INPUT/
+
+# link restart files
+dtz() { echo "${1:0:8}Z${1:8:10}"; }
+t=$(dtz $FCST_START_TIME)
+rst_dir_in=$(date "+$RST_DIR" -d "$t")
+ln -s $rst_dir_in ./RESTART_IN
+
+# output directory for restart files
+#t=$(dtz $FCST_RST_TIME)
+#rst_dir_out=$(date "+rst_dir" -d "$t")
+#mkdir -p $rst_dir_out
+#ln -s $rst_dir_out ./RESTART
+mkdir -p RESTART
+
+
+# run the forecast
+#------------------------------------------------------------
+echo "running MOM..."
 aprun -n $NPROC ./MOM6
 
-
-# move the restart files to their desired final location
-rst_dir=$(date "+$RST_DIR" -d "$FCST_RST_TIME")
-echo "moving restart files to:"
-echo " $rst_dir"
-if [[ -e "$rst_dir" ]]; then
-    echo "WARNING, restart directory already exists, removing old one"
-    rm -r $rst_dir
-fi
-mkdir -p $rst_dir
-mv $FCST_DIR/RESTART/* $rst_dir/

@@ -1,206 +1,241 @@
 <?xml version="1.0"?>
 <!DOCTYPE workflow
 [
+<!--================================================================================
+  NCEP Hybrid-GODAS
+    rocoto XML workflow configuration file
+    generated from hybridgodas.template.xml
+================================================================================-->
+
 
 <!-- experiment specific parameters -->
-<!ENTITY EXP_DIR         "${EXP_DIR}">
-<!ENTITY EXP_NAME        "${EXP_NAME}">
-<!ENTITY MEM             "${MEM_LIST}">
-<!ENTITY CYCLE_START     "${CYCLE_START}">
-
-<!-- fixed directory locations -->
-<!ENTITY ROOT_DIR        "${ROOT_DIR}">
-<!ENTITY WORK_DIR        "${WORK_DIR}">
-
-<!-- forecast/da window lengths and timing-->
-<!ENTITY CYCLE_LEN       "${CYCLE_LEN}">
-<!ENTITY DA_WNDW_SLOTS   "${DA_WNDW_SLOTS}">
+<!ENTITY ROOT_GODAS_DIR        "${ROOT_DIR}">
+<!ENTITY ROOT_EXP_DIR          "${EXP_DIR}">
+<!ENTITY EXP_NAME              "${EXP_NAME}">
+<!ENTITY ENS_LIST              "${ENS_LIST}">
 
 
-<!-- machine / scheduler specific parameters -->
-<!ENTITY PPN                         "36">
-<!ENTITY SCHED                       "moab">
-<!ENTITY SCHED_ACCT                  "${SCHED_ACCT}">
-<!ENTITY SCHED_S_ARGS                "-l partition=es">
-<!ENTITY SCHED_S_QUEUE               "ldtn">
-<!ENTITY SCHED_P_ARGS                "-l partition=c4">
-<!ENTITY SCHED_P_QUEUE               "${SCHED_QUEUE}">
-
-<!ENTITY fcst.prep_WALLTIME          "5:00">
-<!ENTITY fcst.run_NODES              "20">
-<!ENTITY fcst.run_SCHED_NATIVE       "&SCHED_P_ARGS; -l size=&fcst.run_NODES;">
-<!ENTITY fcst.run_SCHED_QUEUE        "&SCHED_P_QUEUE;">
-<!ENTITY fcst.run_WALLTIME           "15:00">
-<!ENTITY fcst.cmb_WALLTIME           "2:00">
-<!ENTITY da.obsop_WALLTIME           "2:00">
-<!ENTITY da.3dvar.prep_WALLTIME      "2:00">
-<!ENTITY da.3dvar.run_NODES          "2">
-<!ENTITY da.3dvar.run_SCHED_NATIVE   "&SCHED_P_ARGS; -l size=&da.3dvar.run_NODES;">
-<!ENTITY da.3dvar.run_WALLTIME       "10:00">
-<!ENTITY da.update_WALLTIME          "2:00">
+<!-- forecast/da parameters -->
+<!ENTITY CYCLEDEF "
+ ${CYCLEDEF}
+">
+<!ENTITY DA_WNDW_SLOTS         "${DA_WNDW_SLOTS}">
 
 
-<!-- ============================================================ -->
-<!-- "Shouldn't" need to edit anything below here -->
-<!-- ============================================================ -->
+<!-- machine /scheduler specific parameters -->
+<!-- TODO: move these to a system config file -->
+<!ENTITY PPN                       "36">
+<!ENTITY SCHED                     "moab">
+<!ENTITY SCHED_ACCT                "${SCHED_ACCT}">
+<!ENTITY SCHED_S_QUEUE             "ldtn">
+<!ENTITY SCHED_S_ARGS              "-l partition=es">
+<!ENTITY SCHED_P_QUEUE             "${SCHED_QUEUE}">
+<!ENTITY SCHED_P_ARGS              "-l partition=c4">
+
+<!ENTITY fcst.prep.WALLTIME        "5:00">
+<!ENTITY fcst.run.NODES            "20">
+<!ENTITY fcst.run.SCHED_ARGS       "&SCHED_P_ARGS; -l size=&fcst.run.NODES;">
+<!ENTITY fcst.run.WALLTIME         "10:00">
+<!ENTITY da.prep.WALLTIME          "10:00">
+<!ENTITY da.3dvar.prep.WALLTIME    "5:00">
+<!ENTITY da.3dvar.run.NODES        "3">
+<!ENTITY da.3dvar.run.SCHED_ARGS   "&SCHED_P_ARGS; -l size=&da.3dvar.run.NODES;">
+<!ENTITY da.3dvar.run.WALLTIME     "10:00">
+<!ENTITY da.letkf.run.NODES        "2">
+<!ENTITY da.letkf.run.SCHED_ARGS   "&SCHED_P_ARGS; -l size=&da.letkf.run.NODES;">
+<!ENTITY da.letkf.run.WALLTIME     "10:00">
+<!ENTITY da.update.WALLTIME        "5:00">
+<!ENTITY da.post.WALLTIME          "5:00">
+
+
+
+
+<!--============================================================-->
+<!-- "shouldn't" need to edit anything below here -->
+<!--============================================================-->
+
+<!-- only parameters that should NEVER need to be changed are included below.
+     Other user configurable environment variables that rocoto doesnt need to know about
+     may be found in the experiment and system configuration files that are loaded by 
+     the jobwrapper.sh script that is run before each job -->
+
 
 <!-- rocoto parameters -->
-<!ENTITY MAXTRIES        "2">
-<!ENTITY MAX_CYCLES      "1">
+<!ENTITY MAXTRIES       "200">
+<!ENTITY MAXCYCLES      "1">
+
+
+<!-- cycle info -->
+<!ENTITY CYCLE           "<cyclestr>@Y@m@d@H</cyclestr>">
+<!ENTITY CYCLE_Z         "<cyclestr>@Y@m@dZ@H</cyclestr>">
 
 
 <!-- fixed directory locations -->
-<!ENTITY SCRIPT_DIR      "&ROOT_DIR;/run/subscripts">
+<!ENTITY EXE_DIR         "&ROOT_GODAS_DIR;/build">
+<!ENTITY SCRIPT_DIR      "&ROOT_GODAS_DIR;/run/subscripts">
+<!ENTITY SCRIPT_WRAPPER  "source &ROOT_GODAS_DIR;/run/rocoto/jobwrapper.sh;">
 
-<!-- cycle info -->
-<!ENTITY CYCLE           "<cyclestr>@Y@m@dZ@H</cyclestr>">
-<!ENTITY CYCLE_NO_Z      "<cyclestr>@Y@m@d@H</cyclestr>">
 
-<!-- generated directory locations -->
-<!ENTITY LOG_DIR         "&EXP_DIR;/log">
-<!ENTITY LOG_PREFIX      "&LOG_DIR;/@Y/@Y@m@d@H/@Y@m@d@H">
-<!ENTITY LOG_PREFIX_ENS  "&LOG_DIR;/@Y/@Y@m@d@H/mem_#mem#/@Y@m@d@H">
-<!ENTITY FCST_DIR        "&WORK_DIR;/fcst_&CYCLE_NO_Z;/mem_#mem#">
-<!ENTITY FORC_DIR        "&WORK_DIR;/forc_&CYCLE_NO_Z;">
+<!-- generated output directory locations -->
+<!ENTITY LOG_DIR         "&ROOT_EXP_DIR;/log">
+<!ENTITY LOG_PREFIX      "&LOG_DIR;/<cyclestr>@Y/@Y@m@d@H/</cyclestr>">
+<!ENTITY LOG_PREFIX_ENS  "&LOG_DIR;/<cyclestr>@Y/@Y@m@d@H/mem_#mem#/</cyclestr>">
+
+<!ENTITY RST_DIR         "&ROOT_EXP_DIR;/fcst_rst/mem_#mem#/&#37;Y&#37;m&#37;d&#37;H">
+
+<!ENTITY NILL_BKG_FILE        "/AHHHH/&ROOT_EXP_DIR;/bkg/ens/mem_#mem#/&#37;Y&#37;m&#37;d.nc">
+<!ENTITY NILL_OMF_FILE        "/AHHHH/&ROOT_EXP_DIR;/bkg/omf/mem_#mem#/&CYCLE;.nc">
+
+
+<!-- generated temporary directory locations -->
+<!ENTITY WORK_DIR         "${WORK_DIR}/cycle_&CYCLE;">
+
+
+
+<!ENTITY NILL_FORC_DIR        "&TMP_DIR;/fcst.prep">
+<!ENTITY NILL_FCST_DIR        "/AHHHH/&TMP_DIR;/fcst/mem_#mem#">
+<!ENTITY NILL_OBSOP_DIR       "/AHHHH/&TMP_DIR;/obsop/mem_#mem#/t#slot#">
+<!ENTITY NILL_OMF_SLOT_FILE   "/AHHHH/&OBSOP_DIR;/obs.nc">
+<!ENTITY NILL_DA_DIR          "/AHHHH/&TMP_DIR;/da">
+<!ENTITY NILL_VAR_DIR         "/AHHHH/&DA_DIR;/var">
+
+<!-- common scheduler blocks-->
+<!ENTITY COM_SCHED_S  "
+  <account>&SCHED_ACCT;</account>
+  <queue>&SCHED_S_QUEUE;</queue>
+  <cores>1</cores>
+  <native>&SCHED_S_ARGS;</native>
+">
+
 
 <!-- common environment blocks -->
-<!-- NOTE: most of the subscripts are happier with the "Z" there to separate the hour, but 
-some small places are not, hence "CYCLE_NO_Z".. TODO: need to pick one format for everything-->
-<!ENTITY ENV_COMMON "
+<!ENTITY COM_ENV "
   <envar>
-    <name>ROOT_DIR</name>
-    <value>&ROOT_DIR;</value>
+    <name>ROOT_GODAS_DIR</name>
+    <value>&ROOT_GODAS_DIR;</value>
   </envar>
   <envar>
-    <name>WORK_DIR</name>
-    <value>&WORK_DIR;</value>
-  </envar>
-  <envar>
-    <name>EXP_DIR</name>
-    <value>&EXP_DIR;</value>
+    <name>ROOT_EXP_DIR</name>
+    <value>&ROOT_EXP_DIR;</value>
   </envar>
   <envar>
     <name>CYCLE</name>
     <value>&CYCLE;</value>
   </envar>
   <envar>
-    <name>CYCLE_NO_Z</name>
-    <value>&CYCLE_NO_Z;</value>
+    <name>EXE_DIR</name>
+    <value>&EXE_DIR;</value>
   </envar>
-  <envar>
-    <name>CYCLE_LEN</name>
-    <value>&CYCLE_LEN;</value>
-  </envar>
-">
-
-<!ENTITY ENV_FCST "
-  <envar>
-    <name>FCST_DIR</name>
-    <value>&FCST_DIR;</value>
-  </envar>
-  <envar>
-    <name>RST_DIR</name>
-    <value>&EXP_DIR;/fcst_rst/mem_#mem#/&#37;Y&#37;m&#37;d&#37;H</value>
-  </envar>
-">
-
-<!ENTITY ENV_MEM "
- <envar>
-  <name>ENS_MEM</name>
-  <value>#mem#</value>
- </envar>
 ">
 
 ]>
 
 
 
-<!-- ============================================================ -->
-<!-- ============================================================ -->
-
-
-<workflow realtime="F" scheduler="&SCHED;" cyclethrottle="&MAX_CYCLES;">
-
-  <!-- TODO : need to be able to handle leap days -->
-  <cycledef>&CYCLE_START;00  ${CYCLE_END}00 &CYCLE_LEN;:00:00</cycledef>
-
-  <log verbosity="10"><cyclestr>&LOG_PREFIX;.workflow.log</cyclestr></log>
+<!--================================================================================-->
+<!--================================================================================-->
 
 
 
-  <!--************************************************************-->
-  <!-- ensemble forecast preparation-->
-  <!--   (directory setup and ensemble member surface forcing) -->
-  <!--************************************************************-->
+<workflow realtime="F" scheduler="&SCHED;" cyclethrottle="&MAXCYCLES;">
+
+  &CYCLEDEF;
+  <log verbosity="10">&LOG_PREFIX;workflow.log</log>
+
+
+
+  <!--********************************************************************************
+    fcst.prep  -  ensemble forecast preparation                
+      * Prepares ensemble surface forcings                     
+      * sets up forecast working directory                     
+   ********************************************************************************-->
   <task name="fcst.prep" maxtries="&MAXTRIES;">
 
     <jobname>&EXP_NAME;.fcst.prep</jobname>
-    <command>&SCRIPT_DIR;/fcst.prep.sh</command>
-    <join><cyclestr>&LOG_PREFIX;.fcst.prep.log</cyclestr></join>       
-    
-    <account>&SCHED_ACCT;</account>
-    <queue>&SCHED_S_QUEUE; </queue>
-    <cores>1</cores>
-    <native>&SCHED_S_ARGS;</native>
-    <walltime>&fcst.prep_WALLTIME;</walltime>
-    
-    &ENV_COMMON;
-    &ENV_MEM;
-    &ENV_FCST;
+    <command>
+      &SCRIPT_WRAPPER;
+      &SCRIPT_DIR;/fcst.prep.sh
+    </command>
+    <join>&LOG_PREFIX;fcst.prep.log</join>
+    <walltime>&fcst.prep.WALLTIME;</walltime>
+    &COM_SCHED_S;
+
+    &COM_ENV;
     <envar>
-      <name>FCST_RESTART</name>
-      <value>-1</value>
+      <name>JOB_WORK_DIR</name>
+      <value>&WORK_DIR;/fcst.prep/work</value>
     </envar>    
     <envar>
       <name>FORC_DIR</name>
-      <value>&FORC_DIR;</value>
+      <value>&WORK_DIR;/fcst.prep</value>
+    </envar>    
+    <envar>
+      <name>ENS_LIST</name>
+      <value>&ENS_LIST;</value>
     </envar>
 
   </task>
 
 
 
-  <!--************************************************************-->
-  <!-- ensemble forecast run-->
-  <!--************************************************************-->
+
+  <!--********************************************************************************
+    fcst.run  -  ensemble forecast run
+      * Runs the ensemble of MOM6 forecasts
+      * NOTE: the FCST_RESTART env var is specially set here indicating a restart
+        should be performed unless the "cycle_status" file contains "init:$CYLCE"
+	* TODO: don't need this anymore, now that dir init moved to fcst.run ?
+   ********************************************************************************-->
   <metatask name="fcst.run.all">
-    <var name="mem">&MEM;</var>
+    <var name="mem">&ENS_LIST;</var>
     <task name="fcst.run.#mem#" maxtries="&MAXTRIES;">
-
+      
       <jobname>&EXP_NAME;.fcst.run.#mem#</jobname>
-      <command>&SCRIPT_DIR;/fcst.run.sh</command>
-      <join><cyclestr>&LOG_PREFIX_ENS;.fcst.run.#mem#.log</cyclestr></join>
-
+      <command>
+        &SCRIPT_WRAPPER;
+	export FCST_RESTART=$([[ $(cat cycle_status) == "ini:&CYCLE;" ]] &#38;&#38; echo 0 || echo 1)
+        &SCRIPT_DIR;/fcst.run.sh
+      </command>
+      <join>&LOG_PREFIX_ENS;fcst.run.#mem#.log</join>
+      <walltime>&fcst.run.WALLTIME;</walltime>
       <account>&SCHED_ACCT;</account>
-      <queue>&SCHED_P_QUEUE; </queue>
-      <nodes>&fcst.run_NODES;:ppn=&PPN;</nodes>
-      <native>&fcst.run_SCHED_NATIVE;</native>
-      <walltime>&fcst.run_WALLTIME;</walltime>
+      <queue>&SCHED_P_QUEUE;</queue>
+      <nodes>&fcst.run.NODES;:ppn=&PPN;</nodes>
+      <native>&fcst.run.SCHED_ARGS;</native>
 
-      &ENV_COMMON;
-      &ENV_MEM;
-      &ENV_FCST;
+      &COM_ENV;
       <envar>
 	<name>NODES</name>
-	<value>&fcst.run_NODES;</value>
+	<value>&fcst.run.NODES;</value>
       </envar>
       <envar>
 	<name>PPN</name>
 	<value>&PPN;</value>
       </envar>
-
+      <envar>
+	<name>FCST_DIR</name>
+	<value>&WORK_DIR;/fcst.run/mem_#mem#</value>
+      </envar>          
+      <envar>
+	<name>FORC_DIR</name>
+	<value>&WORK_DIR;/fcst.prep/mem_#mem#</value>
+      </envar>    
+      <envar>
+	<name>RST_DIR</name>
+	<value>&RST_DIR;</value>
+      </envar>    
+      
       <dependency>
-  	<and>
-  	  <taskdep task="fcst.prep"/>
-	  <!-- must be the first date of a cycle, or
-	       previous analysis must have finished -->
+	<and>
+	  <taskdep task="fcst.prep"/>
 	  <rb>
-	    <!--TODO, need to pick a format for time and stick with it (with or without the Z)-->
-	    f = "&EXP_DIR;/cycle_status"
-	    d=File.open(f,"r").gets.strip
-	    d == ymdh || d == "&CYCLE_NO_Z;"
+	    <!-- must be the first date of a cycle, 
+		 or previous analysis must have finished -->
+	    f = "&ROOT_EXP_DIR;/cycle_status"
+	    d=File.open(f,"r").gets.strip[4,10]
+	    d == ymdh || d == "&CYCLE;"
 	  </rb>
-  	</and>
+	</and>
       </dependency>
 
     </task>
@@ -208,192 +243,217 @@ some small places are not, hence "CYCLE_NO_Z".. TODO: need to pick one format fo
 
 
 
-  <!--************************************************************-->
-  <!-- ensemble forecast daily output combine -->
-  <!--   - performs mppnccombine on daily output files as they are
-           completed, and moves files to their destinations -->
-  <!--************************************************************-->
-  <metatask name="fcst.cmb.all">
-    <var name="day">&DA_WNDW_SLOTS;</var>
-    <metatask name="fcst.cmb.t#day#.allmem">
-      <var name="mem">&MEM;</var>
-      <task name="fcst.cmb.t#day#.#mem#" maxtries="&MAXTRIES;">
 
-  	<jobname>&EXP_NAME;.fcst.combine.t#day#.#mem#</jobname>
-  	<command>&SCRIPT_DIR;/fcst.combine.sh</command>
-  	<join><cyclestr>&LOG_PREFIX_ENS;.fcst.combine.t#day#.#mem#.log</cyclestr></join>
+  <!--********************************************************************************
+    da.prep  -  data assimilation preparation
+      * Combines the MOM6 daily output file tiles into single files
+      * performs various observations operators for given ensemble member / timeslot
+      * setup to do either ALL timeslots as a single job (var "slot" set to "_all" below)
+        or each timeslot as a separate job (var "slot" set to "&DA_WNDW_SLOTS;" below)
+        * TODO  : this seems a little messy, any cleaner way of doing it?
+      * does any other per-ensemble member prep that letkf/3dvar requires
+       * TODO: the per ens da.letkf.prep.sh script will break if 
+   ********************************************************************************--> 
+  <metatask name="da.prep.all">
+    <!-- <var name="slot">&DA_WNDW_SLOTS;</var> -->
+    <var name="slot">_all</var> 
 
-  	<account>&SCHED_ACCT;</account>
-  	<queue>&SCHED_S_QUEUE;</queue>
-  	<cores>1</cores>
-  	<native>&SCHED_S_ARGS;</native>
-  	<walltime>&fcst.cmb_WALLTIME;</walltime>
+    <metatask name="da.prep.t#slot#.allmem">
+      <var name="mem">&ENS_LIST;</var>
+      <task name="da.prep.t#slot#.#mem#" maxtries="&MAXTRIES;">
 
-  	&ENV_COMMON;
-  	&ENV_MEM;
-  	&ENV_FCST;
-  	<envar>
-  	  <name>DA_SLOT</name>
-  	  <value>#day#</value>
-  	</envar>
-        <envar>
-          <name>BKG_FILE</name>
-	  <value>&EXP_DIR;/fcst_bkg/mem_#mem#/%Y%m%d.nc</value>
-	</envar>
+	<jobname>&EXP_NAME;.da.prep.t#slot#.#mem#</jobname>
+	<command>
+	  &SCRIPT_WRAPPER;
 
-  	<dependency>
-  	  <and>
-  	    <!-- fcst.prep should have finished for this member -->
-  	    <taskdep task="fcst.prep"/>
-  	    <!-- the forecast should have indicated it's started  -->
-  	    <datadep>&FCST_DIR;/time_stamp.out</datadep>
-  	    <!-- the fcst.combine script needs to check if all files are good and ready -->
-  	    <sh>&SCRIPT_DIR;/fcst.combine.sh -check</sh>
-  	  </and>
-  	</dependency>
+	  slots="#slot#"
+	  if [[ "&#36;slots" = "_all" ]]; then
+	    slots="&DA_WNDW_SLOTS;"; 
+	  else
+	    exit 1 #TODO, fix this
+	  fi    
+	  for s in &#36;slots; do
+	    export DA_SLOT=&#36;s
+	    export OBSOP_FILE=${OBSOP_FILE_TMPL//&#37;slot/&#36;s}
+	    &SCRIPT_DIR;/fcst.combine.sh
+  	    export TMP_DIR=&WORK_DIR;/da.prep/omf/work/mem_#mem#/t&#36;s
+	    &SCRIPT_DIR;/da.obsop.sh
+	  done
 
-      </task>
-    </metatask>
-  </metatask>
+	  &SCRIPT_DIR;/da.letkf.prep.sh
 
+	</command>
+	<join>&LOG_PREFIX_ENS;da.prep.t#slot#.#mem#.log</join>
+	<walltime>&da.prep.WALLTIME;</walltime>
+	&COM_SCHED_S;
 
-  <!--************************************************************-->
-  <!-- ensemble forecast daily output mean-->
-  <!-- TODO, enable only if doing ensembles -->
-  <!--************************************************************-->
-  ${IF_ENSEMBLE_START}
-  ${IF_ENSEMBLE_END}
-  <!-- <metatask name="fcst.cmb.alldays.mean"> -->
-  <!--   <var name="day">&DAYS;</var> -->
-  <!--   <task name="fcst.cmb.t#day#.mean" maxtries="&MAXTRIES;"> -->
-  <!--     <account>&SCHED_ACCT;</account> -->
-  <!--     <native>&SCHED_P_ARGS;</native> -->
-  <!--     <queue>&SCHED_P_QUEUE;</queue> -->
-  <!--     <cores>1</cores> -->
-  <!--     <walltime>1:00</walltime> -->
-  <!--     <join><cyclestr>&LOGPREFIX_ENSM;.fcst.cmb.t#day#.mean.log</cyclestr></join> -->
-  <!--     <command>&ROOTDIR;/test.sh</command> -->
-  <!--     <dependency> -->
-  <!-- 	<metataskdep metatask="fcst.cmb.t#day#.allmem"/> -->
-  <!--     </dependency> -->
-  <!--   </task> -->
-  <!-- </metatask> -->
+	&COM_ENV;
 
-
-
-  <!--************************************************************-->
-  <!-- ensemble observation operators -->
-  <!--************************************************************-->
-  <metatask name="da.obsop.all">
-    <var name="mem">&MEM;</var>
-    <metatask name="da.obsop.#mem#.alldays">
-      <var name="day">&DA_WNDW_SLOTS;</var>
-      <task name="da.obsop.t#day#.#mem#" maxtries="&MAXTRIES;">
-
-  	<jobname>&EXP_NAME;.da.obsop.t#day#.#mem#</jobname>
-  	<command>&SCRIPT_DIR;/da.obsop.sh</command>
-  	<join><cyclestr>&LOG_PREFIX_ENS;.da.obsop.t#day#.#mem#.log</cyclestr></join>
-
-  	<account>&SCHED_ACCT;</account>
-  	<queue>&SCHED_S_QUEUE;</queue>
-  	<cores>1</cores>
-  	<native>&SCHED_S_ARGS;</native>
-  	<walltime>&da.obsop_WALLTIME;</walltime>
-
-  	&ENV_COMMON;
-  	&ENV_MEM;
-  	&ENV_FCST;
-  	<envar>
-  	  <name>DA_SLOT</name>
-  	  <value>#day#</value>
-  	</envar>
-        <envar>
-          <name>BKG_FILE</name>
-	  <value>&EXP_DIR;/fcst_bkg/mem_#mem#/%Y%m%d.nc</value>
+	<envar>
+	  <name>FCST_DIR</name>
+	  <value>&WORK_DIR;/fcst.run/mem_#mem#</value>
 	</envar>
 	<envar>
-	  <name>OBSOP_FILE</name>
-	  <value>&EXP_DIR;/da_obsop/mem_#mem#/%Y%m%d.nc</value>
+	  <name>BKG_FILE</name>
+	  <value>&WORK_DIR;/da.prep/bkg/mem_#mem#/&#37;Y&#37;m&#37;d.nc</value>
+	</envar>	  
+	<envar>
+	  <name>OBSOP_FILE_TMPL</name>
+	  <value>&WORK_DIR;/da.prep/omf/mem_#mem#/t&#37;slot.nc</value>
 	</envar>
-
-  	<dependency>
-  	    <taskdep task="fcst.cmb.t#day#.#mem#"/>
-  	</dependency>
-
+	<envar>
+	  <name>BKG_RST_DIR</name>
+	  <value>&WORK_DIR;/da.prep/bkg_rst/mem_#mem#</value>
+	</envar>
+	<envar>
+	  <name>ANA_RST_DIR</name>
+	  <value>&WORK_DIR;/da.prep/ana_rst/mem_#mem#</value>
+	</envar>
+	  
+	
+	<dependency>
+	    <taskdep task="fcst.run.#mem#"/>
+	</dependency>
+	
       </task>
     </metatask>
   </metatask>
 
 
 
-  <!--************************************************************-->
-  <!-- 3dvar prep -->
-  <!--************************************************************-->
-  <!-- TODO : should actually depend on obsop of ensemble background mean, or ensemble ana mean -->
-  ${IF_3DVAR_START}
-  <task name="da.3dvar.prep" maxtries="&MAXTRIES;">
-    <jobname>&EXP_NAME;.da.3dvar.prep</jobname>
-    <command>&SCRIPT_DIR;/da.3dvar.prep.sh</command>
-    <join><cyclestr>&LOG_PREFIX;.da.3dvar.prep.log</cyclestr></join>
-    
+
+
+  <!--********************************************************************************
+    da.letkf.run  - LETKF Data assimilation
+      * 
+   ********************************************************************************-->
+  ${IF_LETKF_START}
+  <task name="da.letkf.run" maxtries="&MAXTRIES;">
+
+    <jobname>&EXP_NAME;.da.letkf.run</jobname>
+    <command>
+      &SCRIPT_WRAPPER;
+      &SCRIPT_DIR;/da.letkf.run.sh
+    </command>
+    <join>&LOG_PREFIX;da.letkf.run.log</join>
+    <walltime>&da.letkf.run.WALLTIME;</walltime>
     <account>&SCHED_ACCT;</account>
-    <queue>&SCHED_S_QUEUE;</queue>
-    <cores>1</cores>
-    <native>&SCHED_S_ARGS;</native>
-    <walltime>&da.3dvar.prep_WALLTIME;</walltime>
+    <queue>&SCHED_P_QUEUE;</queue>
+    <nodes>&da.letkf.run.NODES;:ppn=&PPN;</nodes>
+    <native>&da.letkf.run.SCHED_ARGS;</native>
 
-    &ENV_COMMON;
+    &COM_ENV;
     <envar>
-      <name>DA_WNDW_SLOTS</name>
-      <value>&DA_WNDW_SLOTS;</value>
+      <name>TMP_DIR</name>
+      <value>&WORK_DIR;/da.letkf</value>
     </envar>
-    <envar>
-      <name>OBSOP_FILE</name>
-      <value>&EXP_DIR;/da_obsop/mem_0001/%Y%m%d.nc</value>
-    </envar>
-    <envar>
-      <name>OBSOP_CMB_FILE</name>
-      <value>&EXP_DIR;/da_obsop_cmb/mem_0001/<cyclestr>@Y@m@d</cyclestr>.nc</value>
-    </envar>
-
-    <dependency>
-      <metataskdep metatask="da.obsop.all"/>
-    </dependency>
-  </task>
-  ${IF_3DVAR_END}
-
-
-  <!--************************************************************-->
-  <!-- 3dvar -->
-  <!--************************************************************-->
-  <!-- TODO - use ens mean for bkg -->
-  <!-- and <metataskdep metatask="da.obsop.mean.alldays"/> -->
-  ${IF_3DVAR_START}
-  <task name="da.3dvar" maxtries="&MAXTRIES;">
-
-    <jobname>&EXP_NAME;.da.3dvar.run</jobname>
-    <command>&SCRIPT_DIR;/da.3dvar.run.sh</command>
-    <join><cyclestr>&LOG_PREFIX;.da.3dvar.run.log</cyclestr></join>
-
-    <account>&SCHED_ACCT;</account>
-    <queue>&SCHED_P_QUEUE; </queue>
-    <nodes>&da.3dvar.run_NODES;:ppn=&PPN;</nodes>
-    <native>&da.3dvar.run_SCHED_NATIVE;</native>
-    <walltime>&da.3dvar.run_WALLTIME;</walltime>
-
-    &ENV_COMMON;
     <envar>
       <name>NODES</name>
-      <value>&da.3dvar.run_NODES;</value>
+      <value>&da.letkf.run.NODES;</value>
     </envar>
     <envar>
       <name>PPN</name>
       <value>&PPN;</value>
     </envar>
     <envar>
-      <name>BKG_FILE</name>
-      <value>&EXP_DIR;/fcst_bkg/mem_0001/%Y%m%d.nc</value>
+      <name>ENS_LIST</name>
+      <value>&ENS_LIST;</value>
     </envar>
+
+    <dependency>
+      <metataskdep metatask="da.prep.all"/>
+    </dependency>
+
+  </task>
+  ${IF_LETKF_END}
+
+
+
+
+  <!--********************************************************************************
+    da.3dvar.prep  -  3DVar Data assimilation preparation 
+      * combines observation operator from each ensemble member into a single file
+      * TODO: this doesn't do much, roll it into the da.3dvar.run job?
+      * TODO: modify to handle hybrid workflow
+   ********************************************************************************-->
+  ${IF_3DVAR_START}
+  <task name="da.3dvar.prep" maxtries="&MAXTRIES;">
+
+    <jobname>&EXP_NAME;.da.3dvar.prep</jobname>
+    <command>
+      export OMF_FILE=&#36;{OMF_FILE//#mem#/0001}
+      export OMF_SLOT_FILE=&#36;{OMF_SLOT_FILE//#mem#/0001}
+      export BKG_FILE=&#36;(date "+&#36;{BKG_FILE//#mem#/0001}" -d "&CYCLE_Z;")
+      &SCRIPT_WRAPPER;
+      &SCRIPT_DIR;/da.3dvar.prep.sh
+    </command>
+    <join>&LOG_PREFIX;da.3dvar.prep.log</join>
+    <walltime>&da.3dvar.prep.WALLTIME;</walltime>
+    &COM_SCHED_S;
+
+    &COM_ENV;
+    
+    <dependency>
+      <and>
+	<taskdep task="null"/>
+	<metataskdep metatask="da.prep.all"/>
+	${IF_LETKF_START} <taskdep task="da.letkf.run"/> ${IF_LETKF_END}
+      </and>
+    </dependency>
+
+  </task>
+  ${IF_3DVAR_END}
+    <!-- TODO, fix the names of OMF files (i.e. for when doing ensemble da) -->
+    <!-- <envar> -->
+    <!--   <name>TMP_DIR</name> -->
+    <!--   <value>&VAR_DIR;</value> -->
+    <!-- </envar> -->
+    <!-- <envar> -->
+    <!--   <name>OMF_SLOT_FILE</name> -->
+    <!--   <value>&OMF_SLOT_FILE;</value> -->
+    <!-- </envar> -->
+    <!-- <envar> -->
+    <!--   <name>OMF_FILE</name> -->
+    <!--   <value>&OMF_FILE;</value> -->
+    <!-- </envar>       -->
+    <!-- <envar> -->
+    <!--   <name>BKG_FILE</name> -->
+    <!--   <value>&BKG_FILE;</value> -->
+    <!-- </envar> -->
+
+
+
+
+  <!--********************************************************************************
+    da.3dvar.run  -  3DVar data assimilation
+      * Runs the 3dvar preparation (bgvar /vtloc programs)
+      * Runs the 3dvar
+   ********************************************************************************-->
+  ${IF_3DVAR_START}
+  <task name="da.3dvar.run" maxtries="&MAXTRIES;">
+
+    <jobname>&EXP_NAME;.da.3dvar.run</jobname>
+    <command>
+      &SCRIPT_WRAPPER;
+      &SCRIPT_DIR;/da.3dvar.run.sh
+    </command>
+    <join>&LOG_PREFIX;da.3dvar.run.log</join>
+    <walltime>&da.3dvar.run.WALLTIME;</walltime>
+    <account>&SCHED_ACCT;</account>
+    <queue>&SCHED_P_QUEUE;</queue>
+    <nodes>&da.3dvar.run.NODES;:ppn=&PPN;</nodes>
+    <native>&da.3dvar.run.SCHED_ARGS;</native>
+
+    &COM_ENV;
+    <envar>
+      <name>NODES</name>
+      <value>&da.3dvar.run.NODES;</value>
+    </envar>
+    <envar>
+      <name>PPN</name>
+      <value>&PPN;</value>
+    </envar>
+
     
     <dependency>
       <taskdep task="da.3dvar.prep"/>
@@ -401,78 +461,85 @@ some small places are not, hence "CYCLE_NO_Z".. TODO: need to pick one format fo
 
   </task>
   ${IF_3DVAR_END}
+    <!-- <envar> -->
+    <!--   <name>TMP_DIR</name> -->
+    <!--   <value>&VAR_DIR;</value> -->
+    <!-- </envar> -->
 
 
 
-  <!--************************************************************-->
-  <!-- letkf -->
-  <!--************************************************************-->
-  ${IF_LETKF_START}
-  <task name="da.letkf" maxtries="&MAXTRIES;">
-    <account>&SCHED_ACCT;</account>
-    <native>&SCHED_S_ARGS;</native>
-    <queue>&SCHED_S_QUEUE;</queue>
-    <cores>1</cores>
-    <walltime>1:00</walltime>
-    <join><cyclestr>&LOG_PREFIX;.da.letkf.log</cyclestr></join>
-    <command>&ROOT_DIR;/da.letkf.sh</command>
-    <dependency>
-      <taskdep task="da.obsop.all.hold"/>
-    </dependency>
-  </task>
-  ${IF_LETKF_END}
-
-  
-
-  <!--************************************************************-->
-  <!-- letkf/3dvar combine and restart file update-->
-  <!--************************************************************-->
+  <!--********************************************************************************
+    da.update  -  LETKF/3DVar combine and restart file update
+      * TODO: handle the hybrid workflow
+      * Applies the final analysis increments to the restart files
+   ********************************************************************************-->
   <task name="da.update" maxtries="&MAXTRIES;">
-    <jobname>&EXP_NAME;.da.update</jobname>
-    <command>&SCRIPT_DIR;/da.update.sh</command>
-    <join><cyclestr>&LOG_PREFIX;.da.update.log</cyclestr></join>
-    
-    <account>&SCHED_ACCT;</account>
-    <queue>&SCHED_P_QUEUE;</queue>
-    <nodes>1:ppn=&PPN;</nodes>
-    <native>-l partition=c4 -l size=1</native>
-    <walltime>&da.update_WALLTIME;</walltime>
 
-    &ENV_COMMON;
+    <jobname>&EXP_NAME;.da.update</jobname>
+    <command>
+      &SCRIPT_WRAPPER;
+      &SCRIPT_DIR;/da.update.sh
+      echo "rst:&#36;CYCLE_NEXT" > &#36;ROOT_EXP_DIR/cycle_status
+    </command>
+    <join>&LOG_PREFIX;da.update.log</join>
+    <walltime>&da.update.WALLTIME;</walltime>
+    &COM_SCHED_S;
+
+
+    &COM_ENV;
     <envar>
-      <name>NPROC</name>
-      <value>&PPN;</value>
+      <name>JOB_WORK_DIR</name>
+      <value>&WORK_DIR;</value>
+    </envar>
+    <envar>
+      <name>ENS_LIST</name>
+      <value>&ENS_LIST;</value>
     </envar>
 
+    <!-- <envar> -->
+    <!--   <name>NPROC</name> -->
+    <!--   <value>&PPN;</value> -->
+    <!-- </envar> -->
+    <!-- <envar> -->
+    <!--   <name>DA_DIR</name> -->
+    <!--   <value>&DA_DIR;</value> -->
+    <!-- </envar> -->
+    
     <dependency>
       <and>
-  	${IF_3DVAR_START} <taskdep task="da.3dvar"/>     ${IF_3DVAR_END}
+	${IF_3DVAR_START} <taskdep task="da.3dvar.run"/> ${IF_3DVAR_END}
 	${IF_LETKF_START} <taskdep task="da.letkf.run"/> ${IF_LETKF_END}
       </and>
     </dependency>
+
   </task>
 
 
-  <!--************************************************************-->
-  <!-- any other post processing -->
-  <!--************************************************************-->
-  <!-- <task name="da.postproc" maxtries="&MAXTRIES;"> -->
-  <!--   <jobname>&EXP_NAME;.da.postproc</jobname> -->
-  <!--   <command>&SCRIPT_DIR;/da.postproc.sh</command> -->
-  <!--   <join><cyclestr>&LOG_PREFIX;.da.postproc.log</cyclestr></join> -->
+
+
+  <!--********************************************************************************
+    da.post  -  Data assimilation post processing
+      * Performs other file manipulations for things that want to be saved
+      * cleans up files that are no longer needed
+      * This does not need to finsish before rocoto can move onto the next cycle
+   ********************************************************************************-->
+  <task name="da.post" maxtries="&MAXTRIES;">
+
+    <jobname>&EXP_NAME;.da.post</jobname>
+    <command>
+      &SCRIPT_WRAPPER;
+      &SCRIPT_DIR;/da.post.sh
+    </command>
+    <join>&LOG_PREFIX;da.post.log</join>
+    <walltime>&da.post.WALLTIME;</walltime>
+    &COM_SCHED_S;
+
+    &COM_ENV;
     
-  <!--   <account>&SCHED_ACCT;</account> -->
-  <!--   <queue>&SCHED_S_QUEUE;</queue> -->
-  <!--   <cores>1</cores> -->
-  <!--   <native>&SCHED_S_ARGS;</native> -->
-  <!--   <walltime>5:00</walltime> -->
+    <dependency>
+      <taskdep task="da.update"/>
+    </dependency>
 
-  <!--   &ENV_COMMON; -->
-
-  <!--   <dependency> -->
-  <!--     <taskdep task="da.update.hold"/> -->
-  <!--   </dependency> -->
-
-  <!-- </task> -->
+  </task>
 
 </workflow>

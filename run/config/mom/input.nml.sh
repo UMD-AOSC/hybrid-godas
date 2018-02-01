@@ -1,8 +1,9 @@
 #!/bin/bash
+set -e
 
 # This is a script file that generates the main input.nml file required by MOM for forecast runs.
 # The following environment variables need to be set by the caller:
-#  FCST_START_TIME   start date in YYYYMMDDZHH format
+#  FCST_START_TIME   start date in YYYYMMDDHH format
 #  FCST_RESTART      1 if starting from a restart, otherwise 0
 #  FCST_LEN          integration length, in hours
 
@@ -41,7 +42,7 @@ cat <<EOF
             months = 0,
             days   = 0,
             hours  = $FCST_LEN,
-            current_date = $(date "+%Y,%m,%d,%H" -d "$FCST_START_TIME"),0,0,
+            current_date = $(date "+%Y,%m,%d,%H" -d "${FCST_START_TIME:0:8}Z${FCST_START_TIME:8:10}"),0,0,
             calendar = 'julian',
             dt_cpld = 1800,
             dt_atmos = 1800,
