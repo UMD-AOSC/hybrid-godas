@@ -37,7 +37,7 @@ cat <<EOF
             days   = $fcst_len,
             hours  = 0,
             current_date = $(date "+%Y,%m,%d" -d "$fcst_start"),0,0,0,
-            calendar = 'julian',
+            calendar = 'julian', !< NOTE: an OVERRIDE of default OM4_025 settings
             dt_cpld = 1800,
             dt_atmos = 1800,
             do_atmos = .false.,
@@ -50,8 +50,6 @@ cat <<EOF
             use_lag_fluxes=.false.    
             check_stocks = 0
             do_endpoint_chksum=.false.
-! restart_interval=0,0,0,0,0,0
-
 /
 
  &diag_manager_nml
@@ -67,7 +65,7 @@ cat <<EOF
             debug_stocks = .FALSE.
             divert_stocks_report = .TRUE.            
             do_area_weighted_flux = .FALSE.
-            partition_fprec_from_lprec=.TRUE.
+            partition_fprec_from_lprec=.TRUE. !< NOTE: an OVERRIDE of default OM4_025 settings
 /
 
  &fms_io_nml
@@ -126,10 +124,10 @@ cat <<EOF
 
  &surface_flux_nml
 !            ncar_ocean_flux = .true.
-            coare4_ocean_flux = .true.
+            coare4_ocean_flux = .true.  !< NOTE: not present in default OM4_025 settings
 	    raoult_sat_vap = .true.
-            fixed_z_atm_tq = 2.0
-            fixed_z_atm_uv = 10.0
+            fixed_z_atm_tq = 2.0        !< NOTE: not present in default OM4_025 settings
+            fixed_z_atm_uv = 10.0       !< NOTE: not present in default OM4_025 settings
 /
 
  &topography_nml
