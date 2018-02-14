@@ -126,7 +126,7 @@ fi
 
 
 # If files aren't ready, exit
-if [[ "$isready" == "0" ]]; then exit 1; fi
+if [[ "$isready" == "0" ]]; then echo "ERROR: Files are not ready."; exit 1; fi
 
 
 # make the output directory

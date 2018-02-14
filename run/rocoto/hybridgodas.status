@@ -1,5 +1,22 @@
 #!/bin/bash
+set -eu
 
-# TODO: have it show more that 1 cycle, but only the most recent active cycles
-rocotostat -d config/rocoto/hybridgodas.rocoto.db -w config/rocoto/hybridgodas.rocoto.xml  -c :
+# which date in the logs should we be looking at?
+lines=$(rocotostat -d config/rocoto/hybridgodas.rocoto.db -w config/rocoto/hybridgodas.rocoto.xml -s -c all)
+la=$(echo "$lines" | grep Active | cut -d' ' -f1)
+na=$(echo "$lines" | grep Active -v | cut -d' ' -f1)
+active=""
+for l in ${la[@]}; do
+    active="$active,$l"
+done
+active=${active:1}
+n2=($na)
+#TODO, this breaks
+recent="$active"
+if [[ ${#n2[@]} -ge 2 ]]; then recent="$recent,${n2[-2]}"; fi
+if [[ ${#n2[@]} -ge 1 ]]; then recent="$recent,${n2[-1]}"; fi
 
+rocotostat -d config/rocoto/hybridgodas.rocoto.db -w config/rocoto/hybridgodas.rocoto.xml  -s -c $recent
+
+echo ""
+rocotostat -d config/rocoto/hybridgodas.rocoto.db -w config/rocoto/hybridgodas.rocoto.xml  -c $active

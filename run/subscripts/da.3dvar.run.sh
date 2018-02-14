@@ -19,6 +19,7 @@ cat << \#\#
  envar+=("TMP_DIR")
  envar+=("PPN")
  envar+=("NODES")
+ envar+=("EXP_DIR")
 #================================================================================
 #================================================================================
 
@@ -40,8 +41,25 @@ echo "Running with $NPROC cores"
 
 
 # change to working directory
+# TODO, directories as input
 work_dir=$TMP_DIR
+if [[ -e $TMP_DIR ]]; then  rm -r $TMP_DIR; fi
+mkdir -p $TMP_DIR
 cd $work_dir
+
+ln -s $ROOT_GODAS_DIR/build/{gsw_data_v3_0.nc,3dvar} .
+ln -s $EXP_DIR/config/da/* .
+
+mkdir -p INPUT
+cd INPUT
+ln -s $ROOT_GODAS_DIR/DATA/grid/ocean_geometry.nc grid.nc
+ln -s $ROOT_GODAS_DIR/DATA/grid/Vertical_coordinate.nc vgrid.nc
+ln -s $ROOT_GODAS_DIR/DATA/grid/coast_dist.nc .
+ln -s ../../da.3dvar.prep/omf/obs.nc .
+ln -s ../../da.letkf/OUTPUT/ana_mean.nc bkg.nc
+ln -s ../../da.prep/bkg/mem_0001/* bkg2.nc
+cd ..
+
 
 
 # run the bgvar/vtloc programs

@@ -16,10 +16,10 @@
 !------------------------------------------------------------
 "bgvar_t",	"bgvar_t",	"bgvar.nc"
 "bgvar_s",	"bgvar_s",	"bgvar.nc"
-"bg_t",		"temp",		"INPUT/bkg.nc"
-"bg_t",		"salt",		"INPUT/bkg.nc"
-"bg_ssh",	"ssh",		"INPUT/bkg.nc"
-"bg_dens",	"rhopot0",	"INPUT/bkg.nc"
+"bg_t",		"Temp",		"INPUT/bkg.nc"
+"bg_t",		"Salt",		"INPUT/bkg.nc"
+"bg_ssh",	"SSH",		"INPUT/bkg2.nc"
+"bg_dens",	"rhopot0",	"INPUT/bkg2.nc"
 
 
 ! other 3dvar input fields

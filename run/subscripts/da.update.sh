@@ -74,7 +74,7 @@ for m in $ENS_LIST; do
     p=${prev_files//\#mem\#/$m}
     b=${bkg_files//\#mem\#/$m}
     a=${ana_files//\#mem\#/$m}
-
+    h=$JOB_WORK_DIR/da.3dvar/ana_inc.nc
 
     if [[ -d $r ]]; then
 	echo "Removing old restart directory."
@@ -89,8 +89,9 @@ for m in $ENS_LIST; do
     done
 
     # update restart files that need to be modified
+    # TODO, define the variables to be updated (T/S/U/V)
     rm $r/MOM.res.nc.*
-    $ROOT_GODAS_DIR/tools/rst_update.py $b $a $r/MOM.res.nc -vars Temp,Salt
+    $ROOT_GODAS_DIR/tools/rst_update.py -hyb_inc $h $b $a $r/MOM.res.nc -vars Temp,Salt
 done 
 
 

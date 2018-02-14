@@ -32,20 +32,28 @@
 <!ENTITY SCHED_P_QUEUE             "${SCHED_QUEUE}">
 <!ENTITY SCHED_P_ARGS              "-l partition=c4">
 
+
 <!ENTITY fcst.prep.WALLTIME        "5:00">
+
 <!ENTITY fcst.run.NODES            "20">
 <!ENTITY fcst.run.SCHED_ARGS       "&SCHED_P_ARGS; -l size=&fcst.run.NODES;">
 <!ENTITY fcst.run.WALLTIME         "10:00">
+
 <!ENTITY da.prep.WALLTIME          "10:00">
 <!ENTITY da.3dvar.prep.WALLTIME    "5:00">
-<!ENTITY da.3dvar.run.NODES        "3">
+
+<!ENTITY da.3dvar.run.NODES        "1">
 <!ENTITY da.3dvar.run.SCHED_ARGS   "&SCHED_P_ARGS; -l size=&da.3dvar.run.NODES;">
 <!ENTITY da.3dvar.run.WALLTIME     "10:00">
+
 <!ENTITY da.letkf.run.NODES        "2">
 <!ENTITY da.letkf.run.SCHED_ARGS   "&SCHED_P_ARGS; -l size=&da.letkf.run.NODES;">
 <!ENTITY da.letkf.run.WALLTIME     "10:00">
+
 <!ENTITY da.update.WALLTIME        "5:00">
-<!ENTITY da.post.WALLTIME          "5:00">
+
+<!ENTITY da.post.WALLTIME          "20:00">
+
 
 
 
@@ -374,17 +382,29 @@
     da.3dvar.prep  -  3DVar Data assimilation preparation 
       * combines observation operator from each ensemble member into a single file
       * TODO: this doesn't do much, roll it into the da.3dvar.run job?
-      * TODO: modify to handle hybrid workflow
+      * TODO: modify to handle standalone 3dvar
    ********************************************************************************-->
   ${IF_3DVAR_START}
   <task name="da.3dvar.prep" maxtries="&MAXTRIES;">
 
     <jobname>&EXP_NAME;.da.3dvar.prep</jobname>
     <command>
-      export OMF_FILE=&#36;{OMF_FILE//#mem#/0001}
-      export OMF_SLOT_FILE=&#36;{OMF_SLOT_FILE//#mem#/0001}
-      export BKG_FILE=&#36;(date "+&#36;{BKG_FILE//#mem#/0001}" -d "&CYCLE_Z;")
       &SCRIPT_WRAPPER;
+
+      slots="_all"
+      if [[ "&#36;slots" = "_all" ]]; then
+        slots="&DA_WNDW_SLOTS;";
+      else
+	exit 1 #TODO, fix this
+      fi
+      for s in &#36;slots; do
+        export DA_SLOT=&#36;s
+	export TMP_DIR=&WORK_DIR;/da.3dvar.prep/omf/work/t&#36;s
+	export OBSOP_FILE=${OBSOP_FILE_TMPL//&#37;slot/&#36;s}
+	&SCRIPT_DIR;/da.obsop.sh
+      done
+
+      export OMF_SLOT_FILE=${OBSOP_FILE_TMPL//&#37;slot/&#35;slot&#35;}
       &SCRIPT_DIR;/da.3dvar.prep.sh
     </command>
     <join>&LOG_PREFIX;da.3dvar.prep.log</join>
@@ -392,10 +412,22 @@
     &COM_SCHED_S;
 
     &COM_ENV;
-    
+    <envar>
+      <name>BKG_FILE</name>
+      <value>&WORK_DIR;/da.letkf/OUTPUT/ana_mean.nc</value>
+    </envar>
+    <envar>
+      <name>OBSOP_FILE_TMPL</name>
+      <value>&WORK_DIR;/da.3dvar.prep/omf/t&#37;slot.nc</value>
+    </envar>
+    <envar>
+      <name>OMF_FILE</name>
+      <value>&WORK_DIR;/da.3dvar.prep/omf/obs.nc</value>
+    </envar>
+
+
     <dependency>
       <and>
-	<taskdep task="null"/>
 	<metataskdep metatask="da.prep.all"/>
 	${IF_LETKF_START} <taskdep task="da.letkf.run"/> ${IF_LETKF_END}
       </and>
@@ -403,24 +435,6 @@
 
   </task>
   ${IF_3DVAR_END}
-    <!-- TODO, fix the names of OMF files (i.e. for when doing ensemble da) -->
-    <!-- <envar> -->
-    <!--   <name>TMP_DIR</name> -->
-    <!--   <value>&VAR_DIR;</value> -->
-    <!-- </envar> -->
-    <!-- <envar> -->
-    <!--   <name>OMF_SLOT_FILE</name> -->
-    <!--   <value>&OMF_SLOT_FILE;</value> -->
-    <!-- </envar> -->
-    <!-- <envar> -->
-    <!--   <name>OMF_FILE</name> -->
-    <!--   <value>&OMF_FILE;</value> -->
-    <!-- </envar>       -->
-    <!-- <envar> -->
-    <!--   <name>BKG_FILE</name> -->
-    <!--   <value>&BKG_FILE;</value> -->
-    <!-- </envar> -->
-
 
 
 
@@ -453,6 +467,10 @@
       <name>PPN</name>
       <value>&PPN;</value>
     </envar>
+    <envar>
+      <name>TMP_DIR</name>
+      <value>&WORK_DIR;/da.3dvar</value>
+    </envar>
 
     
     <dependency>
@@ -461,10 +479,6 @@
 
   </task>
   ${IF_3DVAR_END}
-    <!-- <envar> -->
-    <!--   <name>TMP_DIR</name> -->
-    <!--   <value>&VAR_DIR;</value> -->
-    <!-- </envar> -->
 
 
 
@@ -495,15 +509,6 @@
       <name>ENS_LIST</name>
       <value>&ENS_LIST;</value>
     </envar>
-
-    <!-- <envar> -->
-    <!--   <name>NPROC</name> -->
-    <!--   <value>&PPN;</value> -->
-    <!-- </envar> -->
-    <!-- <envar> -->
-    <!--   <name>DA_DIR</name> -->
-    <!--   <value>&DA_DIR;</value> -->
-    <!-- </envar> -->
     
     <dependency>
       <and>
@@ -523,23 +528,31 @@
       * cleans up files that are no longer needed
       * This does not need to finsish before rocoto can move onto the next cycle
    ********************************************************************************-->
-  <task name="da.post" maxtries="&MAXTRIES;">
+  <task name="cycle.post" maxtries="&MAXTRIES;">
 
-    <jobname>&EXP_NAME;.da.post</jobname>
+    <jobname>&EXP_NAME;.cycle.post</jobname>
     <command>
       &SCRIPT_WRAPPER;
-      &SCRIPT_DIR;/da.post.sh
+      &SCRIPT_DIR;/cycle.post.sh
     </command>
-    <join>&LOG_PREFIX;da.post.log</join>
+    <join>&LOG_PREFIX;cycle.post.log</join>
     <walltime>&da.post.WALLTIME;</walltime>
     &COM_SCHED_S;
 
     &COM_ENV;
+    <envar>
+      <name>JOB_WORK_DIR</name>
+      <value>&WORK_DIR;</value>
+    </envar>
+    <envar>
+      <name>ENS_LIST</name>
+      <value>&ENS_LIST;</value>
+    </envar>
+
     
     <dependency>
       <taskdep task="da.update"/>
     </dependency>
-
   </task>
 
 </workflow>

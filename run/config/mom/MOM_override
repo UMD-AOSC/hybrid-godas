@@ -4,6 +4,13 @@
 !================================================================================
 
 
+! diagnostics in Z space
+!------------------------------------------------------------
+#override NUM_DIAG_COORDS = 1
+#override DIAG_COORDS = "z Z ZSTAR"
+#override DIAG_COORD_DEF_Z = "FILE:vgrid_75_2m.nc,dz"
+
+
 ! use Z* vertical coordinates instead of hybrid coords
 !------------------------------------------------------------
 #override REGRIDDING_COORDINATE_MODE = "Z*"
@@ -21,11 +28,7 @@
 !#override MASK_SRESTORE_UNDER_ICE=True
 
 
-! other parameters that are probably wrong in OM4_025
-!------------------------------------------------------------
-#override MAX_P_SURF=3.e4
-
-
 ! other tweaks
 !------------------------------------------------------------
+#override MAX_P_SURF=3.e4
 #override USE_IDEAL_AGE_TRACER=False

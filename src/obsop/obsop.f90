@@ -79,18 +79,23 @@ program obsop
 
   allocate(state_t(grid_nx, grid_ny, grid_nz))
   print *, "Reading state TEMP..."
-  call check(nf90_inq_varid(ncid, "temp", vid))
+  call check(nf90_inq_varid(ncid, "Temp", vid))
   call check(nf90_get_var(ncid, vid, state_t))
 
   allocate(state_s(grid_nx, grid_ny, grid_nz))
   print *, "Reading state SALT..."
-  call check(nf90_inq_varid(ncid, "salt", vid))
+  call check(nf90_inq_varid(ncid, "Salt", vid))
   call check(nf90_get_var(ncid, vid, state_s))
 
   allocate(state_sst(grid_nx, grid_ny))
   print *, "Reading state SST..."
-  call check(nf90_inq_varid(ncid, "SST_min", vid))
-  call check(nf90_get_var(ncid, vid, state_sst))
+  i =nf90_inq_varid(ncid, "SST_min", vid)
+  if (i /= NF90_NOERR) then
+     print *, " WARNING: no SST  variable found, using top level of Temp"
+     state_sst=state_t(:,:,1)
+  else
+     call check(nf90_get_var(ncid, vid, state_sst))
+  end if
 
   call check(nf90_close(ncid))
 

@@ -30,17 +30,17 @@ cat <<EOF
 
 "ocean_daily%4yr%2mo%2dy",     1,"days",1,"days","time",1,"days"
 
-'ocean_model', 'SST',      'SST',      'ocean_daily%4yr%2mo%2dy',    'all', 'min', 'none',2
-'ocean_model', 'temp',     'temp',     'ocean_daily%4yr%2mo%2dy',    'all', 'mean','none',2
-'ocean_model', 'salt',     'salt',     'ocean_daily%4yr%2mo%2dy',    'all', 'mean','none',2
-'ocean_model', 'ssh',      'ssh',      'ocean_daily%4yr%2mo%2dy',    'all', 'mean','none',2
+'ocean_model',   'SST',      'SST',      'ocean_daily%4yr%2mo%2dy',    'all', 'min', 'none',2
+'ocean_model_z', 'temp',     'Temp',     'ocean_daily%4yr%2mo%2dy',    'all', 'mean','none',2
+'ocean_model_z', 'salt',     'Salt',     'ocean_daily%4yr%2mo%2dy',    'all', 'mean','none',2
+'ocean_model',   'ssh',      'SSH',      'ocean_daily%4yr%2mo%2dy',    'all', 'mean','none',2
 
 ## TODO, U,V aren't needed by the DA right now, but they will be eventually
-#'ocean_model', 'u',        'u',        'ocean_daily%4yr%2mo%2dy',   'all', 'mean','none',2
-#'ocean_model', 'v',        'v',        'ocean_daily%4yr%2mo%2dy',   'all', 'mean','none',2
+#'ocean_model_z', 'u',        'u',        'ocean_daily%4yr%2mo%2dy',   'all', 'mean','none',2
+#'ocean_model_z', 'v',        'v',        'ocean_daily%4yr%2mo%2dy',   'all', 'mean','none',2
 
 ## TODO, just calculate rho from T/S in the DA code?
-'ocean_model', 'rhopot0',  'rhopot0',  'ocean_daily%4yr%2mo%2dy', 'all', 'mean','none',2
+'ocean_model_z', 'rhopot0',  'rhopot0',  'ocean_daily%4yr%2mo%2dy', 'all', 'mean','none',2
 
 EOF
 fi
@@ -92,11 +92,11 @@ cat <<EOF
 
 ## U/V and derived quantities
 #------------------------------------------------------------
-"ocean_model", "u",          "u",           "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "v",          "v",           "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "speed",      "speed",       "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-#"ocean_model", "SSU",        "SSU",         "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-#"ocean_model", "SSV",        "SSV",         "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model_z", "u",          "u",           "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model_z", "v",          "v",           "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model",   "speed",      "speed",       "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+#"ocean_model",   "SSU",        "SSU",         "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+#"ocean_model",   "SSV",        "SSV",         "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 
 
 
@@ -120,29 +120,29 @@ cat <<EOF
 
 ## Temperature (and extra derived quantities)
 #------------------------------------------------------------
-"ocean_model", "temp",              "temp",              "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "sst_global",        "sst_global",        "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # or tosga?
-"ocean_model", "thetaoga",          "thetaoga",          "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # global mean temp
-"ocean_model", "Th_tendency_2d",    "Th_tendency_2d",    "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # not sure of difference with prev
-"ocean_model", "Th_tendency_xyave", "Th_tendency_xyave", "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "temp_layer_ave",    "temp_layer_ave",    "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "T_adx_2d",          "T_adx_2d",          "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "T_ady_2d",          "T_ady_2d",          "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-#ocean_model", "SST",               "SST",               "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model_z", "temp",              "temp",              "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model",   "sst_global",        "sst_global",        "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # or tosga?
+"ocean_model",   "thetaoga",          "thetaoga",          "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # global mean temp
+"ocean_model",   "Th_tendency_2d",    "Th_tendency_2d",    "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # not sure of difference with prev
+"ocean_model_z", "Th_tendency_xyave", "Th_tendency_xyave", "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model",   "temp_layer_ave",    "temp_layer_ave",    "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model",   "T_adx_2d",          "T_adx_2d",          "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model",   "T_ady_2d",          "T_ady_2d",          "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+#ocean_model",   "SST",               "SST",               "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 
 
 
 ## salinity and extra derived quantities 
 #------------------------------------------------------------
-"ocean_model", "salt",              "salt",              "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "sss_global",        "sss_global",        "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "soga",              "soga",              "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "Sh_tendency_2d",    "Sh_tendency_2d",    "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "Sh_tendency_xyave", "Sh_tendency_xyave", "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "salt_layer_ave",    "salt_layer_ave",    "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "S_adx_2d",          "S_adx_2d",          "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model", "S_ady_2d",          "S_ady_2d",          "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-#"ocean_model", "SSS",               "SSS",               "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model_z", "salt",              "salt",              "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model",   "sss_global",        "sss_global",        "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model",   "soga",              "soga",              "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model",   "Sh_tendency_2d",    "Sh_tendency_2d",    "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model_z", "Sh_tendency_xyave", "Sh_tendency_xyave", "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model",   "salt_layer_ave",    "salt_layer_ave",    "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model",   "S_adx_2d",          "S_adx_2d",          "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model",   "S_ady_2d",          "S_ady_2d",          "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+#"ocean_model",   "SSS",               "SSS",               "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 
 
 
