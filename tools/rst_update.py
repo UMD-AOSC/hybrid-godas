@@ -3,7 +3,10 @@ import netCDF4 as nc
 import argparse
 
 
-# TODO, recentering on 3dvar analysis not done correctly here ? 
+vrange={}
+vrange['Temp']=(-2.1, 45.0)
+vrange['Salt']=(0, 45.0)
+
 # TODO add some global attributes to the output
 #  indicating it was updated with DA analysis
 
@@ -53,9 +56,15 @@ for var in ncd_bkg.variables:
         val=ncd_ana[var][:]
         if args.hyb_inc is not None:
             val += args.alpha * ncd_hyb[var][:]
-        var_out[:] = val
     else:
-        var_out[:] = ncd_bkg[var][:]
+        val=ncd_bkg[var][:]
+
+    # make sure variable is in range
+    if var in vrange:
+        val[val < vrange[var][0]] = vrange[var][0]
+        val[val > vrange[var][1]] = vrange[var][1]
+
+    var_out[:] = val
 
 ncd_out.close()
 ncd_bkg.close()

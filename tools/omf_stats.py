@@ -139,15 +139,16 @@ def procFile(filename):
     print(filename)
     df={}
     ncd = nc.Dataset(filename, 'r')
-    fvars=('obid','plat','lat','lon','depth','inc')
+    fvars=('obid','plat','lat','lon','depth','inc_mean','inc_sprd', 'qc')
     for f in fvars: #ncd.variables:
-        df[f] = ncd.variables[f][:]
+        df[f] = ncd.variables[f][:]        
     ncd.close()
-    ncd = nc.Dataset(filename[:-3]+'.varqc.nc', 'r')
-    fvars = ('qc',)
-    for f in fvars:
-        df[f] = ncd.variables[f][:]
-    ncd.close()
+
+#    ncd = nc.Dataset(filename[:-3]+'.varqc.nc', 'r')
+#    fvars = ('qc',)
+#    for f in fvars:
+#        df[f] = ncd.variables[f][:]
+#    ncd.close()
     df['lon'][df['lon'] < -180] += 360
     df['lon'][df['lon'] >  180] -= 360
     df = pd.DataFrame(df)
@@ -169,12 +170,14 @@ def procFile(filename):
         count_good = (m_good & mask).sum()
         count_bad  = mask.sum()- count_good
         obs  = df[ m_valid & mask]
-        bias = obs.inc.mean()
-        rmsd = math.sqrt((obs.inc**2).mean())
+        bias = obs.inc_mean.mean()
+        sprd = obs.inc_sprd.mean()
+        rmsd = math.sqrt((obs.inc_mean**2).mean())
 #        val  = obs.val.mean()
-        data.append( (count_good, count_bad, bias, rmsd ) )#, val) )
+        data.append( (count_good, count_bad, bias, rmsd, sprd) )#, val) )
 
     return (filename.split('/')[-1][:-3], data)
+
 
 def smooth(d):
     if len(d) > 0:
@@ -217,7 +220,7 @@ if __name__ == "__main__":
     num=0
     for exp in args.path:
         num += 1
-        files = glob(exp + '/output/bkg_omf/????/????????.nc')
+        files = glob(exp + '/omf/????/*.nc')
         files = sorted([f for f in files if args.start <= f.split('/')[-1][:8] <= args.end])
         expfiles['exp{}'.format(num)] = files
 
@@ -255,7 +258,7 @@ if __name__ == "__main__":
                 'count': []    }
             d = data[exp]            
             for d2 in d:
-                e2['date'].append( datetime.datetime.strptime(d2[0],"%Y%m%d").date() )
+                e2['date'].append( datetime.datetime.strptime(d2[0],"%Y%m%d%H").date() )
                 e2['bias'].append(d2[1][cnt][2])
                 e2['rmsd'].append(d2[1][cnt][3])
                 e2['count'].append(d2[1][cnt][0])

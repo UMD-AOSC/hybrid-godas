@@ -37,7 +37,7 @@
 
 <!ENTITY fcst.run.NODES            "20">
 <!ENTITY fcst.run.SCHED_ARGS       "&SCHED_P_ARGS; -l size=&fcst.run.NODES;">
-<!ENTITY fcst.run.WALLTIME         "10:00">
+<!ENTITY fcst.run.WALLTIME         "15:00">
 
 <!ENTITY da.prep.WALLTIME          "10:00">
 <!ENTITY da.3dvar.prep.WALLTIME    "5:00">
@@ -50,7 +50,7 @@
 <!ENTITY da.letkf.run.SCHED_ARGS   "&SCHED_P_ARGS; -l size=&da.letkf.run.NODES;">
 <!ENTITY da.letkf.run.WALLTIME     "10:00">
 
-<!ENTITY da.update.WALLTIME        "5:00">
+<!ENTITY da.update.WALLTIME        "20:00">
 
 <!ENTITY da.post.WALLTIME          "20:00">
 
@@ -69,7 +69,7 @@
 
 
 <!-- rocoto parameters -->
-<!ENTITY MAXTRIES       "200">
+<!ENTITY MAXTRIES       "3">
 <!ENTITY MAXCYCLES      "1">
 
 
@@ -88,24 +88,12 @@
 <!ENTITY LOG_DIR         "&ROOT_EXP_DIR;/log">
 <!ENTITY LOG_PREFIX      "&LOG_DIR;/<cyclestr>@Y/@Y@m@d@H/</cyclestr>">
 <!ENTITY LOG_PREFIX_ENS  "&LOG_DIR;/<cyclestr>@Y/@Y@m@d@H/mem_#mem#/</cyclestr>">
-
 <!ENTITY RST_DIR         "&ROOT_EXP_DIR;/fcst_rst/mem_#mem#/&#37;Y&#37;m&#37;d&#37;H">
-
-<!ENTITY NILL_BKG_FILE        "/AHHHH/&ROOT_EXP_DIR;/bkg/ens/mem_#mem#/&#37;Y&#37;m&#37;d.nc">
-<!ENTITY NILL_OMF_FILE        "/AHHHH/&ROOT_EXP_DIR;/bkg/omf/mem_#mem#/&CYCLE;.nc">
 
 
 <!-- generated temporary directory locations -->
 <!ENTITY WORK_DIR         "${WORK_DIR}/cycle_&CYCLE;">
 
-
-
-<!ENTITY NILL_FORC_DIR        "&TMP_DIR;/fcst.prep">
-<!ENTITY NILL_FCST_DIR        "/AHHHH/&TMP_DIR;/fcst/mem_#mem#">
-<!ENTITY NILL_OBSOP_DIR       "/AHHHH/&TMP_DIR;/obsop/mem_#mem#/t#slot#">
-<!ENTITY NILL_OMF_SLOT_FILE   "/AHHHH/&OBSOP_DIR;/obs.nc">
-<!ENTITY NILL_DA_DIR          "/AHHHH/&TMP_DIR;/da">
-<!ENTITY NILL_VAR_DIR         "/AHHHH/&DA_DIR;/var">
 
 <!-- common scheduler blocks-->
 <!ENTITY COM_SCHED_S  "

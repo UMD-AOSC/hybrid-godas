@@ -159,12 +159,12 @@ if [[ -e "$obsop_file" ]]; then rm $obsop_file; fi
 $ROOT_GODAS_DIR/build/obsop obsprep.nc $obsop_file
 
 
-# convert output from nc to dat
-# TODO: only do this if needed by LETKF
-# TODO: remove hardcoding of observation IDs in LETKF/3dvar/obsops
-echo ""
-echo "Converting .nc obs files to .dat ..."
-dat_file=${obsop_file:0: -3}.dat
- if [[ -e "$dat_file" ]]; then rm $dat_file; fi
-$ROOT_GODAS_DIR/build/obsprep_nc2dat $obsop_file ${obsop_file:0: -3}.dat 2210:3073,2220:5521
-#,sst:5525
+# # convert output from nc to dat
+# # TODO: only do this if needed by LETKF
+# # TODO: remove hardcoding of observation IDs in LETKF/3dvar/obsops
+# echo ""
+# echo "Converting .nc obs files to .dat ..."
+# dat_file=${obsop_file:0: -3}.dat
+#  if [[ -e "$dat_file" ]]; then rm $dat_file; fi
+# $ROOT_GODAS_DIR/build/obsprep_nc2dat $obsop_file ${obsop_file:0: -3}.dat 2210:3073,2220:5521
+# #,sst:5525

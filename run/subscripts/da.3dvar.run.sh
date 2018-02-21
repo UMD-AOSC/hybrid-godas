@@ -57,7 +57,8 @@ ln -s $ROOT_GODAS_DIR/DATA/grid/Vertical_coordinate.nc vgrid.nc
 ln -s $ROOT_GODAS_DIR/DATA/grid/coast_dist.nc .
 ln -s ../../da.3dvar.prep/omf/obs.nc .
 ln -s ../../da.letkf/OUTPUT/ana_mean.nc bkg.nc
-ln -s ../../da.prep/bkg/mem_0001/* bkg2.nc
+# TODO, remove this (only needed for density, ssh?, include these in the letkf state vector)
+ln -s ../../da.prep/bkg/mem_0001/${CYCLE:0:8}.nc bkg2.nc
 cd ..
 
 

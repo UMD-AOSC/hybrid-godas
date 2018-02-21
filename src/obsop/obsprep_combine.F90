@@ -111,7 +111,7 @@ program obsprep_comine
      stop 1
   end if
   if (numfiles <= 0) then
-     print *, 'ERROR: cll with "obsprep_combine <outputfile> <inputfile1> <inputfile2>.... <inputfileN>"'
+     print *, 'ERROR: cll with "obsprep_combine <inputfile1> <inputfile2>.... <inputfileN> <outputfile>"'
      stop 1
   end if
 

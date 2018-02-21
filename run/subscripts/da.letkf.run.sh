@@ -72,7 +72,7 @@ mkdir -p INPUT/obsop
 m=0
 for mem in $ENS_LIST; do
     m=$(printf "%04g" $((10#$m+1)) )
-    ln -s ../../../da.prep/omf/mem_$mem/t+0.nc INPUT/obsop/$m.dat
+    ln -s ../../../da.prep/omf/mem_$mem/obs.nc INPUT/obsop/$m.dat
 done
 
 ## link observations

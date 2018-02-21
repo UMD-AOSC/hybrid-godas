@@ -84,6 +84,7 @@ obsop_cmb_file=$(date "+$OMF_FILE" -d "$(dtz $CYCLE)")
 obsop_cmb_dir=$(dirname $obsop_cmb_file)
 mkdir -p $obsop_cmb_dir
 
+rm -f $obsop_cmb_file
 $ROOT_GODAS_DIR/build/obsprep_combine -basedate $basedate ${obsfiles[@]} $obsop_cmb_file
 ln -s $obsop_cmb_file INPUT/obs.nc
 

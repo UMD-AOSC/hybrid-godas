@@ -57,14 +57,14 @@ for f in "" ; do
     echo $fi
     echo "  mppnccombine..."
     $ROOT_GODAS_DIR/build/mppnccombine -m -64 $fo $fi.*
-
-#    echo "  copy to ana file..."
-#    cp $fo $ANA_RST_DIR/MOM.res${f}.nc
 done
 
-## combine the observation increment files
-## TODO
-# dtz(){ echo ${1:0:8}Z${1:8:10}; }
-# basedate="$(date "+%Y,%m,%d,%H,0,0" -d "$(dtz $CYCLE)")"
+# combine the observation increment files
+# TODO use correct dir
+dtz(){ echo ${1:0:8}Z${1:8:10}; }
+basedate="$(date "+%Y,%m,%d,%H,0,0" -d "$(dtz $CYCLE)")"
+cd $(dirname $OBSOP_FILE)
+ln -s $ROOT_EXP_DIR/config/da/obsprep.nml .
+$ROOT_GODAS_DIR/build/obsprep_combine -basedate $basedate t*.nc obs.nc
 # obsfiles=()
 # for s in $DA_WNDW_SLOTS
