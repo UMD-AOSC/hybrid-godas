@@ -15,7 +15,7 @@ module kdtree
   !! @note Algorithm derived from Numerical Recipes, 2007
   !!
   !! @todo Allow for specification of MINDIV during initialization.
-  !! Different trees might require different values here
+  !! Different trees might require different values for optimum performance
   !!
   !! @todo fix bug where crashes on init if too few observations
   !!
@@ -28,7 +28,7 @@ module kdtree
 
   ! public module methods
   !------------------------------------------------------------
-  public :: kd_root, kd_init
+  public :: kd_root, kd_init, kd_free
   public :: kd_search_radius, kd_search_nnearest
 
 
@@ -105,6 +105,24 @@ module kdtree
 
 
 contains
+
+
+
+  !================================================================================
+  !================================================================================
+
+
+
+  subroutine kd_free(root)
+    !! Frees up any memory that had been allocated by kd_init(), when everyone
+    !! is done using the KD-tree
+    type(KD_ROOT), intent(out)  :: root
+
+    deallocate(root%ptindx)
+    deallocate(root%pts_ll)
+    deallocate(root%pts)
+    deallocate(root%boxes)
+  end subroutine kd_free
 
 
 
