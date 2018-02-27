@@ -40,7 +40,7 @@
 <!ENTITY fcst.run.WALLTIME         "15:00">
 
 <!ENTITY da.prep.WALLTIME          "10:00">
-<!ENTITY da.3dvar.prep.WALLTIME    "5:00">
+<!ENTITY da.prep.3dvar.WALLTIME    "5:00">
 
 <!ENTITY da.3dvar.run.NODES        "1">
 <!ENTITY da.3dvar.run.SCHED_ARGS   "&SCHED_P_ARGS; -l size=&da.3dvar.run.NODES;">
@@ -69,8 +69,8 @@
 
 
 <!-- rocoto parameters -->
-<!ENTITY MAXTRIES       "3">
-<!ENTITY MAXCYCLES      "1">
+<!ENTITY MAXTRIES       "2">
+<!ENTITY MAXCYCLES      "2">
 
 
 <!-- cycle info -->
@@ -129,8 +129,23 @@
 
 
 <!--================================================================================-->
-<!--================================================================================-->
+<!-- 
+Depending on what type of data assimilation we are doing:
+ "none" (No DA, just a forced model run, obsop is still calculated though)
+ "var"  (3DVar only)
+ "ekf"  (LETKF only)
+ "hyb"  (LETKF/3DVAR hybrid)
 
+the following steps are performed:
+ * fcst.prep
+ * fcst.run
+ * da.prep
+ * da.letkf.run   (hyb/ekf only)
+ * da.prep.3dvar  (hyb     only)
+ * da.3dvar.run   (hyb/var only)
+ * cycle.post
+-->
+<!--================================================================================-->
 
 
 <workflow realtime="F" scheduler="&SCHED;" cyclethrottle="&MAXCYCLES;">
@@ -141,28 +156,29 @@
 
 
   <!--********************************************************************************
-    fcst.prep  -  ensemble forecast preparation                
-      * Prepares ensemble surface forcings                     
-      * sets up forecast working directory                     
+    fcst.prep - Surface forcing preparation
+
+      * Prepares ensemble surface forcings
+      * (This can be run 1 or more cycles ahead, as it doesn't require the previous
+         cycle to have finished)
    ********************************************************************************-->
   <task name="fcst.prep" maxtries="&MAXTRIES;">
 
     <jobname>&EXP_NAME;.fcst.prep</jobname>
-    <command>
-      &SCRIPT_WRAPPER;
-      &SCRIPT_DIR;/fcst.prep.sh
-    </command>
     <join>&LOG_PREFIX;fcst.prep.log</join>
     <walltime>&fcst.prep.WALLTIME;</walltime>
     &COM_SCHED_S;
 
+
+    <command>
+      &SCRIPT_WRAPPER;
+      &SCRIPT_DIR;/fcst.prep.sh
+    </command>
+
+
     &COM_ENV;
     <envar>
       <name>JOB_WORK_DIR</name>
-      <value>&WORK_DIR;/fcst.prep/work</value>
-    </envar>    
-    <envar>
-      <name>FORC_DIR</name>
       <value>&WORK_DIR;/fcst.prep</value>
     </envar>    
     <envar>
@@ -176,28 +192,50 @@
 
 
   <!--********************************************************************************
-    fcst.run  -  ensemble forecast run
+    fcst.run - MOM6 model run
+
       * Runs the ensemble of MOM6 forecasts
+      * if there was a previous cycle doing DA, and thus generate an analysis
+        increment, that increment is applied to the restart file before running
       * NOTE: the FCST_RESTART env var is specially set here indicating a restart
         should be performed unless the "cycle_status" file contains "init:$CYLCE"
-	* TODO: don't need this anymore, now that dir init moved to fcst.run ?
    ********************************************************************************-->
   <metatask name="fcst.run.all">
     <var name="mem">&ENS_LIST;</var>
     <task name="fcst.run.#mem#" maxtries="&MAXTRIES;">
-      
+     
       <jobname>&EXP_NAME;.fcst.run.#mem#</jobname>
-      <command>
-        &SCRIPT_WRAPPER;
-	export FCST_RESTART=$([[ $(cat cycle_status) == "ini:&CYCLE;" ]] &#38;&#38; echo 0 || echo 1)
-        &SCRIPT_DIR;/fcst.run.sh
-      </command>
       <join>&LOG_PREFIX_ENS;fcst.run.#mem#.log</join>
       <walltime>&fcst.run.WALLTIME;</walltime>
       <account>&SCHED_ACCT;</account>
       <queue>&SCHED_P_QUEUE;</queue>
       <nodes>&fcst.run.NODES;:ppn=&PPN;</nodes>
       <native>&fcst.run.SCHED_ARGS;</native>
+
+
+      <command>
+        &SCRIPT_WRAPPER;
+
+	# where are the restart files saved?
+	export RST_DIR_IN=&ROOT_EXP_DIR;/cycle/&#36;CYCLE/rst/mem_#mem#/
+	export RST_DIR_OUT=&ROOT_EXP_DIR;/cycle/&#36;CYCLE_NEXT/rst/mem_#mem#/
+	export MEM=#mem#
+	# update the restart files if we did DA in previous cycle
+	export FCST_RESTART=$([[ $(cat cycle_status) == "ini:&CYCLE;" ]] &#38;&#38; echo 0 || echo 1)
+	if [[ &#36;FCST_RESTART -eq 1 &#38;&#38; ! &#36;DA_MODE == "none" ]]; then 
+  	  export JOB_WORK_DIR=&WORK_DIR;/fcst.rst/mem_#mem#
+	  time &SCRIPT_DIR;/da.update.sh
+	  export RST_DIR_IN=&WORK_DIR;/fcst.rst/mem_#mem#
+	fi
+
+	# run the forecast
+        &SCRIPT_DIR;/fcst.run.sh
+
+	# this is the end of the cycle, if not doing DA
+	if [[ &#36;DA_MODE == "none" ]]; then echo "rst:&#36;CYCLE_NEXT" > &#36;ROOT_EXP_DIR/cycle_status; fi
+
+      </command>
+
 
       &COM_ENV;
       <envar>
@@ -216,17 +254,12 @@
 	<name>FORC_DIR</name>
 	<value>&WORK_DIR;/fcst.prep/mem_#mem#</value>
       </envar>    
-      <envar>
-	<name>RST_DIR</name>
-	<value>&RST_DIR;</value>
-      </envar>    
       
       <dependency>
 	<and>
 	  <taskdep task="fcst.prep"/>
 	  <rb>
-	    <!-- must be the first date of a cycle, 
-		 or previous analysis must have finished -->
+	    <!-- must be the first date of a cycle, or previous analysis must have finished -->
 	    f = "&ROOT_EXP_DIR;/cycle_status"
 	    d=File.open(f,"r").gets.strip[4,10]
 	    d == ymdh || d == "&CYCLE;"
@@ -241,14 +274,15 @@
 
 
   <!--********************************************************************************
-    da.prep  -  data assimilation preparation
+    da.prep - data assimilation preparation
+
       * Combines the MOM6 daily output file tiles into single files
+        (TODO: remove this step and let the obsop handle tiles directly)
       * performs various observations operators for given ensemble member / timeslot
-      * setup to do either ALL timeslots as a single job (var "slot" set to "_all" below)
-        or each timeslot as a separate job (var "slot" set to "&DA_WNDW_SLOTS;" below)
-        * TODO  : this seems a little messy, any cleaner way of doing it?
-      * does any other per-ensemble member prep that letkf/3dvar requires
-       * TODO: the per ens da.letkf.prep.sh script will break if 
+      * (setup to do either ALL timeslots as a single job (var "slot" set to "_all" below)
+        or each timeslot as a separate job (var "slot" set to "&DA_WNDW_SLOTS;" below))
+      * Combines the obsop output from all slots for each member
+      * Combines the MOM6 restart file tiles if we are doing DA
    ********************************************************************************--> 
   <metatask name="da.prep.all">
     <!-- <var name="slot">&DA_WNDW_SLOTS;</var> -->
@@ -259,32 +293,45 @@
       <task name="da.prep.t#slot#.#mem#" maxtries="&MAXTRIES;">
 
 	<jobname>&EXP_NAME;.da.prep.t#slot#.#mem#</jobname>
-	<command>
-	  &SCRIPT_WRAPPER;
-
-	  slots="#slot#"
-	  if [[ "&#36;slots" = "_all" ]]; then
-	    slots="&DA_WNDW_SLOTS;"; 
-	  else
-	    exit 1 #TODO, fix this
-	  fi    
-	  for s in &#36;slots; do
-	    export DA_SLOT=&#36;s
-	    export OBSOP_FILE=${OBSOP_FILE_TMPL//&#37;slot/&#36;s}
-	    &SCRIPT_DIR;/fcst.combine.sh
-  	    export TMP_DIR=&WORK_DIR;/da.prep/omf/work/mem_#mem#/t&#36;s
-	    &SCRIPT_DIR;/da.obsop.sh
-	  done
-
-	  &SCRIPT_DIR;/da.letkf.prep.sh
-
-	</command>
 	<join>&LOG_PREFIX_ENS;da.prep.t#slot#.#mem#.log</join>
 	<walltime>&da.prep.WALLTIME;</walltime>
 	&COM_SCHED_S;
 
-	&COM_ENV;
 
+	<command>
+	  &SCRIPT_WRAPPER;
+
+	  # combine the forecast daily files and run the obsop on it
+	  slots="#slot#"
+	  if [[ "&#36;slots" = "_all" ]]; then
+	    slots="&DA_WNDW_SLOTS;"; 
+	  else
+	    exit 1 #TODO, fix this, allow for multiple da.prep jobs, one
+                   # for each slot of each member
+	  fi    
+	  for s in &#36;slots; do
+	    export DA_SLOT=&#36;s
+	    export OBSOP_FILE=${OBSOP_FILE_TMPL//&#37;slot/&#36;s}
+	    &SCRIPT_DIR;/fcst.comb.slot.sh
+  	    export JOB_WORK_DIR=&WORK_DIR;/da.prep/omf/work.slots/mem_#mem#/t&#36;s
+	    &SCRIPT_DIR;/da.obsop.slot.sh
+	  done
+
+	  # combine all the obsop slots into a single file
+	  export JOB_WORK_DIR=&WORK_DIR;/da.prep/omf/work.cmb/mem_#mem#
+	  export OMF_FILES=&WORK_DIR;/da.prep/omf/mem_#mem#/t*.nc
+	  export OUT_FILE=&WORK_DIR;/da.prep/omf/mem_#mem#/obs.nc
+	  &SCRIPT_DIR;/da.obsop.comb.sh
+
+	  # only need to combine the restart file if we are actually doing DA
+	  if [[ ! &#36;DA_MODE == "none" ]]; then
+	    export RST_COMB_DIR=&ROOT_EXP_DIR;/cycle/&#36;CYCLE_NEXT/rst_comb/mem_#mem#/
+	    &SCRIPT_DIR;/fcst.comb.rst.sh
+	  fi	    
+	</command>
+
+
+	&COM_ENV;
 	<envar>
 	  <name>FCST_DIR</name>
 	  <value>&WORK_DIR;/fcst.run/mem_#mem#</value>
@@ -304,8 +351,7 @@
 	<envar>
 	  <name>ANA_RST_DIR</name>
 	  <value>&WORK_DIR;/da.prep/ana_rst/mem_#mem#</value>
-	</envar>
-	  
+	</envar>	  
 	
 	<dependency>
 	    <taskdep task="fcst.run.#mem#"/>
@@ -321,22 +367,31 @@
 
   <!--********************************************************************************
     da.letkf.run  - LETKF Data assimilation
-      * 
+
+      * does the LETKF, obviously
    ********************************************************************************-->
-  ${IF_LETKF_START}
+  ${IF_S_LETKF}
   <task name="da.letkf.run" maxtries="&MAXTRIES;">
 
     <jobname>&EXP_NAME;.da.letkf.run</jobname>
-    <command>
-      &SCRIPT_WRAPPER;
-      &SCRIPT_DIR;/da.letkf.run.sh
-    </command>
     <join>&LOG_PREFIX;da.letkf.run.log</join>
     <walltime>&da.letkf.run.WALLTIME;</walltime>
     <account>&SCHED_ACCT;</account>
     <queue>&SCHED_P_QUEUE;</queue>
     <nodes>&da.letkf.run.NODES;:ppn=&PPN;</nodes>
     <native>&da.letkf.run.SCHED_ARGS;</native>
+
+
+    <command>
+      &SCRIPT_WRAPPER;
+
+      export ANA_FILES=&ROOT_EXP_DIR;/cycle/&#36;CYCLE_NEXT/da.letkf/
+      &SCRIPT_DIR;/da.letkf.run.sh
+
+      # this is the end of the cycle if only doing LETKF
+      if [[ &#36;DA_MODE == "ekf" ]]; then echo "rst:&#36;CYCLE_NEXT" > &#36;ROOT_EXP_DIR/cycle_status; fi
+    </command>
+
 
     &COM_ENV;
     <envar>
@@ -357,28 +412,35 @@
     </envar>
 
     <dependency>
-      <metataskdep metatask="da.prep.all"/>
+	<metataskdep metatask="da.prep.all"/>
     </dependency>
 
   </task>
-  ${IF_LETKF_END}
+  ${IF_E_LETKF}
 
 
 
 
   <!--********************************************************************************
     da.3dvar.prep  -  3DVar Data assimilation preparation 
-      * combines observation operator from each ensemble member into a single file
-      * TODO: this doesn't do much, roll it into the da.3dvar.run job?
-      * TODO: modify to handle standalone 3dvar
-   ********************************************************************************-->
-  ${IF_3DVAR_START}
-  <task name="da.3dvar.prep" maxtries="&MAXTRIES;">
 
-    <jobname>&EXP_NAME;.da.3dvar.prep</jobname>
+      * this is ONLY done if doing hybrid LETKF/3DVAR DA, otherwise the 3DVar 
+        will just use the output of the da.prep step
+      * performs observation operator on the analysis mean output from the LETKF
+   ********************************************************************************-->
+  ${IF_S_HYB}
+  <task name="da.prep.3dvar" maxtries="&MAXTRIES;">
+
+    <jobname>&EXP_NAME;.da.prep.3dvar</jobname>
+    <join>&LOG_PREFIX;da.prep.3dvar.log</join>
+    <walltime>&da.prep.3dvar.WALLTIME;</walltime>
+    &COM_SCHED_S;
+
+
     <command>
       &SCRIPT_WRAPPER;
 
+      # combine the forecast daily files and run the obsop on it
       slots="_all"
       if [[ "&#36;slots" = "_all" ]]; then
         slots="&DA_WNDW_SLOTS;";
@@ -387,17 +449,18 @@
       fi
       for s in &#36;slots; do
         export DA_SLOT=&#36;s
-	export TMP_DIR=&WORK_DIR;/da.3dvar.prep/omf/work/t&#36;s
+	export JOB_WORK_DIR=&WORK_DIR;/da.prep.3dvar/omf/work.slots/t&#36;s
 	export OBSOP_FILE=${OBSOP_FILE_TMPL//&#37;slot/&#36;s}
-	&SCRIPT_DIR;/da.obsop.sh
+	&SCRIPT_DIR;/da.obsop.slot.sh
       done
 
-      export OMF_SLOT_FILE=${OBSOP_FILE_TMPL//&#37;slot/&#35;slot&#35;}
-      &SCRIPT_DIR;/da.3dvar.prep.sh
+      # combine all the obsop slots into a single file
+      export JOB_WORK_DIR=&WORK_DIR;/da.prep.3dvar/omf/work.cmb/
+      export OMF_FILES=&WORK_DIR;/da.prep.3dvar/omf/t*.nc
+      export OUT_FILE=&WORK_DIR;/da.prep.3dvar/omf/obs.nc
+      &SCRIPT_DIR;/da.obsop.comb.sh
     </command>
-    <join>&LOG_PREFIX;da.3dvar.prep.log</join>
-    <walltime>&da.3dvar.prep.WALLTIME;</walltime>
-    &COM_SCHED_S;
+
 
     &COM_ENV;
     <envar>
@@ -406,45 +469,62 @@
     </envar>
     <envar>
       <name>OBSOP_FILE_TMPL</name>
-      <value>&WORK_DIR;/da.3dvar.prep/omf/t&#37;slot.nc</value>
+      <value>&WORK_DIR;/da.prep.3dvar/omf/t&#37;slot.nc</value>
     </envar>
-    <envar>
-      <name>OMF_FILE</name>
-      <value>&WORK_DIR;/da.3dvar.prep/omf/obs.nc</value>
-    </envar>
-
 
     <dependency>
       <and>
 	<metataskdep metatask="da.prep.all"/>
-	${IF_LETKF_START} <taskdep task="da.letkf.run"/> ${IF_LETKF_END}
+	<taskdep task="da.letkf.run"/>
       </and>
     </dependency>
 
   </task>
-  ${IF_3DVAR_END}
+  ${IF_E_HYB}
+
 
 
 
   <!--********************************************************************************
     da.3dvar.run  -  3DVar data assimilation
+
       * Runs the 3dvar preparation (bgvar /vtloc programs)
-      * Runs the 3dvar
+      * Runs the 3dvar and generates an analysis increment
    ********************************************************************************-->
-  ${IF_3DVAR_START}
+  ${IF_S_3DVAR}
   <task name="da.3dvar.run" maxtries="&MAXTRIES;">
 
     <jobname>&EXP_NAME;.da.3dvar.run</jobname>
-    <command>
-      &SCRIPT_WRAPPER;
-      &SCRIPT_DIR;/da.3dvar.run.sh
-    </command>
     <join>&LOG_PREFIX;da.3dvar.run.log</join>
     <walltime>&da.3dvar.run.WALLTIME;</walltime>
     <account>&SCHED_ACCT;</account>
     <queue>&SCHED_P_QUEUE;</queue>
     <nodes>&da.3dvar.run.NODES;:ppn=&PPN;</nodes>
     <native>&da.3dvar.run.SCHED_ARGS;</native>
+
+
+    <command>
+      &SCRIPT_WRAPPER;
+
+      # determine where to pull the obs and bkg from
+      if [[ &#36;DA_MODE == "var" ]]; then
+        export OBS_FILE=&WORK_DIR;/da.prep/omf/mem_&ENS_LIST;/obs.nc
+	export BKG_FILE=&WORK_DIR;/da.prep/bkg/mem_&ENS_LIST;/&#36;{CYCLE:0:8}.nc
+      else # hyb
+        export OBS_FILE=&WORK_DIR;/da.prep.3dvar/omf/obs.nc
+	export BKG_FILE=&WORK_DIR;/da.letkf/OUTPUT/ana_mean.nc
+      fi      
+      export AI_FILE=&ROOT_EXP_DIR;/cycle/&#36;CYCLE_NEXT/da.3dvar/ai.nc
+
+      # run 3DVar
+      &SCRIPT_DIR;/da.3dvar.run.sh
+
+
+      # this is the end of the cycle
+      echo "rst:&#36;CYCLE_NEXT" > &#36;ROOT_EXP_DIR/cycle_status
+
+    </command>
+
 
     &COM_ENV;
     <envar>
@@ -462,57 +542,23 @@
 
     
     <dependency>
-      <taskdep task="da.3dvar.prep"/>
-    </dependency>
-
-  </task>
-  ${IF_3DVAR_END}
-
-
-
-  <!--********************************************************************************
-    da.update  -  LETKF/3DVar combine and restart file update
-      * TODO: handle the hybrid workflow
-      * Applies the final analysis increments to the restart files
-   ********************************************************************************-->
-  <task name="da.update" maxtries="&MAXTRIES;">
-
-    <jobname>&EXP_NAME;.da.update</jobname>
-    <command>
-      &SCRIPT_WRAPPER;
-      &SCRIPT_DIR;/da.update.sh
-      echo "rst:&#36;CYCLE_NEXT" > &#36;ROOT_EXP_DIR/cycle_status
-    </command>
-    <join>&LOG_PREFIX;da.update.log</join>
-    <walltime>&da.update.WALLTIME;</walltime>
-    &COM_SCHED_S;
-
-
-    &COM_ENV;
-    <envar>
-      <name>JOB_WORK_DIR</name>
-      <value>&WORK_DIR;</value>
-    </envar>
-    <envar>
-      <name>ENS_LIST</name>
-      <value>&ENS_LIST;</value>
-    </envar>
-    
-    <dependency>
       <and>
-	${IF_3DVAR_START} <taskdep task="da.3dvar.run"/> ${IF_3DVAR_END}
-	${IF_LETKF_START} <taskdep task="da.letkf.run"/> ${IF_LETKF_END}
+	<metataskdep metatask="da.prep.all"/>
+	${IF_S_3DVAR_HYB}
+	<taskdep task="da.prep.3dvar"/>
+	${IF_E_3DVAR_HYB}
       </and>
     </dependency>
 
   </task>
-
-
+  ${IF_E_3DVAR}
 
 
   <!--********************************************************************************
-    da.post  -  Data assimilation post processing
+    cycle.post  -  end of cycle post processing
+
       * Performs other file manipulations for things that want to be saved
+        (file compression, etc.)
       * cleans up files that are no longer needed
       * This does not need to finsish before rocoto can move onto the next cycle
    ********************************************************************************-->
@@ -536,11 +582,15 @@
       <name>ENS_LIST</name>
       <value>&ENS_LIST;</value>
     </envar>
-
     
     <dependency>
-      <taskdep task="da.update"/>
+      <and>
+	<metataskdep metatask="da.prep.all"/>
+	${IF_S_3DVAR} <taskdep task="da.3dvar.run"/> ${IF_E_3DVAR}
+	${IF_S_LETKF} <taskdep task="da.letkf.run"/> ${IF_E_LETKF}
+      </and>
     </dependency>
   </task>
+
 
 </workflow>

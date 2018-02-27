@@ -22,6 +22,7 @@ cat << \#\#
  envar+=("NODES")
  envar+=("DA_WNDW_SLOTS")
  envar+=("ENS_LIST")
+ envar+=("ANA_FILES")
 #================================================================================
 #================================================================================
 
@@ -67,7 +68,6 @@ for mem in $ENS_LIST; do
 done
 
 # observations
-# TODO use the combined obs output
 mkdir -p INPUT/obsop
 m=0
 for mem in $ENS_LIST; do
@@ -75,18 +75,15 @@ for mem in $ENS_LIST; do
     ln -s ../../../da.prep/omf/mem_$mem/obs.nc INPUT/obsop/$m.dat
 done
 
-## link observations
-# s=0
-# for slot in $DA_WNDW_SLOTS; do
-#     s=$(printf "%02g" $((10#$s+1)) )
-#     m=0
-#     for mem in $ENS_LIST; do
-# 	m=$(printf "%03g" $((10#$m+1)))
-# 	ln -s ../da.prep/omf/mem_$mem/t$slot.dat obs$s$m.dat
-#     done
-# done
 
-
+#ana ens files
+mkdir -p $ANA_FILES
+ln -s $ANA_FILES OUTPUT
+#mkdir -p OUTPUT
+#for mem in $ENS_LIST; do
+#    m=$(printf "%04g" $((10#$m+1)) )
+#    ln -s $ANA_FILES/$m.nc OUTPUT/$m.nc
+#done
 
 # run the LETKF
 aprun -n $nproc ./letkf

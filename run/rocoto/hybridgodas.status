@@ -11,12 +11,25 @@ for l in ${la[@]}; do
 done
 active=${active:1}
 n2=($na)
-#TODO, this breaks
-recent="$active"
+#TODO, this is definitely not elegant
+recent=""
 if [[ ${#n2[@]} -ge 2 ]]; then recent="$recent,${n2[-2]}"; fi
 if [[ ${#n2[@]} -ge 1 ]]; then recent="$recent,${n2[-1]}"; fi
+if [[ "$recent" ]]; then
+    recent=${recent:1:1000}
+fi
+
+if [[ "$active" ]]; then
+    if [[ "$recent" ]]; then
+	recent="$recent,$active"
+    else
+	recent="$active"
+    fi
+fi
 
 rocotostat -d config/rocoto/hybridgodas.rocoto.db -w config/rocoto/hybridgodas.rocoto.xml  -s -c $recent
 
-echo ""
-rocotostat -d config/rocoto/hybridgodas.rocoto.db -w config/rocoto/hybridgodas.rocoto.xml  -c $active
+if [[ "$active" ]]; then
+    echo ""
+    rocotostat -d config/rocoto/hybridgodas.rocoto.db -w config/rocoto/hybridgodas.rocoto.xml  -c $active
+fi

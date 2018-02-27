@@ -23,7 +23,7 @@ cat << \#\#
 #    based on the actual date needed based on the "$CYCLE + $DA_SLOT" calculation.
  envar=()
  envar+=("ROOT_GODAS_DIR")  # The path to the hybrid-godas root code/source dir
- envar+=("TMP_DIR")
+ envar+=("JOB_WORK_DIR")
  envar+=("CYCLE")           # The datetime of the current cycle and ana time (YYYYMMDDHH)
  envar+=("DA_SLOT")         # The offset (in days) from the analysis time (e.g. "-5")
  envar+=("BKG_FILE")        # The path to the background file (using datetime placeholders)
@@ -74,7 +74,7 @@ fi
 #------------------------------------------------------------
 # TODO, move work_dir to external definition
 # TODO move config file and grid file locations to external definition
-work_dir=$TMP_DIR
+work_dir=$JOB_WORK_DIR
 echo ""
 echo "Using working directory:"
 echo " $work_dir"

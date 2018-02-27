@@ -139,9 +139,15 @@ def procFile(filename):
     print(filename)
     df={}
     ncd = nc.Dataset(filename, 'r')
-    fvars=('obid','plat','lat','lon','depth','inc_mean','inc_sprd', 'qc')
+    fvars=('obid','plat','lat','lon','depth','qc')
     for f in fvars: #ncd.variables:
-        df[f] = ncd.variables[f][:]        
+        df[f] = ncd.variables[f][:]
+    if "inc_mean" in ncd.variables.keys():
+        df['inc_mean'] = ncd.variables['inc_mean'][:]
+    else:
+        df['inc_mean'] = ncd.variables['inc'][0]
+    df['qc'][df['inc_mean'] != df['inc_mean']] = 1
+        
     ncd.close()
 
 #    ncd = nc.Dataset(filename[:-3]+'.varqc.nc', 'r')
@@ -171,15 +177,18 @@ def procFile(filename):
         count_bad  = mask.sum()- count_good
         obs  = df[ m_valid & mask]
         bias = obs.inc_mean.mean()
-        sprd = obs.inc_sprd.mean()
+#        sprd = obs.inc_sprd.mean()
         rmsd = math.sqrt((obs.inc_mean**2).mean())
 #        val  = obs.val.mean()
-        data.append( (count_good, count_bad, bias, rmsd, sprd) )#, val) )
+        data.append( (count_good, count_bad, bias, rmsd ))#, sprd) )#, val) )
 
     return (filename.split('/')[-1][:-3], data)
 
 
 def smooth(d):
+    if args.smooth == 0:
+        return d
+
     if len(d) > 0:
         d = np.concatenate( (np.repeat(d[0], box_adj), d, np.repeat(d[-1], box_adj) ) )
         d = np.convolve(d, box, mode='valid')

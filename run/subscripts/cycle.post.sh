@@ -93,8 +93,7 @@ function proc(){
 	truncations=" -lsd $comp3 "
     fi
 
-    
-    if [[ "$?" -gt 4 ]]; then
+    if [[ "$#" -gt 4 ]]; then
 	if [[ "$5" ]]; then
 	    remove=" -remove $5"
 	fi
@@ -140,7 +139,7 @@ if [[ ( "$DA_MODE" == "hyb" ) || ( "$DA_MODE" == "ekf" ) ]]; then
     	    proc $ofile.tmp0 $ofile 1 3
     	    rm $ofile.tmp0
     	else
-    	    proc $file $ofile 1 3
+    	    proc $ifile $ofile 1 3
     	fi
     fi
 
@@ -173,9 +172,7 @@ for ens in ${ENS_LIST}; do
     if [[ "$SAVE_BKG_ENS" -gt 0 ]]; then
 	ifile=$JOB_WORK_DIR/da.prep/bkg/mem_$ens/${DA_WNDW_CNTR_TIME:0:8}.nc
 	ofile=$ROOT_EXP_DIR/bkg/ens/$ens/${DA_WNDW_CNTR_TIME}.nc 
-#	proc $ifile $ofile 0 3 rhopot0
-	echo "ERROR: background at analysis time not being save"
-	exit 1
+	proc $ifile $ofile 0 3 rhopot0,SST_min
     fi
 
     #
@@ -209,20 +206,26 @@ if [[ "$SAVE_OMF" -gt 0 ]]; then
     # calculate the ensemble members / mean /spread
     # for the increments   
     ncecat -h -O $ifiles -v inc $ofile.ens.tmp
-    ncwa -h -O -a record $ofile.ens.tmp $ofile.mean.tmp
-    ncbo -h -O $ofile.ens.tmp $ofile.mean.tmp $ofile.sprd.tmp
-    ncra -h -O -y rmssdn $ofile.sprd.tmp $ofile.sprd.tmp
-    ncwa -h -O -a record $ofile.sprd.tmp $ofile.sprd.tmp
+    if [[ ${#e[@]} -gt 1 ]]; then
+	ncwa -h -O -a record $ofile.ens.tmp $ofile.mean.tmp
+	ncbo -h -O $ofile.ens.tmp $ofile.mean.tmp $ofile.sprd.tmp
+	ncra -h -O -y rmssdn $ofile.sprd.tmp $ofile.sprd.tmp
+	ncwa -h -O -a record $ofile.sprd.tmp $ofile.sprd.tmp
+    fi
 
     # combine things
     #... i have no idea why its being weird
-    ncrename -h -O -v inc,inc_mean $ofile.mean.tmp $ofile.mean.tmp
-    ncrename -h -O -v inc,inc_sprd $ofile.sprd.tmp $ofile.sprd.tmp
     ncrename -h -O -d record,mem $ofile.ens.tmp $ofile.ens.tmp
     ncks -h -O --fix_rec_dmn all $ofile.ens.tmp $ofile.ens.tmp
     mv $ofile.ens.tmp $ofile.tmp
-    ncks -h -A $ofile.mean.tmp $ofile.tmp
-    ncks -h -A $ofile.sprd.tmp $ofile.tmp    
+    if [[ ${#e[@]} -gt 1 ]]; then
+	ncrename -h -O -v inc,inc_mean $ofile.mean.tmp $ofile.mean.tmp
+	ncrename -h -O -v inc,inc_sprd $ofile.sprd.tmp $ofile.sprd.tmp
+	ncks -h -A $ofile.mean.tmp $ofile.tmp
+	ncks -h -A $ofile.sprd.tmp $ofile.tmp    
+    fi
+
+
     vars="time obid plat lat lon depth hr val err qc"
     for v in $vars; do
 	ncks -h --fix_rec_dmn all -v $v $ifile0 $ofile.$v.tmp
