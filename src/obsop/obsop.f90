@@ -7,6 +7,7 @@ program obsop
   use gsw_mod_toolbox
   use cubic_spline
   use datetime_module
+  use ieee_arithmetic
 
   implicit none
 
@@ -28,8 +29,9 @@ program obsop
   real, allocatable :: obs_inc(:)
   type(obsio_nc) :: obsio
 
-  integer :: i
+  integer :: i, bad_val, bad_inc, bad_err, bad_land, num
   integer :: x, y, z
+  integer :: btm
   integer :: prev_x, prev_y
   real :: s, pt, v
   integer :: unit
@@ -87,6 +89,7 @@ program obsop
   call check(nf90_inq_varid(ncid, "Salt", vid))
   call check(nf90_get_var(ncid, vid, state_s))
 
+  ! TODO, modify this for hourly SST data
   allocate(state_sst(grid_nx, grid_ny))
   print *, "Reading state SST..."
   i =nf90_inq_varid(ncid, "SST_min", vid)
@@ -99,7 +102,6 @@ program obsop
 
   call check(nf90_close(ncid))
 
-  call gsw_saar_init(.true.)
 
   ! read in the observations
   call obsio%read(obsfile, obs, basedate)
@@ -108,6 +110,10 @@ program obsop
 
 
   ! process each observation
+  bad_land=0
+  bad_val=0
+  bad_err=0
+  bad_inc=0
   prev_x = -1
   prev_y = -1
   do i=1,size(obs)
@@ -123,10 +129,14 @@ program obsop
      call grid_ll2xy(obs(i)%lat, obs(i)%lon, x, y)
 
      ! ignore points that happen to be on land
-     if (grid_mask(x,y) < 1) cycle
+     if (grid_mask(x,y) < 1) then
+        bad_land = bad_land + 1
+        cycle
+     end if
      
      ! get the model PT, S values at the observation location
      if(obs(i)%plat .ge. 1000 .and. obs(i)%id == obid_t) then
+        ! satellite SST, use the SST state
         pt = state_sst(x,y)
      else if(obs(i)%dpth <= grid_depths(1)) then
         ! if at the surface...
@@ -137,10 +147,27 @@ program obsop
         if(prev_x /= x .or. prev_y /= y) then
            ! generate a new cubic spline of
            ! the t/s profile at the given location
+
+           ! TODO: replace with gsw_rr68_interp()
+
+           ! determine the bottom level 
+           ! TODO: faster to replace this with a binary search
+           ! TODO: not needed once switching to hybrid, need to use actual 
+           !  interface depths though
+           do btm = grid_nz,1,-1
+              if (grid_D(x,y) >= grid_depths(btm)) exit
+           end do
+
+           ! fit a spline to the T/S
            prev_x = x
            prev_y = y
-           spline_t = cspline(grid_depths, state_t(x,y,:))
-           spline_s = cspline(grid_depths, state_s(x,y,:))
+           spline_t = cspline(grid_depths(:btm), state_t(x,y,:btm))
+           spline_s = cspline(grid_depths(:btm), state_s(x,y,:btm))
+        end if
+        if (obs(i)%dpth > grid_depths(btm)) then
+           bad_land = bad_land+1
+           obs(i)%qc = 1
+           cycle
         end if
         pt  = spline_t%interp(obs(i)%dpth, check=.true.)
         s   = spline_s%interp(obs(i)%dpth, check=.true.)
@@ -153,6 +180,9 @@ program obsop
               print *, grid_depths(z), state_t(x,y,z), state_s(x,y,z)
            end do
            print *, ""
+           print *, "bottom (lvl_idx, lvl_meters, depth)"
+           print *, btm, grid_depths(btm), grid_D(x,y)
+           print *,""
            print *,'interpolation (depth, pt, s)'
            print *, obs(i)%dpth, pt, s
            stop 1
@@ -182,13 +212,38 @@ program obsop
         print *, "unkown observation id: ",obs(i)%id
         stop 1
      end if   
-
+     
      obs_inc(i) = obs(i)%val - v
 
-     ! observation has passed this QC
-     obs(i)%qc = 0
+     ! extra checks on the numbers for obvious bad values
+     if ( .not. ieee_is_finite(obs(i)%val)) then
+        bad_val = bad_val + 1
+        obs(i)%val = 0
+     else if( .not. ieee_is_finite(obs(i)%err)) then
+        bad_err = bad_err + 1
+        obs(i)%err = 0
+     else if ( .not. ieee_is_finite(obs_inc(i))) then
+        bad_inc = bad_inc + 1
+        obs_inc(i) = 0
+     else
+        ! observation has passed this QC
+        obs(i)%qc = 0
+     end if
   end do
 
+  ! count the number of bad obs
+  num=0
+  do i=1,size(obs)
+     if(obs(i)%qc == 0) num = num +1
+  end do
+  print *, ""
+  print *, "Good obs:  ", num
+  print *, " bad ob:   ", bad_val
+  print *, " bad h(x): ", bad_inc
+  print *, " bad err:  ", bad_err
+  print *, " bad land: ", bad_land
+
+  
   !done, write out observation
   call obsio%write(outfile, obs, basedate, obs_inc)
 

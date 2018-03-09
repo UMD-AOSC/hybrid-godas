@@ -5,6 +5,7 @@
   grid_lon_var="geolon"
   grid_lat_var="geolat"
   grid_msk_var="wet"
+  grid_D_var="D"
   grid_dpth_file="INPUT/vgrid.nc"
   grid_dpth_dim="Layer"
   grid_dpth_var="Layer"

@@ -15,6 +15,7 @@ module obscom_grid
   real, allocatable, public :: grid_lons(:,:)
   real, allocatable, public :: grid_lats(:,:)
   real, allocatable, public :: grid_mask(:,:)
+  real, allocatable, public :: grid_D(:,:)
   real, allocatable, public :: grid_depths(:)
   
   type(kd_root) :: ll_kdtree
@@ -82,6 +83,7 @@ contains
     character(len=:), allocatable :: grid_lon_var
     character(len=:), allocatable :: grid_lat_var
     character(len=:), allocatable :: grid_msk_var
+    character(len=:), allocatable :: grid_D_var
     character(len=:), allocatable :: grid_dpth_file
     character(len=:), allocatable :: grid_dpth_dim
     character(len=:), allocatable :: grid_dpth_var
@@ -92,7 +94,7 @@ contains
     
     namelist /grid_nml/ grid_file, grid_lon_dim, grid_lat_dim, &
          grid_lon_var, grid_lat_var, grid_msk_var, &
-         grid_dpth_file, grid_dpth_dim, grid_dpth_var
+         grid_dpth_file, grid_dpth_dim, grid_dpth_var, grid_D_var
     
 
     ! read namelist file
@@ -106,6 +108,7 @@ contains
     allocate(character(len=1024) :: grid_dpth_file)
     allocate(character(len=1024) :: grid_dpth_dim)
     allocate(character(len=1024) :: grid_dpth_var)
+    allocate(character(len=1024) :: grid_D_var)
     open(newunit=unit, file=nml_file)
     read(unit, grid_nml)
     close(unit)
@@ -118,6 +121,7 @@ contains
     grid_dpth_file = trim(grid_dpth_file)
     grid_dpth_dim  = trim(grid_dpth_dim)
     grid_dpth_var  = trim(grid_dpth_var)
+    grid_D_var = trim(grid_D_var)
     print *, ""
     print grid_nml
     print *, ""
@@ -151,6 +155,10 @@ contains
     allocate(grid_mask(grid_nx,grid_ny))
     call check(nf90_inq_varid(ncid, grid_msk_var, vid))
     call check(nf90_get_var(ncid, vid, grid_mask))
+
+    allocate(grid_D(grid_nx, grid_ny))
+    call check(nf90_inq_varid(ncid, grid_D_var, vid))
+    call check(nf90_get_var(ncid, vid, grid_D))
 
     ! put the grid into kd-tree
     allocate(ll_kdtree_x(grid_nx*grid_ny))

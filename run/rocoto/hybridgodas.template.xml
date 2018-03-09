@@ -42,7 +42,7 @@
 <!ENTITY da.prep.WALLTIME          "10:00">
 <!ENTITY da.prep.3dvar.WALLTIME    "5:00">
 
-<!ENTITY da.3dvar.run.NODES        "1">
+<!ENTITY da.3dvar.run.NODES        "2">
 <!ENTITY da.3dvar.run.SCHED_ARGS   "&SCHED_P_ARGS; -l size=&da.3dvar.run.NODES;">
 <!ENTITY da.3dvar.run.WALLTIME     "10:00">
 
