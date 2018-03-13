@@ -20,7 +20,8 @@
                                !  restart variables, time derivatives, etc.
                                !  This is mostly used for the size of pointer
                                !  arrays, so it should be set generously.
-#define SYMMETRIC_MEMORY_
+
+#undef SYMMETRIC_MEMORY_
 
 #include <MOM_memory_macros.h>
 #include <SIS_memory_macros.h>

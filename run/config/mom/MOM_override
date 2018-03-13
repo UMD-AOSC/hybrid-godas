@@ -25,10 +25,11 @@
 #override ADJUST_NET_SRESTORE_BY_SCALING = True
 #override ADJUST_NET_FRESH_WATER_BY_SCALING = True
 #override MAX_DELTA_RESTORE=1.0
-!#override MASK_SRESTORE_UNDER_ICE=True
+#override USE_NET_FW_ADJUSTMENT_SIGN_BUG = False
 
 
 ! other tweaks
 !------------------------------------------------------------
 #override MAX_P_SURF=3.e4
 #override USE_IDEAL_AGE_TRACER=False
+#override SEND_LOG_TO_STDOUT = True
