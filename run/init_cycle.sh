@@ -30,8 +30,7 @@ mkdir -p config/da
 mkdir -p config/mom
 cp $root_dir/run/config/da/* config/da
 cp $root_dir/run/config/mom/* config/mom
-ln -s $root_dir/run/rocoto/hybridgodas.runstep .
-ln -s $root_dir/run/rocoto/hybridgodas.status .
+ln -s $root_dir/run/rocoto/hybridgodas.{run,status} .
 
 # setup default values to fill the default configuration script with
 export EXP_NAME="${exp_dir##*/}"
