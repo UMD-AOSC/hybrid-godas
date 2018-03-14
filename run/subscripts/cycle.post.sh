@@ -236,3 +236,43 @@ if [[ "$SAVE_OMF" -gt 0 ]]; then
     rm $ofile.tmp
     rm $ofile.*.tmp
 fi
+
+# delete any old working directories that are no longer needed
+#------------------------------------------------------------
+# cycle directory
+if [[ "$SAVE_RST_CYCLES" -gt "0" ]]; then
+    echo "Checking for old cycles to delete..."
+
+    # how far back do we need to go?
+    dtz(){ echo ${1:0:8}Z${1:8:10}; }
+    keep_hrs=$(($FCST_LEN + $SAVE_RST_CYCLES))
+    keep_date=$(date "+%Y%m%d%H" -d "$(dtz $CYCLE) - $keep_hrs hours")
+    echo "Deleting cycles before $keep_date"
+
+    for f in $ROOT_EXP_DIR/cycle/*; do
+	d=${f##*/}
+	keep=0
+
+	# keep if new enough
+	if [[ "$d" -ge "$CYCLE" ]]; then keep=1; fi
+
+	#save annual restart file?
+	if [[ "$SAVE_RST_ANNUAL" -gt 0 ]]; then
+	    y1=${d:0:4}
+	    y2=$(date "+%Y" -d "$(dtz $d) - $FCST_LEN hours")
+	    if [[ "$y1" -ne "$y2" ]]; then keep=1; fi
+	fi
+
+	# delete
+	if [[ "$keep" -eq 0 ]]; then
+	    echo "* Deleting $d"
+	    rm -r $f
+	fi
+    done
+fi
+
+
+# working directory
+echo "* Deleting cycle temporary working directory: "
+echo "  $JOB_WORK_DIR"
+rm -r $JOB_WORK_DIR
