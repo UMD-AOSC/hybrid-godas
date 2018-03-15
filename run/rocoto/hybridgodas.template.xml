@@ -225,12 +225,7 @@ the following steps are performed:
 	fi
 
 	# run the forecast
-	# TODO, cleanup this logic
-	if [[ &#36;DA_MODE == "none" ]]; then
-	    export FCST_DIAG_DA=0
-        else
-	    export FCST_DIAG_DA=1
-	fi
+	export FCST_DIAG_DA=1
 	export FCST_DIAG_OTHER=0
 	if [[ #mem# == "0000" ]]; then
 	    export FCST_DIAG_OTHER=1

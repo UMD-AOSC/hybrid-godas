@@ -16,6 +16,7 @@ cat << \#\#
  envar+=("DA_MODE")
  envar+=("DA_HYB_ALPHA")
  envar+=("FCST_RST_TIME")
+ envar+=("CYCLE")
 
  envar+=("SAVE_FORMAT_GRID")
  envar+=("SAVE_COMP_LEVEL")
@@ -49,14 +50,27 @@ done
 set -u
 echo ""
 
-comp2=Temp/3,Salt/3,SSH/4
-comp3=Temp/2,Salt/2,SSH/3
+#TODO: there is inconsistency in variables names (e.g. Temp vs temp) fix this
+comp2=Temp/3,Salt/3,SSH/4,u/3,v/3
+comp3=Temp/2,Salt/2,SSH/3,u/2,v/2,\
+temp/2,salt/2,ssh/3,\
+mld_003/1,mld_0125/1,taux/2,tauy/2,speed/2,ssh/3,lh/1,lw/1,sh/1,net_heat_coupler/1,\
+cn/2,siu/3,siv/3,sisnconc/2,siconc/2,hs/2,hi/2
+
 tools_dir=$ROOT_GODAS_DIR/tools/postproc
+
+# create temporary working directory
+work_dir=$JOB_WORK_DIR/cycle.post
+if [[ -d "$work_dir" ]]; then
+    echo "Deleting old working directory"
+    rm -r $work_dir
+fi
+mkdir -p $work_dir
 
 
 #--------------------------------------------------------------------------------
 # function that does the actual masking / regridding / compression of the 3d output
-function proc(){
+function procGrid(){
     echo ""
     echo "processing:"
     echo "  $1"
@@ -77,6 +91,19 @@ function proc(){
     fi
     
     # file regridding
+    # if [[ true ]]; then
+    # 	$ROOT_GODAS_DIR/tools/postproc/rotUV.py -u u -v v $2.tmp $2.uv
+    # 	infile=$2.tmp \
+    # 	    outfile=$2.tmp.t.nc \
+    # 	    vars=speed,ssh \
+    # 	    weights=$ROOT_GODAS_DIR/tools/postproc/weights/remap.grid_t.05deg.con.nc \
+    # 	    ncl $ROOT_GODAS_DIR/tools/postproc/remap.ncl
+    # 	infile=$2.uv \
+    # 	    outfile=$2.tmp.uv.nc \
+    # 	    vars=u,v \
+    # 	    weights=$ROOT_GODAS_DIR/tools/postproc/weights/remap.grid_t.05deg.bil.nc \
+    # 	    ncl $ROOT_GODAS_DIR/tools/postproc/remap.ncl
+    # fi
     ln -f $2.tmp $2.tmp2
 
     # file compression
@@ -86,12 +113,10 @@ function proc(){
     if [[ "$4" -gt 0 ]]; then
 	compression=" -compression $SAVE_COMP_LEVEL "
     fi
-
-    if [[ "$4" -eq 2 ]]; then
-	truncations=" -lsd $comp2 "
-    elif [[ "$4" -eq 3 ]]; then
-	truncations=" -lsd $comp3 "
-    fi
+    case "$4" in
+	2)  truncations=" -lsd $comp2 " ;;
+	3)  truncations=" -lsd $comp3 " ;;
+    esac
 
     if [[ "$#" -gt 4 ]]; then
 	if [[ "$5" ]]; then
@@ -117,47 +142,58 @@ if [[ ( "$DA_MODE" == "hyb" ) || ( "$DA_MODE" == "ekf" ) ]]; then
     # ensemble background mean
     if [[ "$SAVE_BKG_MEAN" -gt 0 ]]; then
 	ifile=$JOB_WORK_DIR/da.letkf/OUTPUT/bkg_mean.nc
-	ofile=$ROOT_EXP_DIR/bkg/mean/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc
-	proc $ifile $ofile 1 3
+	ofile=$ROOT_EXP_DIR/output/bkg/mean/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc
+	procGrid $ifile $ofile 1 3
     fi
 
     # ensemble background spread
     if [[ "$SAVE_BKG_SPRD" -gt 0 ]]; then
 	ifile=$JOB_WORK_DIR/da.letkf/OUTPUT/bkg_sprd.nc
-	ofile=$ROOT_EXP_DIR/bkg/sprd/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc
-	proc $ifile $ofile 1 2
+	ofile=$ROOT_EXP_DIR/output/bkg/sprd/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc
+	procGrid $ifile $ofile 1 2
     fi
 
     # ensemble analysis mean
     if [[ "$SAVE_ANA_MEAN" -gt 0 ]]; then
-    	ofile=$ROOT_EXP_DIR/ana/mean/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc	
+    	ofile=$ROOT_EXP_DIR/output/ana/mean/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc	
     	ifile=$JOB_WORK_DIR/da.letkf/OUTPUT/ana_mean.nc
     	mkdir -p $(dirname $ofile)
     	if [[ "$DA_MODE" == "hyb" ]]; then
     	    ifile2=$JOB_WORK_DIR/da.3dvar/ana_inc.nc	    
     	    cdo add -mulc,$DA_HYB_ALPHA $ifile2 $ifile $ofile.tmp0
-    	    proc $ofile.tmp0 $ofile 1 3
+    	    procGrid $ofile.tmp0 $ofile 1 3
     	    rm $ofile.tmp0
     	else
-    	    proc $ifile $ofile 1 3
+    	    procGrid $ifile $ofile 1 3
     	fi
     fi
 
     # ensemble analysis mean (from the intermediate LETKF part of they hybrid)
     if [[ ( "$SAVE_ANA_MEAN_LETKF" -gt 0 ) && ( "$DA_MODE" == "hyb" ) ]]; then
 	ifile=$JOB_WORK_DIR/da.letkf/OUTPUT/ana_mean.nc
-	ofile=$ROOT_EXP_DIR/ana/mean_letkf/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc
-	proc $ifile $ofile 1 3
+	ofile=$ROOT_EXP_DIR/output/ana/mean_letkf/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc
+	procGrid $ifile $ofile 1 3
     fi
 
     # ensemble analysis spread
     if [[ "$SAVE_ANA_SPRD" -gt 0 ]]; then
 	ifile=$JOB_WORK_DIR/da.letkf/OUTPUT/ana_sprd.nc
-	ofile=$ROOT_EXP_DIR/ana/sprd/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc
-	proc $ifile $ofile 1 2
+	ofile=$ROOT_EXP_DIR/output/ana/sprd/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc
+	procGrid $ifile $ofile 1 2
     fi
 fi
 
+
+# things that are done for the mean forecast (ensemble member 0000)
+#--------------------------------------------------------------------------------
+echo ""
+echo "Saving mean forecast (member 0000)"
+$ROOT_GODAS_DIR/build/mppnccombine -m -64 $work_dir/pentad.ice.nc \
+    $JOB_WORK_DIR/fcst.run/mem_0000/*.ice_pentad_*
+procGrid $work_dir/pentad.ice.nc $ROOT_EXP_DIR/output/fcst/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.ice.nc 0 3
+$ROOT_GODAS_DIR/build/mppnccombine -m -64 $work_dir/pentad.ocean.nc \
+    $JOB_WORK_DIR/fcst.run/mem_0000/*.ocean_pentad_*
+procGrid $work_dir/pentad.ocean.nc $ROOT_EXP_DIR/output/fcst/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.ocean.nc 0 3
 
 
 # things thare are done for any DA type
@@ -171,20 +207,20 @@ for ens in ${ENS_LIST}; do
     # ensemble member background at analysis time
     if [[ "$SAVE_BKG_ENS" -gt 0 ]]; then
 	ifile=$JOB_WORK_DIR/da.prep/bkg/mem_$ens/${DA_WNDW_CNTR_TIME:0:8}.nc
-	ofile=$ROOT_EXP_DIR/bkg/ens/$ens/${DA_WNDW_CNTR_TIME}.nc 
-	proc $ifile $ofile 0 3 rhopot0,SST_min
+	ofile=$ROOT_EXP_DIR/output/bkg/ens/$ens/${DA_WNDW_CNTR_TIME}.nc 
+	procGrid $ifile $ofile 0 3 rhopot0,SST_min
     fi
 
     #
     if [[ "$SAVE_BKG_SLOT" -gt 0 ]]; then
-	out_dir=$ROOT_EXP_DIR/bkg/ens_slots/$ens
+	out_dir=$ROOT_EXP_DIR/output/bkg/ens_slots/$ens
 	echo "ERROR: background ensemble slots not being saved"
 	exit 1
     fi
 
     #
     if [[ "$SAVE_ANA_ENS" -gt 0 ]]; then
-	out_dir=$ROOT_EXP_DIR/ana/ens/$ens
+	out_dir=$ROOT_EXP_DIR/output/ana/ens/$ens
 	echo "ERROR: analysis ensemble slots not being saved."
 	exit 1
     fi
@@ -192,9 +228,10 @@ done
 
 
 # Save observation minus background stats
+#--------------------------------------------------------------------------------
 if [[ "$SAVE_OMF" -gt 0 ]]; then
     echo "Saving OmF..."
-    ofile=$ROOT_EXP_DIR/omf/${CYCLE:0:4}/${CYCLE}.nc 
+    ofile=$ROOT_EXP_DIR/output/omf/${CYCLE:0:4}/${CYCLE}.nc 
     mkdir -p $(dirname $ofile)
 
     #TODO: fix this to use combined obs (all slots in one file)
@@ -237,8 +274,9 @@ if [[ "$SAVE_OMF" -gt 0 ]]; then
     rm $ofile.*.tmp
 fi
 
+
 # delete any old working directories that are no longer needed
-#------------------------------------------------------------
+#--------------------------------------------------------------------------------
 # cycle directory
 if [[ "$SAVE_RST_CYCLES" -gt "0" ]]; then
     echo "Checking for old cycles to delete..."
