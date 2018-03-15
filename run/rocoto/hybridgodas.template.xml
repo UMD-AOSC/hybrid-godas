@@ -12,7 +12,8 @@
 <!ENTITY ROOT_GODAS_DIR        "${ROOT_DIR}">
 <!ENTITY ROOT_EXP_DIR          "${EXP_DIR}">
 <!ENTITY EXP_NAME              "${EXP_NAME}">
-<!ENTITY ENS_LIST              "${ENS_LIST}">
+<!ENTITY ENS_LIST_FCST         "${ENS_LIST_FCST}">
+<!ENTITY ENS_LIST_DA           "${ENS_LIST_DA}">
 
 
 <!-- forecast/da parameters -->
@@ -181,11 +182,6 @@ the following steps are performed:
       <name>JOB_WORK_DIR</name>
       <value>&WORK_DIR;/fcst.prep</value>
     </envar>    
-    <envar>
-      <name>ENS_LIST</name>
-      <value>&ENS_LIST;</value>
-    </envar>
-
   </task>
 
 
@@ -201,7 +197,7 @@ the following steps are performed:
         should be performed unless the "cycle_status" file contains "init:$CYLCE"
    ********************************************************************************-->
   <metatask name="fcst.run.all">
-    <var name="mem">&ENS_LIST;</var>
+    <var name="mem">&ENS_LIST_FCST;</var>
     <task name="fcst.run.#mem#" maxtries="&MAXTRIES;">
      
       <jobname>&EXP_NAME;.fcst.run.#mem#</jobname>
@@ -229,6 +225,16 @@ the following steps are performed:
 	fi
 
 	# run the forecast
+	# TODO, cleanup this logic
+	if [[ &#36;DA_MODE == "none" ]]; then
+	    export FCST_DIAG_DA=0
+        else
+	    export FCST_DIAG_DA=1
+	fi
+	export FCST_DIAG_OTHER=0
+	if [[ #mem# == "0000" ]]; then
+	    export FCST_DIAG_OTHER=1
+	fi
         &SCRIPT_DIR;/fcst.run.sh
 
 	# this is the end of the cycle, if not doing DA
@@ -289,7 +295,7 @@ the following steps are performed:
     <var name="slot">_all</var> 
 
     <metatask name="da.prep.t#slot#.allmem">
-      <var name="mem">&ENS_LIST;</var>
+      <var name="mem">&ENS_LIST_FCST;</var>
       <task name="da.prep.t#slot#.#mem#" maxtries="&MAXTRIES;">
 
 	<jobname>&EXP_NAME;.da.prep.t#slot#.#mem#</jobname>
@@ -408,7 +414,7 @@ the following steps are performed:
     </envar>
     <envar>
       <name>ENS_LIST</name>
-      <value>&ENS_LIST;</value>
+      <value>&ENS_LIST_DA;</value>
     </envar>
 
     <dependency>
@@ -508,8 +514,8 @@ the following steps are performed:
 
       # determine where to pull the obs and bkg from
       if [[ &#36;DA_MODE == "var" ]]; then
-        export OBS_FILE=&WORK_DIR;/da.prep/omf/mem_&ENS_LIST;/obs.nc
-	export BKG_FILE=&WORK_DIR;/da.prep/bkg/mem_&ENS_LIST;/&#36;{CYCLE:0:8}.nc
+        export OBS_FILE=&WORK_DIR;/da.prep/omf/mem_&ENS_LIST_DA;/obs.nc
+	export BKG_FILE=&WORK_DIR;/da.prep/bkg/mem_&ENS_LIST_DA;/&#36;{CYCLE:0:8}.nc
       else # hyb
         export OBS_FILE=&WORK_DIR;/da.prep.3dvar/omf/obs.nc
 	export BKG_FILE=&WORK_DIR;/da.letkf/OUTPUT/ana_mean.nc
@@ -580,7 +586,7 @@ the following steps are performed:
     </envar>
     <envar>
       <name>ENS_LIST</name>
-      <value>&ENS_LIST;</value>
+      <value>&ENS_LIST_DA;</value>
     </envar>
     
     <dependency>

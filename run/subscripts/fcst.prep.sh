@@ -39,8 +39,7 @@ cat << \#\#
  envar+=("JOB_WORK_DIR")     # The temporary directory in which this script
                              #  will do all of its work
 
- envar+=("ENS_LIST")         # The list of ensemble member numbers
-                             #  (i.e.  "0001 0002 0003 0004")
+ envar+=("ENS_SIZE")         # number of ensemble members
 
  envar+=("FCST_START_TIME")  # Datetime for start of the forecast (YYYYMMDDHH)
 
@@ -236,12 +235,12 @@ echo ""
 # ------------------------------------------------------------
 # If we are doing an ensemble run, process the ensemble perturbations
 # ------------------------------------------------------------
-ens_list=($ENS_LIST)
-ens_size=${#ens_list[@]}
-if [[ "$ens_size" -gt 1 ]]; then
+ens_list=""
+if [[ "$ENS_SIZE" -gt 1 ]]; then
+    ens_list=$(seq -s ' ' -f "%04g" 1 $ENS_SIZE)
     # Create the combined forcing file for each member
     echo "Generating ensemble member forcing files..."
-    for m in ${ens_list[@]}; do
+    for m in $ens_list; do
 	d=ens/mem_$m
 	mkdir -p $d
 	echo " member: $m"
@@ -289,7 +288,7 @@ if [[ "$ens_size" -gt 1 ]]; then
 
      # generate the final individual ensemble forcing files
      echo "Generating final ensemble members forcings..."
-     for m in ${ens_list[@]}; do
+     for m in $ens_list; do
  	d=mem_$m
  	mkdir -p $d
 
@@ -313,9 +312,10 @@ if [[ "$ens_size" -gt 1 ]]; then
 	    fi
 	done   
      done  
-else
-     ln -s mean mem_$ENS_LIST
 fi
+ens_list="0000 $ens_list"
+ln -s mean mem_0000
+
 
 
 # ------------------------------------------------------------
@@ -323,7 +323,7 @@ fi
 # ------------------------------------------------------------
 echo ""
 echo "Checking that the positiveness of the variables: ${forc_var_pos[@]}"
-for m in ${ens_list[@]}; do
+for m in $ens_list; do
     for v in ${forc_var_pos[@]}; do
 	f=mem_$m/$v.nc
 	cdo setrtoc,-1e10,0,0 $f $f.2

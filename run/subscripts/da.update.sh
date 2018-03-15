@@ -50,7 +50,12 @@ m=$MEM
 out_dir=$JOB_WORK_DIR
 rst0=$ROOT_EXP_DIR/cycle/$CYCLE/rst/mem_$m
 rstc=$ROOT_EXP_DIR/cycle/$CYCLE/rst_comb/mem_$m
-ekf=$ROOT_EXP_DIR/cycle/$CYCLE/da.letkf/$m.nc
+if [[ $m == "0000" ]]; then
+    # this is a control forecast being run from the analysis mean
+    ekf=$ROOT_EXP_DIR/cycle/$CYCLE/da.letkf/ana_mean.nc
+else
+    ekf=$ROOT_EXP_DIR/cycle/$CYCLE/da.letkf/$m.nc
+fi
 
 if [[ -e "$out_dir" ]]; then
     echo "WARNING: restart directory already exists"

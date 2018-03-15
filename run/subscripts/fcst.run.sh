@@ -21,7 +21,6 @@ cat << \#\#
  envar=()
  envar+=("FCST_DIR")         # The directory that the forecast will be run in
  envar+=("FORC_DIR")         # directory for the generated surface forcings
-# envar+=("RST_DIR")
  envar+=("RST_DIR_IN")
  envar+=("RST_DIR_OUT")
  envar+=("PPN")              # Number of cores per node (procs per node)
@@ -30,6 +29,8 @@ cat << \#\#
  envar+=("FCST_START_TIME")  # datetime for start of forecast (YYYYMMDDHH)
  envar+=("FCST_LEN")         # length of forecast (hours)
  envar+=("FCST_RESTART")     # 1 if yes, 0 if no
+ envar+=("FCST_DIAG_DA")     # 1 if the diagnostic output required for DA is to be saved
+ envar+=("FCST_DIAG_OTHER")  # 1 if other diag output (not needed for DA) is to be saved
 #================================================================================
 #================================================================================
 

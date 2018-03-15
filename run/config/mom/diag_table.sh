@@ -2,14 +2,14 @@
 # This file, when sourced, generates the diagnostic ouput configuration file for MOM6.
 #
 # Required variables:
-#  $fcst_len          forecast length (days)
-#  $fcst_diag_daily   if 1, daily mean ouput files are saved (needed for data assimilation)
-#  $fcst_diag_pentad  if 1, pentad (or 6 day pentad if leap day) files are saved
+#  $FCST_LEN          forecast length (hours)
+#  $FCST_DIAG_DA      if 1, daily mean ouput files are saved (needed for data assimilation)
+#  $FCST_DIAG_OTHER   if 1, pentad (or 6 day pentad if leap day) files are saved
 
 #TODO : fix this
-fcst_diag_daily=1
-fcst_diag_pentad=0
-fcst_len=$(($FCST_LEN / 24 ))
+#FCST_DIAG_DA=1
+#FCST_DIAG_OTHER=0
+#fcst_len=$(($FCST_LEN / 24 ))
 
 # file header
 #------------------------------------------------------------
@@ -25,7 +25,7 @@ EOF
 #------------------------------------------------------------
 # Files needed for data assimilation
 #------------------------------------------------------------
-if [ "$fcst_diag_daily" = 1 ]; then
+if [ "$FCST_DIAG_DA" = 1 ]; then
 cat <<EOF
 
 "ocean_daily%4yr%2mo%2dy",     1,"days",1,"days","time",1,"days"
@@ -51,11 +51,11 @@ fi
 #------------------------------------------------------------
 # other diagnostic files
 #------------------------------------------------------------
-if [ "$fcst_diag_pentad" = 1 ]; then
+if [ "$FCST_DIAG_OTHER" = 1 ]; then
 cat <<EOF
 
-"ocean_pentad%4yr%2mo%2dy",    ${fcst_len}, "days",   1, "days",   "time", ${fcst_len}, "days"
-"ice_pentad%4yr%2mo%2dy",      ${fcst_len}, "days",   1, "days",   "time", ${fcst_len}, "days"
+"ocean_pentad%4yr%2mo%2dy",    ${FCST_LEN}, "hours",   1, "days",   "time", ${FCST_LEN}, "hours"
+"ice_pentad%4yr%2mo%2dy",      ${FCST_LEN}, "hours",   1, "days",   "time", ${FCST_LEN}, "hours"
 #"ocean_static",                -1,          "months", 1, "days",   "time"
 
 # For some weird reason it seems MOM is often putting zeros in for the entire field of

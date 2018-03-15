@@ -125,7 +125,16 @@ runstep() {
 	fi
 	#------------------------------------------------------------
 
-	export ENS_LIST="$(seq -s ' ' -f "%04g" 1 $ENS_SIZE)"
+	# determine the ensemble list (there will be an extra "ensemble" member if we are 
+	#  doing a forecast from the ensemble mean)       
+	if [[ $DA_MODE == "hyb" || $DA_MODE == "ekf" ]]; then
+	    export ENS_LIST_DA="$(seq -s ' ' -f "%04g" 1 $ENS_SIZE)"
+	    ENS_LIST_FCST="0000 "
+	else
+	    export ENS_LIST_DA="0000"
+	    ENS_LIST_FCST=""
+	fi
+	export ENS_LIST_FCST="${ENS_LIST_FCST}$ENS_LIST_DA"
 
 	
 	# # TODO: check this calculation, move the logic for this into the common script
