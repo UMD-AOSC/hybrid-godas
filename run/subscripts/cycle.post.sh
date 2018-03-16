@@ -68,8 +68,12 @@ fi
 mkdir -p $work_dir
 
 
-#--------------------------------------------------------------------------------
-# function that does the actual masking / regridding / compression of the 3d output
+
+#================================================================================
+# procGrid(): function that does the actual masking / regridding / compression
+#   of the 3d output files
+# TODO: enable the actual regridding code
+#================================================================================
 function procGrid(){
     echo ""
     echo "processing:"
@@ -132,28 +136,31 @@ function procGrid(){
 
     rm -f $2.tmp $2.tmp2
 }
+#================================================================================
 
 
 
-# Things that are done only for ensemble DA
+
+#--------------------------------------------------------------------------------
+# Save ensemble background/analysis mean/spread
 #--------------------------------------------------------------------------------
 if [[ ( "$DA_MODE" == "hyb" ) || ( "$DA_MODE" == "ekf" ) ]]; then
 
-    # ensemble background mean
+    # ensemble background mean (as reported by the LETKF)
     if [[ "$SAVE_BKG_MEAN" -gt 0 ]]; then
 	ifile=$JOB_WORK_DIR/da.letkf/OUTPUT/bkg_mean.nc
 	ofile=$ROOT_EXP_DIR/output/bkg/mean/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc
 	procGrid $ifile $ofile 1 3
     fi
 
-    # ensemble background spread
+    # ensemble background spread (as reported by the LETKF)
     if [[ "$SAVE_BKG_SPRD" -gt 0 ]]; then
 	ifile=$JOB_WORK_DIR/da.letkf/OUTPUT/bkg_sprd.nc
 	ofile=$ROOT_EXP_DIR/output/bkg/sprd/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc
 	procGrid $ifile $ofile 1 2
     fi
 
-    # ensemble analysis mean
+    # ensemble analysis mean (as reported by the LETKF, plus the increment from the VAR)
     if [[ "$SAVE_ANA_MEAN" -gt 0 ]]; then
     	ofile=$ROOT_EXP_DIR/output/ana/mean/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc	
     	ifile=$JOB_WORK_DIR/da.letkf/OUTPUT/ana_mean.nc
@@ -175,7 +182,7 @@ if [[ ( "$DA_MODE" == "hyb" ) || ( "$DA_MODE" == "ekf" ) ]]; then
 	procGrid $ifile $ofile 1 3
     fi
 
-    # ensemble analysis spread
+    # ensemble analysis spread (as reported by the LETKF)
     if [[ "$SAVE_ANA_SPRD" -gt 0 ]]; then
 	ifile=$JOB_WORK_DIR/da.letkf/OUTPUT/ana_sprd.nc
 	ofile=$ROOT_EXP_DIR/output/ana/sprd/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc
@@ -184,7 +191,36 @@ if [[ ( "$DA_MODE" == "hyb" ) || ( "$DA_MODE" == "ekf" ) ]]; then
 fi
 
 
-# things that are done for the mean forecast (ensemble member 0000)
+
+#--------------------------------------------------------------------------------
+# Save 3dvar background/analysis
+#--------------------------------------------------------------------------------
+if [[ "$DA_MODE" == "var" ]]; then
+
+    ofileb=$ROOT_EXP_DIR/output/bkg/mean/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc	
+
+    if [[ "$SAVE_BKG_MEAN" -gt 0 || "$SAVE_ANA_MEAN" -gt 0 ]]; then
+	ifileb=$JOB_WORK_DIR/da.prep/bkg_rst/mem_0000/MOM.res.nc
+    	mkdir -p $(dirname $ofileb)
+	cdo select,name=Temp,Salt $ifileb $ofileb.tmp0
+	procGrid $ofileb.tmp0 $ofileb 1 2
+    fi
+
+    if [[ "$SAVE_ANA_MEAN" -gt 0 ]]; then
+	ifile=$JOB_WORK_DIR/da.3dvar/ana_inc.nc
+	ofile=$ROOT_EXP_DIR/output/ana/mean/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.nc	
+    	mkdir -p $(dirname $ofile)
+	cdo add $ofileb.tmp0 $ifile $ofile.tmp0
+	procGrid $ofile.tmp0 $ofile 1 2
+	rm $ofile.tmp0
+    fi    
+    rm -f $ofileb.tmp0
+fi
+
+
+#--------------------------------------------------------------------------------
+# save the extra forecast diagnostics. (ensemble member 0000)
+#  this is the forecast from the "mean" state if doing ensemble da
 #--------------------------------------------------------------------------------
 echo ""
 echo "Saving mean forecast (member 0000)"
@@ -196,8 +232,10 @@ $ROOT_GODAS_DIR/build/mppnccombine -m -64 $work_dir/pentad.ocean.nc \
 procGrid $work_dir/pentad.ocean.nc $ROOT_EXP_DIR/output/fcst/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.ocean.nc 0 3
 
 
-# things thare are done for any DA type
-# note that for 3dvar, there is "one" ensemble member
+
+#--------------------------------------------------------------------------------
+# save per-ensemble state
+#  note that for 3dvar, there is one "ensemble member"
 #--------------------------------------------------------------------------------
 echo "Saving ensemble data..."
 for ens in ${ENS_LIST}; do
@@ -205,6 +243,7 @@ for ens in ${ENS_LIST}; do
     echo " ensemble member: $ens"
 
     # ensemble member background at analysis time
+    # TODO: use the restart file instead?
     if [[ "$SAVE_BKG_ENS" -gt 0 ]]; then
 	ifile=$JOB_WORK_DIR/da.prep/bkg/mem_$ens/${DA_WNDW_CNTR_TIME:0:8}.nc
 	ofile=$ROOT_EXP_DIR/output/bkg/ens/$ens/${DA_WNDW_CNTR_TIME}.nc 
@@ -227,6 +266,8 @@ for ens in ${ENS_LIST}; do
 done
 
 
+
+#--------------------------------------------------------------------------------
 # Save observation minus background stats
 #--------------------------------------------------------------------------------
 if [[ "$SAVE_OMF" -gt 0 ]]; then
@@ -234,7 +275,6 @@ if [[ "$SAVE_OMF" -gt 0 ]]; then
     ofile=$ROOT_EXP_DIR/output/omf/${CYCLE:0:4}/${CYCLE}.nc 
     mkdir -p $(dirname $ofile)
 
-    #TODO: fix this to use combined obs (all slots in one file)
     e=( $ENS_LIST )
     e=${e[0]}
     ifiles=$JOB_WORK_DIR/da.prep/omf/mem_*/obs.nc
@@ -275,6 +315,7 @@ if [[ "$SAVE_OMF" -gt 0 ]]; then
 fi
 
 
+#--------------------------------------------------------------------------------
 # delete any old working directories that are no longer needed
 #--------------------------------------------------------------------------------
 # cycle directory
