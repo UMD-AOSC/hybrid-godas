@@ -25,7 +25,7 @@ cat << \#\#
  envar=()
  envar+=("ROOT_GODAS_DIR")    # Path to the hybrid-godas root code/source directory
  envar+=("CYCLE")             # The datetime of the current cycle and analysis time (YYYYMMDDHH)
- envar+=("DA_SLOT")           # The offset (in days) from the analysis time
+ envar+=("DA_SLOT")           # The offset (in hours) from the analysis time
                               # (e.g.  "-5" or "+0")
  envar+=("FCST_DIR")          # The directory that the forecast is runnin in
  envar+=("BKG_FILE")          # filename the the combined output file should be moved to 
@@ -58,7 +58,7 @@ dtz(){ echo ${1:0:8}Z${1:8:10};  }
 
 # determine which file(s) we should be looking at
 #  the result will be placed in the "files" array
-fdate=$(date "+%Y%m%d" -d "$(dtz $CYCLE) + $DA_SLOT days")
+fdate=$(date "+%Y%m%d" -d "$(dtz $CYCLE) + $DA_SLOT hours")
 file_base="$(date "+%Y%m%d" -d "$(dtz $FCST_START_TIME)").ocean_daily_$(date "+%Y_%m_%d" -d "$fdate").nc"
 files=()
 if [[ $FCST_IO_PROC -gt 1 ]]; then

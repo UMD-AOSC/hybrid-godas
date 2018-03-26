@@ -137,16 +137,45 @@ runstep() {
 	export ENS_LIST_FCST="${ENS_LIST_FCST}$ENS_LIST_DA"
 
 	
-	# # TODO: check this calculation, move the logic for this into the common script
-	# # TODO: change DA_TIMESLOTS to be in units of hours instead of days (in case we want sub daily DA cycles)
-	# # TODO: is there a variable already for the width, in hours, of each timeslot?
-	s1=$(( $DA_WNDW_OFST / 24 -  ($DA_TIMESLOTS-1)/2))  
-	export DA_WNDW_SLOTS=$(seq -s ' ' -f "%+02g" $s1 $(($s1 + $DA_TIMESLOTS -1)) )
+	# CYCLEDEF tells rocoto what cycles to run
+	# If we are to handle leap days specially (such as 6 day pentads), need to do extra logic...
+	# TODO, use the leapday logic in the jobwrapper.sh script?
+	if [[ $CYCLE_LEAPADJ -eq 0 ]]; then
+	    export CYCLEDEF="<cycledef>${CYCLE_START}00 ${CYCLE_END}00 ${CYCLE_LEN}:00:00</cycledef>"
+	else
+	    CYCLEDEF=""
+	    export TZ=UTC
+	    dtz() { echo ${1:0:8}Z${1:8:10}; }
+	    sdate=$CYCLE_START
+	    cdate=$sdate
+	    while [[ $cdate -lt $CYCLE_END ]]; do
+		ndate=$(date "+%Y%m%d%H" -d "$(dtz $cdate) + $CYCLE_LEN hours")
 
+		# is this a leap year?
+		[[ $(date "+%m%d" -d "${cdate:0:4}0228 + 1 day") = "0229" ]] && leap=1 || leap=0
+		if [[ $leap = 1 ]]; then
+		    # yes.. check to see if we need to add another date
+		    ld=${cdate:0:4}0229
+		    if [[ ${cdate:0:8} -lt $ld && ${ndate:0:8} -ge $ld ]]; then
+			#yep, leap day, adjust accordingly
+			ndate=$(date "+%Y%m%d%H" -d "$(dtz $ndate) + 1 day")
+			CYCLEDEF="""$CYCLEDEF
+<cycledef>${sdate}00 ${cdate}00 ${CYCLE_LEN}:00:00</cycledef>
+<cycledef>${cdate}00 ${ndate}00 $((${CYCLE_LEN} + 24)):00:00</cycledef>"""
+			sdate=$ndate
+		    fi
+		fi
+		cdate=$ndate
+	    done
+	    export CYCLEDEF="$CYCLEDEF
+<cycledef>${sdate}00 ${cdate}00 ${CYCLE_LEN}:00:00</cycledef>"
+	fi
 
-	#TODO: fix cycledef for leapyears
-	export CYCLEDEF="<cycledef>${CYCLE_START}00 ${CYCLE_END}00 ${CYCLE_LEN}:00:00</cycledef>"
-
+	# TODO, use the logic that is in the jobwrapper.sh script already?
+	DA_SLOT_NUM=$(( $CYCLE_LEN / $DA_SLOT_LEN ))
+	ss=$(( $DA_IAU_LEN - $CYCLE_LEN + $DA_SLOT_LEN/2 ))
+	se=$(( $ss + $DA_SLOT_LEN*($DA_SLOT_NUM-1) ))
+	export DA_SLOTS=$(seq -s ' ' -f "%+02g" $ss $DA_SLOT_LEN $se)
 
 	# All done defining variables, generate the rocoto XML file that is used to manage the jobs
 	cat $rocoto_template | envsubst > $rocoto_file

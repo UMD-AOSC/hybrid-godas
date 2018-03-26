@@ -20,7 +20,6 @@ cat << \#\#
  envar+=("TMP_DIR")
  envar+=("PPN")
  envar+=("NODES")
- envar+=("DA_WNDW_SLOTS")
  envar+=("ENS_LIST")
  envar+=("ANA_FILES")
 #================================================================================

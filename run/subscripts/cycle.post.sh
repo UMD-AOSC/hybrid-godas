@@ -221,15 +221,17 @@ fi
 #--------------------------------------------------------------------------------
 # save the extra forecast diagnostics. (ensemble member 0000)
 #  this is the forecast from the "mean" state if doing ensemble da
+# TODO: right now this is hardcoded for "pentad" files, but this should 
+#  be generalized to any extra diagnostic files
 #--------------------------------------------------------------------------------
 echo ""
 echo "Saving mean forecast (member 0000)"
 $ROOT_GODAS_DIR/build/mppnccombine -m -64 $work_dir/pentad.ice.nc \
     $JOB_WORK_DIR/fcst.run/mem_0000/*.ice_pentad_*
-procGrid $work_dir/pentad.ice.nc $ROOT_EXP_DIR/output/fcst/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.ice.nc 0 3
+procGrid $work_dir/pentad.ice.nc $ROOT_EXP_DIR/output/bkg_diag/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.ice.nc 0 3
 $ROOT_GODAS_DIR/build/mppnccombine -m -64 $work_dir/pentad.ocean.nc \
     $JOB_WORK_DIR/fcst.run/mem_0000/*.ocean_pentad_*
-procGrid $work_dir/pentad.ocean.nc $ROOT_EXP_DIR/output/fcst/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.ocean.nc 0 3
+procGrid $work_dir/pentad.ocean.nc $ROOT_EXP_DIR/output/bkg_diag/${FCST_RST_TIME:0:4}/${FCST_RST_TIME}.ocean.nc 0 3
 
 
 
@@ -244,11 +246,12 @@ for ens in ${ENS_LIST}; do
 
     # ensemble member background at analysis time
     # TODO: use the restart file instead?
-    if [[ "$SAVE_BKG_ENS" -gt 0 ]]; then
-	ifile=$JOB_WORK_DIR/da.prep/bkg/mem_$ens/${DA_WNDW_CNTR_TIME:0:8}.nc
-	ofile=$ROOT_EXP_DIR/output/bkg/ens/$ens/${DA_WNDW_CNTR_TIME}.nc 
-	procGrid $ifile $ofile 0 3 rhopot0,SST_min
-    fi
+    # TODO: DA_WNDW_CNTR_TIME is no longer defined
+#    if [[ "$SAVE_BKG_ENS" -gt 0 ]]; then
+#	ifile=$JOB_WORK_DIR/da.prep/bkg/mem_$ens/${DA_WNDW_CNTR_TIME:0:8}.nc
+#	ofile=$ROOT_EXP_DIR/output/bkg/ens/$ens/${DA_WNDW_CNTR_TIME}.nc 
+#	procGrid $ifile $ofile 0 3 rhopot0,SST_min
+#    fi
 
     #
     if [[ "$SAVE_BKG_SLOT" -gt 0 ]]; then

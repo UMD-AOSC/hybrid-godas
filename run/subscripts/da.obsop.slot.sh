@@ -25,7 +25,7 @@ cat << \#\#
  envar+=("ROOT_GODAS_DIR")  # The path to the hybrid-godas root code/source dir
  envar+=("JOB_WORK_DIR")
  envar+=("CYCLE")           # The datetime of the current cycle and ana time (YYYYMMDDHH)
- envar+=("DA_SLOT")         # The offset (in days) from the analysis time (e.g. "-5")
+ envar+=("DA_SLOT")         # The offset (in hours) from the analysis time (e.g. "-5")
  envar+=("BKG_FILE")        # The path to the background file (using datetime placeholders)
  envar+=("OBSOP_FILE")      # Path for output observation operator data (using datetime placeholders)
  envar+=("OBS_USE_SST")     # ==1 if SST obs are to be used
@@ -56,7 +56,7 @@ shopt -s nullglob
 # determine the filename of the model background 
 # TODO: pull this calculation out of the script into the rocoto xml
 dtz(){ echo ${1:0:8}Z${1:8:10}; }
-fdate=$(date "+%Y%m%d" -d "$(dtz $CYCLE) + $DA_SLOT days")
+fdate=$(date "+%Y%m%d" -d "$(dtz $CYCLE) + $DA_SLOT hours")
 bkg_file=$(date "+$BKG_FILE" -d "$fdate")
 echo ""
 echo "Using background file:"
@@ -101,7 +101,7 @@ if [[ "$OBS_USE_SST" == 1 ]]; then
     # make sure file exists
     if [[ ! -f $obs_sst ]]; then
 	echo " ERROR: Cannot find file"
-	if [[ "$OBS_ERR_ON_MISSING" == 1 ]]; then exit 1; fi
+	if [[ "$OBS_ERR_ON_MISS" == 1 ]]; then exit 1; fi
     else
 	# TODO : the obsprep routine has already been run for these files
 	#  Add a configurable to manually allow bypass
@@ -129,10 +129,10 @@ if [[ "$OBS_USE_PROF" == 1 ]]; then
     # make sure files exist
     if [[ ! -f $obs_t ]]; then
 	echo " ERROR: Cannot find file for T profiles."
-	if [[ "$OBS_ERR_ON_MISSING" == 1 ]]; then exit 1; fi
+	if [[ "$OBS_ERR_ON_MISS" == 1 ]]; then exit 1; fi
     elif [[ ! -f $obs_s ]]; then
 	echo " ERROR: Cannot find file for S profiles."
-	if [[ "$OBS_ERR_ON_MISSING" == 1 ]]; then exit 1; fi
+	if [[ "$OBS_ERR_ON_MISS" == 1 ]]; then exit 1; fi
     else
 	$obsprep_exec ${obs_t:0: -5} obsprep.insitu.nc
     fi
@@ -146,7 +146,7 @@ if [[ "${#obsprepfiles[@]}" == "0" ]]; then
     echo "No observations files to perform obsop on. Quitting."
     exit 1
 fi
-basedate="$(date "+%Y,%m,%d,%H,0,0" -d "$(dtz $CYCLE) $DA_SLOT days")"
+basedate="$(date "+%Y,%m,%d,%H,0,0" -d "$(dtz $CYCLE) $DA_SLOT hours")"
 $ROOT_GODAS_DIR/build/obsprep_combine -basedate $basedate ${obsprepfiles[@]} obsprep.nc
 
 

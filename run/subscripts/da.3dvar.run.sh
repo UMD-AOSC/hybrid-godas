@@ -62,7 +62,9 @@ ln -s $OBS_FILE obs.nc
 ln -s $BKG_FILE bkg.nc
 
 # TODO, remove this (only needed for density, ssh?, include these in the letkf state vector)
-ln -s ../../da.prep/bkg/mem_0000/${CYCLE:0:8}.nc bkg2.nc
+# TODO, also, this is messy, and wrong when switching to centered DA window
+bkg2file=$(find ../../da.prep/bkg/mem_0000/ -name "*.nc" | tail -n1)
+ln -s $bkg2file bkg2.nc
 
 cd ..
 

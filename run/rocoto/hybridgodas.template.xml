@@ -20,7 +20,7 @@
 <!ENTITY CYCLEDEF "
  ${CYCLEDEF}
 ">
-<!ENTITY DA_WNDW_SLOTS         "${DA_WNDW_SLOTS}">
+<!ENTITY DA_SLOTS         "${DA_SLOTS}">
 
 
 <!-- machine /scheduler specific parameters -->
@@ -281,12 +281,12 @@ the following steps are performed:
         (TODO: remove this step and let the obsop handle tiles directly)
       * performs various observations operators for given ensemble member / timeslot
       * (setup to do either ALL timeslots as a single job (var "slot" set to "_all" below)
-        or each timeslot as a separate job (var "slot" set to "&DA_WNDW_SLOTS;" below))
+        or each timeslot as a separate job (var "slot" set to "&DA_SLOTS;" below))
       * Combines the obsop output from all slots for each member
       * Combines the MOM6 restart file tiles if we are doing DA
    ********************************************************************************--> 
   <metatask name="da.prep.all">
-    <!-- <var name="slot">&DA_WNDW_SLOTS;</var> -->
+    <!-- <var name="slot">&DA_SLOTS;</var> -->
     <var name="slot">_all</var> 
 
     <metatask name="da.prep.t#slot#.allmem">
@@ -305,7 +305,7 @@ the following steps are performed:
 	  # combine the forecast daily files and run the obsop on it
 	  slots="#slot#"
 	  if [[ "&#36;slots" = "_all" ]]; then
-	    slots="&DA_WNDW_SLOTS;"; 
+	    slots="&DA_SLOTS;"; 
 	  else
 	    exit 1 #TODO, fix this, allow for multiple da.prep jobs, one
                    # for each slot of each member
@@ -444,7 +444,7 @@ the following steps are performed:
       # combine the forecast daily files and run the obsop on it
       slots="_all"
       if [[ "&#36;slots" = "_all" ]]; then
-        slots="&DA_WNDW_SLOTS;";
+        slots="&DA_SLOTS;";
       else
 	exit 1 #TODO, fix this
       fi
@@ -510,7 +510,7 @@ the following steps are performed:
       # determine where to pull the obs and bkg from
       if [[ &#36;DA_MODE == "var" ]]; then
         export OBS_FILE=&WORK_DIR;/da.prep/omf/mem_&ENS_LIST_DA;/obs.nc
-	export BKG_FILE=&WORK_DIR;/da.prep/bkg/mem_&ENS_LIST_DA;/&#36;{CYCLE:0:8}.nc
+	export BKG_FILE=&WORK_DIR;/da.prep/bkg_rst/mem_&ENS_LIST_DA;/MOM.res.nc
       else # hyb
         export OBS_FILE=&WORK_DIR;/da.prep.3dvar/omf/obs.nc
 	export BKG_FILE=&WORK_DIR;/da.letkf/OUTPUT/ana_mean.nc
