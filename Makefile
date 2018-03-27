@@ -26,17 +26,16 @@ clean-model:
 	rm -rf src/MOM6/build/intel/*
 
 
+
 # DA system components
 #--------------------------------------------------------------------------------
-da: gsw datetime obsop util 3dvar letkf
-
-gsw:
-	cd src/gsw; make
+da: obsop util 3dvar letkf
 
 datetime:
-	cd src/datetime; make
+	mkdir -p build/datetime
+	. config/env; cd build/datetime; cmake -DCMAKE_Fortran_FLAGS:STRING="$$DATETIME_COMPILE_FLAGS" ../../src/datetime; make --no-print-directory
 
-obsop: gsw datetime
+obsop: datetime
 	cd src/obsop; make
 
 util: 
@@ -51,9 +50,8 @@ letkf:
 	cd src/letkf; make --no-print-directory
 
 clean-da:
+	rm -rf build/datetime
 	cd src/3dvar; make clean
 	cd src/util; make clean
 	cd src/obsop; make clean
-	cd src/datetime; make clean
-	cd src/gsw; make clean
 	cd src/letkf; make clean

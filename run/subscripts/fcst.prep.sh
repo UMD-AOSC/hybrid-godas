@@ -115,7 +115,7 @@ if [[ -e "$JOB_WORK_DIR" ]]; then
 fi
 mkdir -p "$JOB_WORK_DIR"
 cd $JOB_WORK_DIR
-
+mkdir -p work
 
 
 # determine the actual start/end dates of the forcing files we need.
@@ -134,6 +134,7 @@ forc_end_hr=${FCST_END_TIME:8:12}
 if [[ $forc_end_hr -gt $FORC_HR ]]; then
     forc_end_dy=$(date "+%Y%m%d" -d "$forc_end_dy + 1 day")
 fi
+
 echo ""
 echo "preparing surface forcing from $forc_start_dy to $forc_end_dy"
 echo " forcing variables are: ${forc_var[@]}"
@@ -142,10 +143,13 @@ echo ""
 
 # ------------------------------------------------------------
 # Create the combined mean forcing file
+# TODO: don't need to do this if we are directly using the ensemble
+#  files (instead of using them as just perturbations)
 #------------------------------------------------------------
-mkdir -p mean
-mkdir -p mean.tmp
+mkdir -p mem_0000
+mkdir -p work/mean
 echo "Generating forcing mean files..."
+echo "------------------------------------------------------------"
 for f in ${forc_var[@]}; do
 
     # does this variable need bias correction applied?
@@ -183,7 +187,7 @@ for f in ${forc_var[@]}; do
 	# if we are bias correcting this variable
 	#------------------------------------------------------------
 	if [[ $do_bias -eq 1 ]]; then
-	    file_out=mean.tmp/corrected.$f.$date_cur.nc
+	    file_out=work/mean/corrected.$f.$date_cur.nc
 
             # from the monthly climatology correction files
             # we need 3 months to create a file file from which the
@@ -210,7 +214,7 @@ for f in ${forc_var[@]}; do
             done
 
             # generate the interpolated bias correction file
-            file_corr=mean.tmp/bias.$f.$cf1_s.$cf2_s.$cf3_s.nc
+            file_corr=work/mean/bias.$f.$cf1_s.$cf2_s.$cf3_s.nc
             if [[ ! -e $file_corr ]]; then
                 cdo -s -L mergetime -setyear,1899 -selmon,12 $cf1 -setyear,1900 $cf2 -setyear,1901 -selmon,1 $cf3 $file_corr
             fi
@@ -224,9 +228,9 @@ for f in ${forc_var[@]}; do
 	date_cur=$(date "+%Y%m%d" -d "$date_cur + 1 day")	
     done
 
-    ncrcat $files mean/$f.nc
-    ncatted -O -a axis,time,c,c,T mean/$f.nc
-    ncatted -O -a calendar,,m,c,gregorian mean/$f.nc
+    ncrcat $files mem_0000/$f.nc
+    ncatted -O -a axis,time,c,c,T mem_0000/$f.nc
+    ncatted -O -a calendar,,m,c,gregorian mem_0000/$f.nc
 done
 echo ""
 
@@ -238,17 +242,20 @@ echo ""
 ens_list=""
 if [[ "$ENS_SIZE" -gt 1 ]]; then
     ens_list=$(seq -s ' ' -f "%04g" 1 $ENS_SIZE)
-    # Create the combined forcing file for each member
+
+    echo ""
     echo "Generating ensemble member forcing files..."
+    echo "------------------------------------------------------------"
+
+    # Create the combined forcing file for each member
     for m in $ens_list; do
-	d=ens/mem_$m
+	d=work/ens/mem_$m
 	mkdir -p $d
 	echo " member: $m"
 
  	for f in ${forc_var_ens[@]}; do
  	    files=()
  	    date_cur=$forc_start_dy
- 	    #TODO : create a function that combines this with the previous ctrl script lines
  	    while [[ $(date -d "$date_cur" +%s) -le $(date -d "$forc_end_dy" +%s) ]];do
  		date_next=$(date "+%F" -d "$date_cur + 1 day")
  		file=${FORC_ENS_FILE//#var#/$f}
@@ -264,25 +271,25 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
 
      # Calculate the mean of the ens files,
      echo "Generating ensemble forcing mean..."
-     mkdir -p ens_mean
+     mkdir -p work/ens_mean
      for f in ${forc_var_ens[@]}; do
- 	cdo ensmean "ens/*/$f.nc" ens_mean/$f.nc
+ 	cdo ensmean "work/ens/*/$f.nc" work/ens_mean/$f.nc
      done
      echo "" 
 
      # generate remap weights
      echo 'Generating "ens->mean" interpolation weights...'
-     mkdir -p weights
+     mkdir -p work/ens_weights
      for f in ${forc_var_ens[@]}; do
- 	cdo gen${interp},mean/$f.nc ens_mean/$f.nc weights/$f.nc
+ 	cdo gen${interp},mem_0000/$f.nc work/ens_mean/$f.nc work/ens_weights/$f.nc
      done
      echo ""
 
      # remap the ens means and calculate mean-ens_mean
      echo 'Calculating "mean - ens_mean"...'
-     mkdir -p offset
+     mkdir -p work/ens_offset
      for f in ${forc_var_ens[@]}; do
- 	cdo sub mean/$f.nc -remap,mean/$f.nc,weights/$f.nc ens_mean/$f.nc offset/$f.nc
+ 	cdo sub mem_0000/$f.nc -remap,mem_0000/$f.nc,work/ens_weights/$f.nc work/ens_mean/$f.nc work/ens_offset/$f.nc
      done
      echo ""
 
@@ -303,18 +310,17 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
 	    # if this is a variable that should have an ensemble
 	    # perturbation added to it...
 	    if [[ $is_ens -ne 0 ]]; then
-		cdo add offset/$f.nc -remap,mean/$f.nc,weights/$f.nc ens/mem_$m/$f.nc $d/$f.nc
+		cdo add work/ens_offset/$f.nc -remap,mem_0000/$f.nc,work/ens_weights/$f.nc work/ens/mem_$m/$f.nc $d/$f.nc
  		ncatted -O -a axis,time,c,c,T $d/$f.nc
  		ncatted -O -a calendar,,m,c,gregorian $d/$f.nc	    
 	    else
 		# otherwise, just copy the mean file
-		cp mean/$f.nc $d/$f.nc
+		cp mem_0000/$f.nc $d/$f.nc
 	    fi
 	done   
      done  
 fi
 ens_list="0000 $ens_list"
-ln -s mean mem_0000
 
 
 

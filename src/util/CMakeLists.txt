@@ -27,7 +27,7 @@ FIND_PACKAGE( OpenMP REQUIRED)
 set(SRCS kdtree.f90 datatable.f90 hzsmooth.f90)
 add_library( util_common STATIC ${SRCS} )
 set_target_properties(util_common PROPERTIES 
-    COMPILE_FLAGS "${OpenMP_C_FLAGS} $ENV{SRC_UTIL_COMPILE_FLAGS}")
+    COMPILE_FLAGS "${OpenMP_C_FLAGS} $ENV{UTIL_COMPILE_FLAGS}")
 
 
 # bgerr var
@@ -36,7 +36,7 @@ set(EXE  bgvar)
 add_executable(${EXE} ${SRCS})
 target_link_libraries(${EXE} util_common $ENV{NETCDF_LIBS})
 set_target_properties(${EXE} PROPERTIES 
-    COMPILE_FLAGS "${OpenMP_C_FLAGS} $ENV{SRC_UTIL_COMPILE_FLAGS}"
+    COMPILE_FLAGS "${OpenMP_C_FLAGS} $ENV{UTIL_COMPILE_FLAGS}"
     LINK_FLAGS "${OpenMP_C_FLAGS}")
 
 
@@ -47,7 +47,7 @@ add_executable(${EXE} ${SRCS})
 target_link_libraries(${EXE} util_common)
 target_link_libraries(${EXE} $ENV{NETCDF_LIBS})
 set_target_properties(${EXE} PROPERTIES 
-    COMPILE_FLAGS "${OpenMP_C_FLAGS} $ENV{SRC_UTIL_COMPILE_FLAGS}"
+    COMPILE_FLAGS "${OpenMP_C_FLAGS} $ENV{UTIL_COMPILE_FLAGS}"
     LINK_FLAGS "${OpenMP_C_FLAGS}")
 
 
@@ -56,11 +56,11 @@ set(EXE update_restart)
 add_executable(${EXE} update_restart.f90)
 target_link_libraries(${EXE} util_common $ENV{NETCDF_LIBS})
 set_target_properties(${EXE} PROPERTIES
-    COMPILE_FLAGS "$ENV{SRC_UTIL_COMPILE_FLAGS}")			    
+    COMPILE_FLAGS "$ENV{UTIL_COMPILE_FLAGS}")			    
 
 
 set(EXE mppnccombine)
 add_executable(${EXE} mppnccombine.c)
 target_link_libraries(${EXE} $ENV{NETCDF_LIBS})
 set_target_properties(${EXE} PROPERTIES
-    COMPILE_FLAGS "$ENV{SRC_UTIL_COMPILE_FLAGS}")			    
+    COMPILE_FLAGS "$ENV{UTIL_COMPILE_FLAGS}")			    
