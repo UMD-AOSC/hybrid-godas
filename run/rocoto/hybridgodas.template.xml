@@ -38,7 +38,7 @@
 
 <!ENTITY fcst.run.NODES            "20">
 <!ENTITY fcst.run.SCHED_ARGS       "&SCHED_P_ARGS; -l size=&fcst.run.NODES;">
-<!ENTITY fcst.run.WALLTIME         "15:00">
+<!ENTITY fcst.run.WALLTIME         "10:00">
 
 <!ENTITY da.prep.WALLTIME          "10:00">
 <!ENTITY da.prep.3dvar.WALLTIME    "5:00">

@@ -15,8 +15,8 @@
 !------------------------------------------------------------
 #override REGRIDDING_COORDINATE_MODE = "Z*"
 #override ALE_COORDINATE_CONFIG="FILE:vgrid_75_2m.nc,dz"
-#override THERMO_SPANS_COUPLING = False
-#override DT_THERM = 900.0
+!#override THERMO_SPANS_COUPLING = False
+!#override DT_THERM = 900.0
 
 
 ! change how the SSS restoration and freshwater balances are handled

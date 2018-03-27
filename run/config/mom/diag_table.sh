@@ -150,7 +150,7 @@ cat <<EOF
 #------------------------------------------------------------
 "ocean_model", "taux",     "taux",     "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 "ocean_model", "tauy",     "tauy",     "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-
+"ocean_model", "ustar",    "ustar",    "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 
 
 ## heat flux

@@ -94,7 +94,7 @@ if __name__ == "__main__":
     allData={}
     for exp in args.path:
         # get list of files, keeping only those within the date range
-        files = glob(exp + '/omf/????/*.nc')
+        files = glob(exp + '/output/omf/????/*.nc')
         files = sorted([f for f in files if args.start <= f.split('/')[-1][:8] <= args.end])
 
         # do a parallel processing of the dates
