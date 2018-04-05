@@ -273,7 +273,7 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
      echo "Generating ensemble forcing mean..."
      mkdir -p work/ens_mean
      for f in ${forc_var_ens[@]}; do
- 	cdo ensmean "work/ens/*/$f.nc" work/ens_mean/$f.nc
+ 	cdo -L ensmean "work/ens/*/$f.nc" work/ens_mean/$f.nc
      done
      echo "" 
 
@@ -281,7 +281,7 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
      echo 'Generating "ens->mean" interpolation weights...'
      mkdir -p work/ens_weights
      for f in ${forc_var_ens[@]}; do
- 	cdo gen${interp},mem_0000/$f.nc work/ens_mean/$f.nc work/ens_weights/$f.nc
+ 	cdo -L gen${interp},mem_0000/$f.nc work/ens_mean/$f.nc work/ens_weights/$f.nc
      done
      echo ""
 
@@ -289,7 +289,7 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
      echo 'Calculating "mean - ens_mean"...'
      mkdir -p work/ens_offset
      for f in ${forc_var_ens[@]}; do
- 	cdo sub mem_0000/$f.nc -remap,mem_0000/$f.nc,work/ens_weights/$f.nc work/ens_mean/$f.nc work/ens_offset/$f.nc
+ 	cdo -L sub mem_0000/$f.nc -remap,mem_0000/$f.nc,work/ens_weights/$f.nc work/ens_mean/$f.nc work/ens_offset/$f.nc
      done
      echo ""
 
@@ -310,7 +310,7 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
 	    # if this is a variable that should have an ensemble
 	    # perturbation added to it...
 	    if [[ $is_ens -ne 0 ]]; then
-		cdo add work/ens_offset/$f.nc -remap,mem_0000/$f.nc,work/ens_weights/$f.nc work/ens/mem_$m/$f.nc $d/$f.nc
+		cdo -L add work/ens_offset/$f.nc -remap,mem_0000/$f.nc,work/ens_weights/$f.nc work/ens/mem_$m/$f.nc $d/$f.nc
  		ncatted -O -a axis,time,c,c,T $d/$f.nc
  		ncatted -O -a calendar,,m,c,gregorian $d/$f.nc	    
 	    else
@@ -332,7 +332,7 @@ echo "Checking that the positiveness of the variables: ${forc_var_pos[@]}"
 for m in $ens_list; do
     for v in ${forc_var_pos[@]}; do
 	f=mem_$m/$v.nc
-	cdo setrtoc,-1e10,0,0 $f $f.2
+	cdo -L setrtoc,-1e10,0,0 $f $f.2
 	mv $f.2 $f
 	ncatted -O -a calendar,,m,c,gregorian $f
     done
