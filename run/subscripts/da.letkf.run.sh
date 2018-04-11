@@ -22,6 +22,7 @@ cat << \#\#
  envar+=("NODES")
  envar+=("ENS_LIST")
  envar+=("ANA_FILES")
+ envar+=("DA_TS_ONLY")
 #================================================================================
 #================================================================================
 
@@ -51,7 +52,14 @@ ln -s $ROOT_GODAS_DIR/build/letkf .
 
 # configuration files
 source $ROOT_EXP_DIR/config/da/namelist.letkf.sh >> namelist.letkf
-ln -s $ROOT_EXP_DIR/config/da/{obsdef,platdef,statedef}.cfg .
+ln -s $ROOT_EXP_DIR/config/da/{obsdef,platdef}.cfg .
+f=$ROOT_EXP_DIR/config/da/statedef.cfg
+if [[ $DA_TS_ONLY -ne 0 ]]; then 
+    echo "WARNING: configured to only update T/S state variables"
+    f=$f.ts_only
+fi
+ln -s $f statedef.cfg
+
 
 # grid definition files
 ln -s $ROOT_GODAS_DIR/DATA/grid/ocean_geometry.nc .
@@ -63,6 +71,10 @@ m=0
 for mem in $ENS_LIST; do
     m=$(printf "%04g" $((10#$m+1)))
     ln -s ../../../da.prep/bkg_rst/mem_$mem/MOM.res.nc INPUT/gues/$m.nc
+
+    if [[ $DA_TS_ONLY -eq 0 ]]; then
+	ln -s ../../../da.prep/bkg_rst/mem_$mem/MOM.res_1.nc INPUT/gues/$m.1.nc
+    fi
 #    ln -s ../../../da.prep/bkg_rst/mem_$mem/MOM.res_1.nc INPUT/gues/$m.2.nc
 done
 

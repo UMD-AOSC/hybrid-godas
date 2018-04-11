@@ -10,12 +10,11 @@ vrange['Salt']=(0, 45.0)
 # read command line arguments
 parser=argparse.ArgumentParser()
 parser.add_argument('bkg_rst')
-#parser.add_argument('ana_rst')
 parser.add_argument('out_rst')
 parser.add_argument('-vars')
 parser.add_argument('-var')
 parser.add_argument('-ekf')
-parser.add_argument('-alpha',type=float, default=0.5)
+parser.add_argument('-alpha',type=float, default=1.0)
 args=parser.parse_args()
 print(args)
 
@@ -48,12 +47,19 @@ for var in ncd_bkg.variables:
 
     # update with new values
     if var in args.vars:
+        val=None
+
+        # get value from background OR letkf output
         if args.ekf is not None:
-            val=ncd_ekf[var][:]
-        else:
+            if var in ncd_ekf.variables:
+                val=ncd_ekf[var][:]
+        if val is None:
             val=ncd_bkg[var][:]
+
+        # add in the var update
         if args.var is not None:
-            val += args.alpha * ncd_var[var][:]
+            if var in ncd_var.variables:
+                val += args.alpha * ncd_var[var][:]
     else:
         val=ncd_bkg[var][:]
 

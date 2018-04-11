@@ -167,7 +167,7 @@ if [[ ( "$DA_MODE" == "hyb" ) || ( "$DA_MODE" == "ekf" ) ]]; then
     	mkdir -p $(dirname $ofile)
     	if [[ "$DA_MODE" == "hyb" ]]; then
     	    ifile2=$JOB_WORK_DIR/da.3dvar/ana_inc.nc	    
-    	    cdo add -mulc,$DA_HYB_ALPHA $ifile2 $ifile $ofile.tmp0
+	    $ROOT_GODAS_DIR/tools/rst_update.py -vars Temp,Salt $ifile $ofile.tmp0 -alpha $DA_HYB_ALPHA -var $ifile2
     	    procGrid $ofile.tmp0 $ofile 1 3
     	    rm $ofile.tmp0
     	else

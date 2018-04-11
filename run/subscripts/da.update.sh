@@ -27,6 +27,7 @@ cat << \#\#
   envar+=("MEM")
   envar+=("JOB_WORK_DIR")
   envar+=("FCST_RST_TIME")
+  envar+=("DA_TS_ONLY")
 #================================================================================
 #================================================================================
 
@@ -63,15 +64,19 @@ if [[ -e "$out_dir" ]]; then
 fi
 mkdir -p $out_dir
 
-# link files that we aren't going to modify
-# TODO, need to copy, not link
+# link the restart files.
 for f in $rst0/*; do
     ln -s $f $out_dir/
 done
 
-# update restart files that need to be modified
-# TODO, define the variables to be updated (T/S/U/V)
+# remove the inidiviual restart file patches for those restart files that we have
+# combined files for (and will be doing a DA update with)
 rm $out_dir/MOM.res.nc.*
+if [[ $DA_TS_ONLY -eq 0 ]]; then
+    rm $out_dir/MOM.res_1.nc.*
+fi
+
+# update restart files that need to be modified
 args=""
 if [[ $DA_MODE == "var" ]]; then
     args="-var $var"
@@ -81,6 +86,10 @@ elif [[ $DA_MODE == "hyb" ]]; then
     args="-ekf $ekf -var $var -alpha $DA_HYB_ALPHA"
 fi
 
-$ROOT_GODAS_DIR/tools/rst_update.py $args $rstc/MOM.res.nc $out_dir/MOM.res.nc -vars Temp,Salt
+$ROOT_GODAS_DIR/tools/rst_update.py $args $rstc/MOM.res.nc $out_dir/MOM.res.nc -vars Temp,Salt,u
+if [[ $DA_TS_ONLY -eq 0 ]]; then
+    $ROOT_GODAS_DIR/tools/rst_update.py $args $rstc/MOM.res_1.nc $out_dir/MOM.res_1.nc -vars v
+fi
+
 
 

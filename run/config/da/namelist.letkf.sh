@@ -2,6 +2,18 @@
 set -e
 set -u
 
+# This is a script file that generates the main letkf namelist file.
+# The following environment variables need to be set by the caller:
+#  ENS_SIZE     number of ensemble members
+#  DA_TS_ONLY   eq 1 if only T/S is in the state vector, otherwise U/V/T/S
+
+if [[ $DA_TS_ONLY -ne 0 ]]; then
+    GRID_NS=150
+else
+    GRID_NS=300
+fi
+
+
 cat <<EOF
 
 &letkf_settings
@@ -53,7 +65,7 @@ cat <<EOF
   grid_nx = 1440
   grid_ny = 1080
   grid_nz = 75
-  grid_ns = 150
+  grid_ns = ${GRID_NS}
 /
 
 

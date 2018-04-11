@@ -47,7 +47,7 @@
 <!ENTITY da.3dvar.run.SCHED_ARGS   "&SCHED_P_ARGS; -l size=&da.3dvar.run.NODES;">
 <!ENTITY da.3dvar.run.WALLTIME     "10:00">
 
-<!ENTITY da.letkf.run.NODES        "2">
+<!ENTITY da.letkf.run.NODES        "4">
 <!ENTITY da.letkf.run.SCHED_ARGS   "&SCHED_P_ARGS; -l size=&da.letkf.run.NODES;">
 <!ENTITY da.letkf.run.WALLTIME     "10:00">
 

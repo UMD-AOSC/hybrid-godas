@@ -21,6 +21,7 @@ cat << \#\#
  envar+=("FCST_DIR")
  envar+=("BKG_RST_DIR")
  envar+=("RST_COMB_DIR")
+ envar+=("DA_TS_ONLY")
 #================================================================================
 #================================================================================
 
@@ -48,11 +49,15 @@ mkdir -p $BKG_RST_DIR
 
 mkdir -p $RST_COMB_DIR
 
-# do mppncombine on restart files
-# This is a mess... what's going on here
+
+# do mppncombine on restart file(s)
+# we only need "MOM.res.nc" if we are only updating T/S
+# we also need "MOM.res_1.nc" if we are also updating U/V
 echo ""
-echo "Performing mppnccombine on restart files... "
-for f in ""; do
+echo "Performing mppnccombine on restart files(s)... "
+rst_pfx=("")
+if [[ $DA_TS_ONLY -eq 0 ]]; then rst_pfx+=(_1); fi
+for f in "${rst_pfx[@]}"; do
     fi=$FCST_DIR/RESTART/MOM.res${f}.nc
     fo=$BKG_RST_DIR/MOM.res${f}.nc
 
@@ -60,8 +65,7 @@ for f in ""; do
     echo $fi
     echo "  mppnccombine..."
     $ROOT_GODAS_DIR/build/mppnccombine -m -64 $fo $fi.*
-done
-mv $fo $RST_COMB_DIR
-ln -s $RST_COMB_DIR/MOM.res* $BKG_RST_DIR/
 
-#exit 1
+    mv $fo $RST_COMB_DIR
+done
+ln -s $RST_COMB_DIR/MOM.res* $BKG_RST_DIR/
