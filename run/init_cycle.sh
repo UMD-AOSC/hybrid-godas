@@ -28,8 +28,8 @@ cd $exp_dir
 mkdir -p config
 mkdir -p config/da
 mkdir -p config/mom
-cp $root_dir/run/config/da/* config/da
-cp $root_dir/run/config/mom/* config/mom
+cp $root_dir/run/config.exp_default/da/* config/da
+cp $root_dir/run/config.exp_default/mom/* config/mom
 ln -s $root_dir/run/rocoto/hybridgodas.{run,status} .
 
 # setup default values to fill the default configuration script with
@@ -37,7 +37,7 @@ export EXP_NAME="${exp_dir##*/}"
 export ROOT_DIR=$root_dir
 export EXP_DIR=$exp_dir
 export D='$'
-cat $root_dir/run/config/hybridgodas.template.config | envsubst '$EXP_NAME $ROOT_DIR $EXP_DIR $D' > config/hybridgodas.config
+cat $root_dir/run/config.exp_default/hybridgodas.template.config | envsubst '$EXP_NAME $ROOT_DIR $EXP_DIR $D' > config/hybridgodas.config
 
 
 # Save code version information

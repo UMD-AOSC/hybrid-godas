@@ -72,8 +72,10 @@ source diag_table.sh > diag_table
 source input.nml.sh > input.nml
 
 # static input files
+# TODO, these should be linked into exp's config dir at exp init
+# time?
 mkdir -p INPUT
-ln -s $ROOT_GODAS_DIR/run/config/mom_input/* INPUT/
+ln -s $ROOT_GODAS_DIR/run/config.exp_default/mom_input/* INPUT/
 
 # link restart files
 #dtz() { echo "${1:0:8}Z${1:8:10}"; }

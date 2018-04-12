@@ -1,0 +1,3 @@
+source code for the `vtloc` and `bgvar` support utilities needed by the 3DVar.
+
+These will go away eventually, it is more efficient for the code to be rolled back into the 3dvar executable. They were originally separated for reasons that I can't remember (something to do with thinking I need the vertical localization values before doing the observation preparation, which might have been true back when trying to do vertical localization based on vertical density gradients)
