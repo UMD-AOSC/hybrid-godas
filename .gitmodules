@@ -13,3 +13,9 @@
 [submodule "src/letkf"]
 	path = src/letkf
 	url = https://github.com/travissluka/UMD-LETKF.git
+[submodule "src/--force"]
+	path = src/--force
+	url = https://github.com/travissluka/geoKdTree.git
+[submodule "src/geoKdTree"]
+	path = src/geoKdTree
+	url = https://github.com/travissluka/geoKdTree.git

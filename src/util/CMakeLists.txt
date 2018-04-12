@@ -24,7 +24,7 @@ FIND_PACKAGE( OpenMP REQUIRED)
 
 
 # common objects
-set(SRCS kdtree.f90 datatable.f90 hzsmooth.f90)
+set(SRCS ../geoKdTree/kdtree.f90 datatable.f90 hzsmooth.f90)
 add_library( util_common STATIC ${SRCS} )
 set_target_properties(util_common PROPERTIES 
     COMPILE_FLAGS "${OpenMP_C_FLAGS} $ENV{UTIL_COMPILE_FLAGS}")
