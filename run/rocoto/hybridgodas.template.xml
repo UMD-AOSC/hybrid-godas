@@ -569,6 +569,7 @@ the following steps are performed:
     <command>
       &SCRIPT_WRAPPER;
       &SCRIPT_DIR;/cycle.post.sh
+      echo "&#36;{CYCLE:0:10}" > &#36;ROOT_EXP_DIR/cycle.post_status
     </command>
     <join>&LOG_PREFIX;cycle.post.log</join>
     <walltime>&da.post.WALLTIME;</walltime>

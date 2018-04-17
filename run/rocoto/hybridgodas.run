@@ -207,10 +207,10 @@ else
 	( runstep )
 	# check to see if we're done with the cycles
 	CYCLE_END=$(source $config_file; echo $CYCLE_END)
-	if [[ -e cycle_status ]]; then
-	    f=$(cat cycle_status)
-	    curr_time=${f##*:}
-	    if [[ "$curr_time" -gt $CYCLE_END ]]; then
+	if [[ -e cycle.post_status ]]; then
+	    f=$(cat cycle.post_status)
+	    curr_time=${f}
+	    if [[ "$curr_time" -ge $CYCLE_END ]]; then
 		echo "All done with cycles."
 		exit 0
 	    fi
