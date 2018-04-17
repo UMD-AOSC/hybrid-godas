@@ -43,11 +43,17 @@ rocoto_db="$exp_dir/config/rocoto/hybridgodas.rocoto.db"
 
 
 runstep() {
-    # TODO, load in system configuration
+    # load in system configuration
+    # first we need the ROOT_DIR directory from the exp config.
+    # we do it weird like this because we want duplicated variables in the 
+    # experiment configuration to override the system configurtion
+    ROOT_DIR=$(source $config_file; echo $ROOT_DIR)
+    source $ROOT_DIR/config/env
 
     # Load in experiment configuration
     source $config_file
     rocoto_template="$ROOT_DIR/run/rocoto/hybridgodas.template.xml"
+
 
     # determine if the rocoto xml file needs to be regnerated
     #  &make_xml will be set to 1 if a new file is to be generated
@@ -197,9 +203,13 @@ runstep() {
 
 
 if [[ $cycle -eq 0 ]]; then
+    echo "Starting a single rocoto step."
     runstep
 else
-    echo "Starting rocoto cycling."
+    echo "Hybrid-GODAS: Starting rocoto cycling."
+    echo "Run ./hybridgodas.status to get more detailed information of current run status."
+    echo "This script will exit when the run cycles have completed."
+    echo ""
 
     prev_time=0
     curr_time=0
@@ -208,18 +218,17 @@ else
 	# check to see if we're done with the cycles
 	CYCLE_END=$(source $config_file; echo $CYCLE_END)
 	if [[ -e cycle.post_status ]]; then
-	    f=$(cat cycle.post_status)
-	    curr_time=${f}
+	    curr_time=$(cat cycle.post_status)
 	    if [[ "$curr_time" -ge $CYCLE_END ]]; then
 		echo "All done with cycles."
 		exit 0
 	    fi
 	fi	    
-	
+
 	# are we on to a new cycle? (print out)
 	if [[ "$curr_time" -ne "$prev_time" ]]; then
-	    echo "$curr_time"
-	    prev_time=curr_time
+	    echo "running $curr_time"
+	    prev_time=$curr_time
 	fi
 
 	# sleep

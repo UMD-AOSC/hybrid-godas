@@ -33,6 +33,7 @@ set -u
 
 # Load in configurables from the system end experiment configuration scripts
 # TODO: check for env vars existing
+# TODO: is this necessary? they should already be loaded into the environment
 #------------------------------------------------------------
 files=()
 files+=("${ROOT_GODAS_DIR}/config/env")
