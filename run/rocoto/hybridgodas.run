@@ -38,8 +38,8 @@ exp_dir="$(readlink -f $exp_dir)"
 
 # other configurables
 config_file="$exp_dir/config/hybridgodas.config"
-rocoto_file="$exp_dir/config/rocoto/hybridgodas.rocoto.xml"
-rocoto_db="$exp_dir/config/rocoto/hybridgodas.rocoto.db"
+rocoto_file="$exp_dir/cycle/rocoto/hybridgodas.rocoto.xml"
+rocoto_db="$exp_dir/cycle/rocoto/hybridgodas.rocoto.db"
 
 
 runstep() {
@@ -191,8 +191,9 @@ runstep() {
     # If this is the first time running, create a timestamp file of the NEXT cycle that should run
     # (Needed because of special logic in the subscripts to handle the leap day issue that rocoto
     #   can't handle on its own)
-    if [[ ! -f "$exp_dir/cycle_status" ]]; then
-	echo "ini:$CYCLE_START" > cycle_status
+    if [[ ! -f "$exp_dir/cycle/cycle.status" ]]; then
+	mkdir -p $exp_dir/cycle
+	echo "ini:$CYCLE_START" > $exp_dir/cycle/cycle.status
     fi
     
     
@@ -217,8 +218,8 @@ else
 	( runstep )
 	# check to see if we're done with the cycles
 	CYCLE_END=$(source $config_file; echo $CYCLE_END)
-	if [[ -e cycle.post_status ]]; then
-	    curr_time=$(cat cycle.post_status)
+	if [[ -e cycle/cycle_post.status ]]; then
+	    curr_time=$(cat cycle/cycle_post.status)
 	    if [[ "$curr_time" -ge $CYCLE_END ]]; then
 		echo "All done with cycles."
 		exit 0

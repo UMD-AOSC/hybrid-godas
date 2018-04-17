@@ -194,7 +194,7 @@ the following steps are performed:
       * if there was a previous cycle doing DA, and thus generate an analysis
         increment, that increment is applied to the restart file before running
       * NOTE: the FCST_RESTART env var is specially set here indicating a restart
-        should be performed unless the "cycle_status" file contains "init:$CYLCE"
+        should be performed unless the "cycle/cycle.status" file contains "init:$CYLCE"
    ********************************************************************************-->
   <metatask name="fcst.run.all">
     <var name="mem">&ENS_LIST_FCST;</var>
@@ -217,7 +217,7 @@ the following steps are performed:
 	export RST_DIR_OUT=&ROOT_EXP_DIR;/cycle/&#36;CYCLE_NEXT/rst/mem_#mem#/
 	export MEM=#mem#
 	# update the restart files if we did DA in previous cycle
-	export FCST_RESTART=$([[ $(cat cycle_status) == "ini:&CYCLE;" ]] &#38;&#38; echo 0 || echo 1)
+	export FCST_RESTART=$([[ $(cat cycle/cycle.status) == "ini:&CYCLE;" ]] &#38;&#38; echo 0 || echo 1)
 	if [[ &#36;FCST_RESTART -eq 1 &#38;&#38; ! &#36;DA_MODE == "none" ]]; then 
   	  export JOB_WORK_DIR=&WORK_DIR;/fcst.rst/mem_#mem#
 	  time &SCRIPT_DIR;/da.update.sh
@@ -233,7 +233,7 @@ the following steps are performed:
         &SCRIPT_DIR;/fcst.run.sh
 
 	# this is the end of the cycle, if not doing DA
-	if [[ &#36;DA_MODE == "none" ]]; then echo "rst:&#36;CYCLE_NEXT" > &#36;ROOT_EXP_DIR/cycle_status; fi
+	if [[ &#36;DA_MODE == "none" ]]; then echo "rst:&#36;CYCLE_NEXT" > &#36;ROOT_EXP_DIR/cycle/cycle.status; fi
 
       </command>
 
@@ -261,7 +261,7 @@ the following steps are performed:
 	  <taskdep task="fcst.prep"/>
 	  <rb>
 	    <!-- must be the first date of a cycle, or previous analysis must have finished -->
-	    f = "&ROOT_EXP_DIR;/cycle_status"
+	    f = "&ROOT_EXP_DIR;/cycle/cycle.status"
 	    d=File.open(f,"r").gets.strip[4,10]
 	    d == ymdh || d == "&CYCLE;"
 	  </rb>
@@ -390,7 +390,7 @@ the following steps are performed:
       &SCRIPT_DIR;/da.letkf.run.sh
 
       # this is the end of the cycle if only doing LETKF
-      if [[ &#36;DA_MODE == "ekf" ]]; then echo "rst:&#36;CYCLE_NEXT" > &#36;ROOT_EXP_DIR/cycle_status; fi
+      if [[ &#36;DA_MODE == "ekf" ]]; then echo "rst:&#36;CYCLE_NEXT" > &#36;ROOT_EXP_DIR/cycle/cycle.status; fi
     </command>
 
 
@@ -522,7 +522,7 @@ the following steps are performed:
 
 
       # this is the end of the cycle
-      echo "rst:&#36;CYCLE_NEXT" > &#36;ROOT_EXP_DIR/cycle_status
+      echo "rst:&#36;CYCLE_NEXT" > &#36;ROOT_EXP_DIR/cycle/cycle.status
 
     </command>
 
@@ -569,7 +569,7 @@ the following steps are performed:
     <command>
       &SCRIPT_WRAPPER;
       &SCRIPT_DIR;/cycle.post.sh
-      echo "&#36;{CYCLE:0:10}" > &#36;ROOT_EXP_DIR/cycle.post_status
+      echo "&#36;{CYCLE:0:10}" > &#36;ROOT_EXP_DIR/cycle/cycle_post.status
     </command>
     <join>&LOG_PREFIX;cycle.post.log</join>
     <walltime>&da.post.WALLTIME;</walltime>

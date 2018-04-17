@@ -1,8 +1,26 @@
 #!/bin/bash
 set -eu
 
+#================================================================================
+#================================================================================
+# NCEP Hybrid-GODAS  -  hybrid.status
+#================================================================================
+
+# determine the experiment directory
+exp_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+exp_dir="$(readlink -f $exp_dir)"
+
+# other configurables
+config_file="$exp_dir/config/hybridgodas.config"
+rocoto_file="$exp_dir/cycle/rocoto/hybridgodas.rocoto.xml"
+rocoto_db="$exp_dir/cycle/rocoto/hybridgodas.rocoto.db"
+
+# load the environment
+source $config_file
+source $ROOT_DIR/config/env
+
 # which date in the logs should we be looking at?
-lines=$(rocotostat -d config/rocoto/hybridgodas.rocoto.db -w config/rocoto/hybridgodas.rocoto.xml -s -c all)
+lines=$(rocotostat -d $rocoto_db -w $rocoto_file -s -c all)
 la=$(echo "$lines" | grep Active | cut -d' ' -f1)
 na=$(echo "$lines" | grep Active -v | cut -d' ' -f1)
 active=""
@@ -27,9 +45,9 @@ if [[ "$active" ]]; then
     fi
 fi
 
-rocotostat -d config/rocoto/hybridgodas.rocoto.db -w config/rocoto/hybridgodas.rocoto.xml  -s -c $recent
+rocotostat -d $rocoto_db -w $rocoto_file  -s -c $recent
 
 if [[ "$active" ]]; then
     echo ""
-    rocotostat -d config/rocoto/hybridgodas.rocoto.db -w config/rocoto/hybridgodas.rocoto.xml  -c $active
+    rocotostat -d $rocoto_db -w $rocoto_file -c $active
 fi

@@ -1,0 +1,47 @@
+#!/bin/bash
+set -e
+set -u
+
+#================================================================================
+#================================================================================
+# NCEP Hybrid-GODAS  -  hybridgodas.rocoto
+# Run arbitrary rocoto commands rocoto{boot,check,rewind,stat,vacuum}
+# with the rocoto database and workflow paths prefilled
+#
+# E.g. ./hybridgodas.rocoto boot -c 200301010000 -t all
+#
+# NOTE: to run a rocoto step the hybridgodas.run script should instead be used,
+#  this is because more than just "rocotorun" is required to run a step (e.g.
+#  the rocoto xml file is dynamically generated before passing it to rocoto)
+#================================================================================
+
+# test proper cammndline arguments
+# make sure it is a valid rocoto command (except for "run", don't allow "run")
+validcommands="boot check rewind stat vacuum"
+is_validcommand="0"
+if [[ "$#" -gt 0 ]]; then
+    is_validcommand=$([[ $validcommands =~ (^|[[:space:]])$1($|[[:space:]]) ]] && echo "1" || echo "0")
+fi
+if [[ $is_validcommand -ne 1 ]]; then
+    echo "Usage: ./hybridgodas.rocoto {boot, check, reqind, stat, vacuum} <additional_rocoto_arguments>"
+    echo ' NOTE: for "run" use hybridgodas.run instead.'
+    exit 1
+fi
+
+
+# determine the experiment directory
+#  (should be the same directory this file, or a link to the file, is in)
+exp_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+exp_dir="$(readlink -f $exp_dir)"
+
+# other configurables
+config_file="$exp_dir/config/hybridgodas.config"
+rocoto_file="$exp_dir/cycle/rocoto/hybridgodas.rocoto.xml"
+rocoto_db="$exp_dir/cycle/rocoto/hybridgodas.rocoto.db"
+
+# load the environment
+source $config_file
+source $ROOT_DIR/config/env
+
+# run the desired rocoto command
+rocoto$@ -d $rocoto_db -w $rocoto_file
