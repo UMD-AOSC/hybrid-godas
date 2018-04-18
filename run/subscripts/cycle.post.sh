@@ -331,7 +331,8 @@ if [[ "$SAVE_RST_CYCLES" -gt "0" ]]; then
     keep_date=$(date "+%Y%m%d%H" -d "$(dtz $CYCLE) - $keep_hrs hours")
     echo "Deleting cycles before $keep_date"
 
-    for f in $ROOT_EXP_DIR/cycle/*; do
+    for f in $ROOT_EXP_DIR/cycle/??????????/; do
+	f=${f%/}
 	d=${f##*/}
 	keep=0
 
