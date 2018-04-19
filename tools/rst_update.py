@@ -43,7 +43,8 @@ for var in ncd_bkg.variables:
     var_out=ncd_out.createVariable(var, var_bkg.dtype, var_bkg.dimensions)
     
     for a in var_bkg.ncattrs():
-        var_out.setncattr(a, var_bkg.getncattr(a))
+        if a not in ('checksum'): # skip adding the checksum field
+            var_out.setncattr(a, var_bkg.getncattr(a))
 
     # update with new values
     if var in args.vars:
