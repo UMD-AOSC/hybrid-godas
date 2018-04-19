@@ -51,14 +51,6 @@ set_target_properties(${EXE} PROPERTIES
     LINK_FLAGS "${OpenMP_C_FLAGS}")
 
 
-# update_restart
-set(EXE update_restart)
-add_executable(${EXE} update_restart.f90)
-target_link_libraries(${EXE} util_common $ENV{NETCDF_LIBS})
-set_target_properties(${EXE} PROPERTIES
-    COMPILE_FLAGS "$ENV{UTIL_COMPILE_FLAGS}")			    
-
-
 set(EXE mppnccombine)
 add_executable(${EXE} mppnccombine.c)
 target_link_libraries(${EXE} $ENV{NETCDF_LIBS})
