@@ -58,7 +58,7 @@ runstep() {
     # determine if the rocoto xml file needs to be regnerated
     #  &make_xml will be set to 1 if a new file is to be generated
     #------------------------------------------------------------
-    mkdir -p config/rocoto
+    mkdir -p cycle/rocoto
 
     make_xml=0
     if [[ ! -f "$rocoto_file" ]]; then
@@ -228,7 +228,7 @@ else
 
 	# are we on to a new cycle? (print out)
 	if [[ "$curr_time" -ne "$prev_time" ]]; then
-	    echo "running $curr_time"
+	    echo "finished $curr_time"
 	    prev_time=$curr_time
 	fi
 
