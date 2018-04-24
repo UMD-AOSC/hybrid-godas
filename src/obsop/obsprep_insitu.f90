@@ -7,15 +7,25 @@ program obsprep_insitu
 
   implicit none
 
-  !parameters read in from namelist
+
+  ! parameters read in from namelist
   integer :: obid_t=2210
   integer :: obid_s=2220
-  real   :: se_t(2) = (/1.0,2.0/)
-  real   :: se_s(2) = (/0.05, 0.2/)
+  real    :: err_cscale_mul=6.0
+  real    :: err_cscale_dist=800e3
+  real    :: err_t_surf=0.78
+  real    :: err_t_max=1.0
+  real    :: err_t_do=0.07
+  real    :: err_t_d(4)=(/75.0,300.0,450.0,1000.0/)
+  real    :: err_s_surf=0.18
+  real    :: err_s_do=0.02
+  real    :: err_s_d=750.0  
+
 
   ! variables read in from the command line
   character(len=1024) :: obsfile
   character(len=1024) :: outfile
+
    
   ! variables read in from obs file
   integer ::prf_num
@@ -29,10 +39,12 @@ program obsprep_insitu
   real,      allocatable :: obs_depth(:)
   real,      allocatable :: obs_val(:)
 
+
   ! output data that is generated here
   integer, parameter :: obsout_max = 1000000
   type(observation)  :: obsout(obsout_max)
   integer            :: obsout_num
+
 
   ! other misc variables
   type(datetime) :: basedate
@@ -46,8 +58,15 @@ program obsprep_insitu
   real :: se(2)
   character(len=1024) :: tmp_str
   integer :: yr,mn,dy
+  integer :: x,y
+  real, parameter :: pi = 4*atan(1.0)
 
-  namelist /obsprep_insitu_nml/ obid_t, obid_s, se_t, se_s
+  
+!  namelist /obsprep_insitu_nml/ obid_t, obid_s, se_t, se_s
+  namelist /obsprep_insitu_nml/ obid_t, obid_s, &
+       err_cscale_mul, err_cscale_dist, &
+       err_t_surf, err_t_max, err_t_do, err_t_d, &
+       err_s_surf, err_s_do, err_s_d
 
   print *, "------------------------------------------------------------"
   print *, " insitu observation preparation "
@@ -68,7 +87,7 @@ program obsprep_insitu
   print *, ""
   
   !read the namelist
-  open(newunit=unit, file="obsprep.nml")
+  open(newunit=unit, file="obsprep.nml", status='OLD')
   read(unit, obsprep_insitu_nml)
   close(unit)
   print *, ""
@@ -83,11 +102,11 @@ program obsprep_insitu
      cnt = 0
      if (v == 1) then
         var = 'T'
-        se = se_t
+!        se = se_t
         obid=obid_t
      else
         var = 'S'
-        se = se_s
+!        se = se_s
         obid=obid_s
      end if
      
@@ -138,15 +157,23 @@ program obsprep_insitu
      ! for each profile, determine the error profile
      ! create output observations
      do p=1,prf_num
-!        print *,obid
- !       print *, ""
-!        print*, "Profile",p
+!        print *,obid 
+!        print *, "" 
+!        print*, "Profile",p 
         idx1 = prf_obsidx(p)
         idx2 = prf_obsidx(p) + prf_obslen(p) - 1
         prflen = prf_obslen(p)
 
         ! calculate error profile
-        call calcErr(obs_depth(idx1:idx2), obs_val(idx1:idx2), se(1), se(2), err(1:prf_obslen(p)))
+        if (v == 1) then
+           call calcErr_t(prf_lon(p), prf_lat(p), obs_depth(idx1:idx2), obs_val(idx1:idx2), err(1:prf_obslen(p)))
+        else
+           call calcErr_s(prf_lon(p), prf_lat(p), obs_depth(idx1:idx2), obs_val(idx1:idx2), err(1:prf_obslen(p)))
+        end if
+
+        ! calculate error profile
+!        call calcErr_db(obs_depth(idx1:idx2), obs_val(idx1:idx2), se(1), se(2), err(1:prf_obslen(p)))
+        
 
         ! add interpolated obs where there is stratified ocean
         ! TODO
@@ -168,7 +195,7 @@ program obsprep_insitu
            obsout(obsout_num)%err  = err(i-idx1+1)
            obsout(obsout_num)%qc   = 0
 !          print*, obs_depth(i), obs_val(i), err(i-idx1+1)
-        end do        
+        end do                
      end do
  !    print *, obsout_num
      print *, cnt,"observations kept"
@@ -220,7 +247,79 @@ contains
   end subroutine prfThin
 
 
-  pure subroutine calcErr(depth, val, se_min, se_max, err)
+  subroutine calcErr_t(lon, lat, depth, val, err)
+    real, intent(in) :: lon, lat
+    real, intent(in) :: depth(:)
+    real, intent(in) :: val(:)
+    real, intent(out):: err(:)
+
+    integer :: x,y
+    real :: coast_dist
+    real :: cscale
+
+    ! determine the profile distance to coast    
+    call grid_ll2xy(lat, lon, x, y)
+    coast_dist=grid_coast(x,y)   
+
+    ! calculate vertical error profile
+    do i=1,size(depth)
+       if ( depth(i) <= err_t_d(1) ) then
+          err(i) = (err_t_surf - err_t_max)*(-depth(i) / err_t_d(1)) + err_t_surf
+       elseif ( depth(i) <= err_t_d(2) ) then
+          err(i) = (err_t_max * exp( (-depth(i)+err_t_d(1)) / err_t_d(3)))
+       else
+          err(i) = max(err_t_do, err_t_max*exp( (-err_t_d(2) + err_t_d(1))/err_t_d(3))*&
+               exp( (-depth(i)+err_t_d(2))/err_t_d(4)))
+       end if
+    end do  
+
+    ! Calculate scaling based on distance from coast
+    cscale = 1.0
+    if (err_cscale_dist > coast_dist) then
+       cscale = 0.5*(1+cos(pi * coast_dist /err_cscale_dist))
+       cscale = min(1.0, max(0.0, cscale))
+       cscale = cscale * (err_cscale_mul - 1.0) + 1.0
+    end if
+    err = err * cscale
+
+  end subroutine calcErr_t
+
+
+
+  subroutine calcErr_s(lon, lat, depth, val, err)
+    real, intent(in) :: lon, lat
+    real, intent(in) :: depth(:)
+    real, intent(in) :: val(:)
+    real, intent(out):: err(:)
+
+    integer :: x, y, i 
+    real :: coast_dist
+    real :: cscale
+
+    ! determine the profile distance to coast    
+    call grid_ll2xy(lat, lon, x, y)
+    coast_dist=grid_coast(x,y)   
+
+    ! calculate vertical error profile
+    do i=1,size(depth)
+       err(i) = max(err_s_do, err_s_surf*exp(-depth(i)/err_s_d))
+    end do
+
+    ! Calculate scaling based on distance from coast
+    cscale = 1.0
+    if (err_cscale_dist > coast_dist) then
+       cscale = 0.5*(1+cos(pi * coast_dist /err_cscale_dist))
+       cscale = min(1.0, max(0.0, cscale))
+       cscale = cscale * (err_cscale_mul - 1.0) + 1.0
+    end if
+    err = err * cscale
+
+  end subroutine calcErr_s
+
+
+
+  pure subroutine calcErr_db(depth, val, se_min, se_max, err)
+    !!observation error calculation, dave behringer method
     real, intent(in) :: depth(:)
     real, intent(in) :: val(:)    
     real, intent(in) :: se_min
@@ -272,7 +371,9 @@ contains
     ! calculate final err stddev
     err = (se_max-se_min)*err + se_min
 
-  end subroutine calcErr
+  end subroutine calcErr_db
+
+
 
 
   subroutine check(status)

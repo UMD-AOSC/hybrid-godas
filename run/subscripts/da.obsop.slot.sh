@@ -88,6 +88,7 @@ ln -s $EXP_DIR/config/da/obsprep.nml .
 mkdir -p INPUT
 ln -s $ROOT_GODAS_DIR/DATA/grid/ocean_geometry.nc INPUT/grid.nc
 ln -s $ROOT_GODAS_DIR/DATA/grid/Vertical_coordinate.nc INPUT/vgrid.nc
+ln -s $ROOT_GODAS_DIR/DATA/grid/coast_dist.nc INPUT/coast_dist.nc
 
 
 # SST observations

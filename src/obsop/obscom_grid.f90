@@ -11,12 +11,14 @@ module obscom_grid
   integer, public :: grid_nx
   integer, public :: grid_ny
   integer, public :: grid_nz
-  
-  real, allocatable, public :: grid_lons(:,:)
-  real, allocatable, public :: grid_lats(:,:)
-  real, allocatable, public :: grid_mask(:,:)
-  real, allocatable, public :: grid_D(:,:)
-  real, allocatable, public :: grid_depths(:)
+
+  real, allocatable, public :: grid_lons(:,:)  ! longitudes (degrees)
+  real, allocatable, public :: grid_lats(:,:)  ! latitudes  (degrees)
+  real, allocatable, public :: grid_mask(:,:)  ! mask (0=land, 1=ocean)
+  real, allocatable, public :: grid_D(:,:)     ! ocean depth (m)
+  real, allocatable, public :: grid_depths(:)  ! nominal depth at each vertical level (m)
+  real, allocatable, public :: grid_coast(:,:) ! distance to coast (m)
+
   
   type(kd_root) :: ll_kdtree
   integer, allocatable :: ll_kdtree_x(:)
@@ -87,6 +89,8 @@ contains
     character(len=:), allocatable :: grid_dpth_file
     character(len=:), allocatable :: grid_dpth_dim
     character(len=:), allocatable :: grid_dpth_var
+    character(len=:), allocatable :: grid_coast_file
+    character(len=:), allocatable :: grid_coast_var
     
     integer :: x, y, i
 
@@ -94,7 +98,8 @@ contains
     
     namelist /grid_nml/ grid_file, grid_lon_dim, grid_lat_dim, &
          grid_lon_var, grid_lat_var, grid_msk_var, &
-         grid_dpth_file, grid_dpth_dim, grid_dpth_var, grid_D_var
+         grid_dpth_file, grid_dpth_dim, grid_dpth_var, grid_D_var, &
+         grid_coast_file, grid_coast_var
     
 
     ! read namelist file
@@ -109,7 +114,9 @@ contains
     allocate(character(len=1024) :: grid_dpth_dim)
     allocate(character(len=1024) :: grid_dpth_var)
     allocate(character(len=1024) :: grid_D_var)
-    open(newunit=unit, file=nml_file)
+    allocate(character(len=1024) :: grid_coast_file)
+    allocate(character(len=1024) :: grid_coast_var)
+    open(newunit=unit, file=nml_file, status='OLD')
     read(unit, grid_nml)
     close(unit)
     grid_file    = trim(grid_file)
@@ -122,6 +129,8 @@ contains
     grid_dpth_dim  = trim(grid_dpth_dim)
     grid_dpth_var  = trim(grid_dpth_var)
     grid_D_var = trim(grid_D_var)
+    grid_coast_file = trim(grid_coast_file)
+    grid_coast_var = trim(grid_coast_var)
     print *, ""
     print grid_nml
     print *, ""
@@ -152,13 +161,29 @@ contains
     print *, "  lat range:",minval(grid_lats),maxval(grid_lats)
     print *, "  lon range:",minval(grid_lons),maxval(grid_lons)
 
+    ! get mask, place in array
     allocate(grid_mask(grid_nx,grid_ny))
     call check(nf90_inq_varid(ncid, grid_msk_var, vid))
     call check(nf90_get_var(ncid, vid, grid_mask))
 
+    ! get ocean depths
     allocate(grid_D(grid_nx, grid_ny))
     call check(nf90_inq_varid(ncid, grid_D_var, vid))
     call check(nf90_get_var(ncid, vid, grid_D))
+
+
+    call check(nf90_close(ncid))
+
+
+    ! get the distances to the coast
+    call check(nf90_open(grid_coast_file, nf90_nowrite, ncid))
+    allocate(grid_coast(grid_nx, grid_ny))
+    call check(nf90_inq_varid(ncid, grid_coast_var, vid))
+    call check(nf90_get_var(ncid, vid, grid_coast))
+    call check(nf90_close(ncid))
+    print *, "  coast_dist range:",minval(grid_coast),maxval(grid_coast)
+
+
 
     ! put the grid into kd-tree
     allocate(ll_kdtree_x(grid_nx*grid_ny))

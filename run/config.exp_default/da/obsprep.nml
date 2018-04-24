@@ -9,13 +9,27 @@
   grid_dpth_file="INPUT/vgrid.nc"
   grid_dpth_dim="Layer"
   grid_dpth_var="Layer"
+  grid_coast_file="INPUT/coast_dist.nc"
+  grid_coast_var="coast_dist"
 /
 
 &obsprep_insitu_nml
   obid_t=2210
   obid_s=2220
-  se_t=1.0,2.0
-  se_s=0.05,0.2
+!  se_t=1.0,2.0
+!  se_s=0.05,0.2
+
+  err_cscale_mul=6.0
+  err_cscale_dist=800e3
+
+  err_t_d=75,300,450,1000
+  err_t_surf=0.78
+  err_t_max=1.0
+  err_t_do=0.07
+
+  err_s_d=750
+  err_s_surf=0.18
+  err_s_do=0.02
 /
 
 &obsprep_combine_nml
