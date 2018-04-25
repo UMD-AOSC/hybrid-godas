@@ -61,6 +61,13 @@ program obsprep_insitu
   integer :: x,y
   real, parameter :: pi = 4*atan(1.0)
 
+! use this to get the repository version at compile time
+#ifndef CVERSION
+#define CVERSION "Unknown"
+#endif
+#ifndef CTIME
+#define CTIME "Unknown"
+#endif
   
 !  namelist /obsprep_insitu_nml/ obid_t, obid_s, se_t, se_s
   namelist /obsprep_insitu_nml/ obid_t, obid_s, &
@@ -70,6 +77,9 @@ program obsprep_insitu
 
   print *, "------------------------------------------------------------"
   print *, " insitu observation preparation "
+  print *, ""
+  print *, " version:  ", CVERSION
+  print *, " compiled: ", CTIME
   print *, "------------------------------------------------------------"
 
   call grid_init("obsprep.nml")

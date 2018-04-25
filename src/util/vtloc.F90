@@ -42,6 +42,14 @@ program vtloc
    ! OpenMP functions
    INTEGER ::  OMP_GET_NUM_THREADS,  OMP_GET_THREAD_NUM
 
+! use this to get the repository version at compile time
+#ifndef CVERSION
+#define CVERSION "Unknown"
+#endif
+
+#ifndef CTIME
+#define CTIME "Unknown"
+#endif
 
    namelist /g3dv_grid/ grid_nx, grid_ny, grid_nz
    namelist /g3dv_hzloc/ hz_loc, hz_loc_scale
@@ -51,6 +59,9 @@ program vtloc
    ! read in namelist and datatable files
    print *, "------------------------------------------------------------"
    print *, " GODAS-3DVar vertical localization distance calculator"
+   print *, ""
+   print *, " version: ", CVERSION
+   print *, " compiled:", CTIME
    print *, "------------------------------------------------------------"
 
 !$OMP PARALLEL

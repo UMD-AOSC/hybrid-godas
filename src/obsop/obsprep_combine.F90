@@ -48,11 +48,21 @@ program obsprep_comine
   integer, allocatable :: bin_file(:,:)
   integer, allocatable :: bin_idx(:,:)
   
+! use this to get the repository version at compile time
+#ifndef CVERSION
+#define CVERSION "Unknown"
+#endif
+#ifndef CTIME
+#define CTIME "Unknown"
+#endif
 
   namelist /obsprep_combine_nml/ collate, thinning, thinning_eq, basedate
   print *, "------------------------------------------------------------"
   print *, " obsprep_combine (Combine multiple obs files, optionally thinning"
   print *, "  coincident obs to only keep those closest to analysis time.)"
+  print *, ""
+  print *, " version:  ", CVERSION
+  print *, " compiled: ", CTIME
   print *, "------------------------------------------------------------"
 
   nml_file = "obsprep.nml"

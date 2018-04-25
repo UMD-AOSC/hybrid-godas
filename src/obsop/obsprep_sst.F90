@@ -47,12 +47,23 @@ program obsprep_sst
   real,    allocatable :: bin_lat(:,:)
   real,    allocatable :: bin_lon(:,:)
   real,    allocatable :: bin_time(:,:)
+
+! use this to get the repository version at compile time
+#ifndef CVERSION
+#define CVERSION "Unknown"
+#endif
+#ifndef CTIME
+#define CTIME "Unknown"
+#endif
   
   namelist /obsprep_sst_nml/ obid, platid, min_err_lvl, err_base, err_sses,&
        err_superob, bias_adj, thinning, thinning_eq
 
   print *, "------------------------------------------------------------"
   print *, "  SST (GDS2.0 GHRSST format) observation preparation"
+  print *, ""
+  print *, " version:  ", CVERSION
+  print *, " compiled: ", CTIME
   print *, "------------------------------------------------------------"
   nml_file = "obsprep.nml"
 

@@ -59,6 +59,15 @@ program bgvar
   real, parameter :: re = 6371d3
   real, parameter :: omega = 7.29e-5
 
+! use this to get the repository version at compile time
+#ifndef CVERSION
+#define CVERSION "Unknown"
+#endif
+
+#ifndef CTIME
+#define CTIME "Unknown"
+#endif
+
   namelist /g3dv_grid/ grid_nx, grid_ny, grid_nz
   namelist /g3dv_hzloc/ hz_loc, hz_loc_scale
   namelist /bgvar_nml/  t_varmin_len, t_varmin_do, t_varmin_surf_const, t_varmax, t_dz, &
@@ -67,6 +76,9 @@ program bgvar
 
   print *, "------------------------------------------------------------"
   print *, " GODAS-3DVar background error variance"
+  print *, ""
+  print *, " version:  ", CVERSION
+  print *, " compiled: ", CTIME
   print *, "------------------------------------------------------------"
 
 !$OMP PARALLEL

@@ -17,6 +17,16 @@ else()
   add_definitions(-O3)
 endif()
 
+# determine the repository version and compile time
+execute_process(COMMAND git describe --dirty --tags --always OUTPUT_VARIABLE GIT_VERSION RESULT_VARIABLE RES OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(NOT ${RES} EQUAL "0")
+  set(GIT_VERSION "Unknown")
+endif()
+add_definitions(-DCVERSION=\"${GIT_VERSION}\")
+string(TIMESTAMP TS %Y-%m-%d )
+add_definitions(-DCTIME=\"${TS}\")
+
+
 # find required datetime library for fortran
 include_directories($ENV{NETCDF_INCS})
 include_directories("../../build/datetime/include")
@@ -69,7 +79,7 @@ set_target_properties(${EXE} PROPERTIES
 
 
 # obsop
-set(SRCS obsop.f90)
+set(SRCS obsop.F90)
 set(EXE  obsop)
 add_executable(${EXE} ${SRCS})
 target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS} ${DATETIMELIB})
@@ -78,7 +88,7 @@ set_target_properties(${EXE} PROPERTIES
 
 
 # obs2dat
-set(SRCS obsprep_nc2dat.f90)
+set(SRCS obsprep_nc2dat.F90)
 set(EXE obsprep_nc2dat)
 add_executable(${EXE} ${SRCS})
 target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS} ${DATETIMELIB})

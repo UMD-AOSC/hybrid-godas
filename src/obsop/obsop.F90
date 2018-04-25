@@ -40,6 +40,13 @@ program obsop
   real, allocatable :: state_t(:,:,:), state_s(:,:,:), state_sst(:,:)
   integer :: ncid, vid
 
+! use this to get the repository version at compile time
+#ifndef CVERSION
+#define CVERSION "Unknown"
+#endif
+#ifndef CTIME
+#define CTIME "Unknown"
+#endif
 
   namelist /obsop_nml/ statefile, obid_t, obid_pt, obid_s, lat_bounds
 
@@ -47,6 +54,9 @@ program obsop
   print *, "------------------------------------------------------------"
   print *, " Ocean observation operaetor, for standard variables"
   print *, " (T,Pt,S,U,V)"
+  print *, ""
+  print *, " version:  ", CVERSION
+  print *, " compiled: ", CTIME
   print *, "------------------------------------------------------------"
   
   
