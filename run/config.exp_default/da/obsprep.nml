@@ -16,11 +16,9 @@
 &obsprep_insitu_nml
   obid_t=2210
   obid_s=2220
-!  se_t=1.0,2.0
-!  se_s=0.05,0.2
 
-  err_cscale_mul=6.0
-  err_cscale_dist=800e3
+  err_cscale_mul=3.0
+  err_cscale_dist=400e3
 
   err_t_d=75,300,450,1000
   err_t_surf=0.78
