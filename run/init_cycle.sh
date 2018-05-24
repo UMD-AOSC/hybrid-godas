@@ -40,6 +40,10 @@ export EXP_DIR=$exp_dir
 export D='$'
 cat $root_dir/run/config.exp_default/hybridgodas.template.config | envsubst '$EXP_NAME $ROOT_DIR $EXP_DIR $D' > config/hybridgodas.config
 
+# setup the initial conditions
+icdir=$root_dir/DATA/ic/2004010100
+echo "Using initial conditions from $icdir"
+cp $icdir/cycle . -r
 
 # Save code version information
 touch version

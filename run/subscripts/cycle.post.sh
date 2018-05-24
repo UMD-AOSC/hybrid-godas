@@ -32,10 +32,10 @@ cat << \#\#
  envar+=("SAVE_ANA_SPRD")
 
  envar+=("SAVE_OMF")
- envar+=("SAVE_OMA")
 
  envar+=("SAVE_RST_ANNUAL")
- envar+=("SAVE_RST_CYCLES")
+ envar+=("SAVE_RST_REGEX")
+ envar+=("SAVE_RST_MINCYCLES")
 
 #================================================================================
 #================================================================================
@@ -322,12 +322,12 @@ fi
 # delete any old working directories that are no longer needed
 #--------------------------------------------------------------------------------
 # cycle directory
-if [[ "$SAVE_RST_CYCLES" -gt "0" ]]; then
+if [[ "$SAVE_RST_MINCYCLES" -gt "0" ]]; then
     echo "Checking for old cycles to delete..."
 
     # how far back do we need to go?
     dtz(){ echo ${1:0:8}Z${1:8:10}; }
-    keep_hrs=$(($FCST_LEN + $SAVE_RST_CYCLES))
+    keep_hrs=$(($FCST_LEN + $SAVE_RST_MINCYCLES))
     keep_date=$(date "+%Y%m%d%H" -d "$(dtz $CYCLE) - $keep_hrs hours")
     echo "Deleting cycles before $keep_date"
 
@@ -339,11 +339,16 @@ if [[ "$SAVE_RST_CYCLES" -gt "0" ]]; then
 	# keep if new enough
 	if [[ "$d" -ge "$CYCLE" ]]; then keep=1; fi
 
-	#save annual restart file?
+	# save annual restart file?
 	if [[ "$SAVE_RST_ANNUAL" -gt 0 ]]; then
 	    y1=${d:0:4}
 	    y2=$(date "+%Y" -d "$(dtz $d) - $FCST_LEN hours")
 	    if [[ "$y1" -ne "$y2" ]]; then keep=1; fi
+	fi
+
+	# save if the regular expression matches
+	if [[ "$SAVE_RST_REGEX" != "" ]]; then
+	    ( echo $d | grep -E "$SAVE_RST_REGEX" ) && keep=1
 	fi
 
 	# delete
