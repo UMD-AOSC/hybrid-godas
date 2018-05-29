@@ -63,9 +63,9 @@ masks = {
 
     # depths                                                                                
     # 'd_surf' : lambda d: (d.depth <= 1),
-#    'd_d1'   : lambda d: (d.depth <= 5),
-#    'd_d2'   : lambda d: (d.depth > 5) & (d.depth <= 50),
-#    'd_d3'   : lambda d: (d.depth > 50) & (d.depth <= 300),
+    'd_d1'   : lambda d: (d.depth >= 1) & (d.depth <= 50),
+    'd_d2'   : lambda d: (d.depth > 50) & (d.depth <= 200),
+    'd_d3'   : lambda d: (d.depth > 200) & (d.depth <= 750),
 }
 
 
