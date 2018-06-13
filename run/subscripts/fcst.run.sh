@@ -94,3 +94,11 @@ ln -s $RST_DIR_OUT RESTART
 echo "running MOM..."
 aprun -n $NPROC ./MOM6
 
+
+# the intermediate restart files are being a little weird currently.
+# Do this the messy way until I have time to look into the MOM/SIS code.
+# Rename the intermediate restart files after the model finishes...
+cd RESTART
+for f in ????????.????00.*.res*; do 
+    mv $f ${f:16}
+done
