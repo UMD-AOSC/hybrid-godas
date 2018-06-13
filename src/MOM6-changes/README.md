@@ -4,3 +4,4 @@ this directory contains modifications we wish to apply to the default MOM6 code 
 
 * *memory* - static memory parameters, runs a little bit faster that way
 
+* *SIS2* and *MOM6* - small change to keep end of run restart file from being written (want intermediate restart files only). This is temporary until changes can be pushed to GFDL's main repo.
