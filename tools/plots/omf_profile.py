@@ -192,6 +192,10 @@ if __name__=="__main__":
 
             plt.annotate('profiles: {}'.format(int(np.max(allData[0][cnt]['count']))),
                          xy=(6,30), xycoords='figure points')
+            plt.annotate("{} to {}".format(min(validDates), max(validDates)), xy=(300,30),
+                         xycoords='figure points', horizontalalignment='right')
+
+
             plt.legend()
             plt.savefig(filename)
             plt.close('all')
