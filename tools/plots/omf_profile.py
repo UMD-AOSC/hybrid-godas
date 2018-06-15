@@ -5,9 +5,29 @@ import os
 import numpy as np
 import bisect
 import math
+import netCDF4 as nc
 
-#  TODO, fit a curve to the raw data, don't do binning
-lvls=np.concatenate( (np.arange(5.0,100.0,5),np.arange(100.0,500.0,25),np.arange(500.0,2001.0,50)) )
+vtgrid_file="../../DATA/grid/Vertical_coordinate.nc"
+lvls=nc.Dataset(vtgrid_file, 'r').variables["Layer"][:]
+
+def smooth(counts, vals):
+    smooth_w = args.smooth
+    wndw=np.zeros(smooth_w*2 + 1)
+    for i in range(len(wndw)):
+        wndw[i] = (smooth_w+1-abs(i-smooth_w))/(smooth_w+1)
+
+    newVals = np.copy(vals)
+    for i in range(vals.size):
+        w = 0.0
+        v = 0.0
+        for j in range(len(wndw)):
+            k=i+j-smooth_w
+            if k < 0 or k >= vals.size:
+                continue
+            w += counts[k]*wndw[j]
+            v += vals[k]*counts[k]*wndw[j]
+        newVals[i] = v*1.0/w
+    return newVals
 
 
 def processExp(e):
@@ -87,6 +107,9 @@ if __name__=="__main__":
         "A comma separated list of labels to use for the plot lines"))
     parser.add_argument('-threads', type=int, default=4, help=(
         "number of threads to use when reading input files. (Default: %(default)s)"))
+    parser.add_argument('-smooth', type=int, default=2, help=(
+        "size of half width of window used in weighted smoothing of profile"))
+
     args = parser.parse_args()
     args.path = [os.path.abspath(p) for p in args.path]
     if args.label is not None:
@@ -155,12 +178,13 @@ if __name__=="__main__":
                 enum+=1
                 data=allData[enum][cnt]
                 if p2 == 'rmsd':
-                    plt.plot(np.sqrt(data['inc_mean2']), lvls, 'C{}'.format(enum),
+                    plt.plot(np.sqrt(smooth(data['count'],data['inc_mean2'])), lvls, 'C{}'.format(enum),
                              label=args.label[enum])
                     plt.plot(np.sqrt(data['inc_sprd']), lvls, 'C{}'.format(enum), ls='--')
+#                    plt.plot(smooth(data['count'],data['err']),lvls, 'C{}'.format(enum), ls='--')
                     plt.axvline(x=0.0, color='black')
                 elif p2 == 'bias':
-                    plt.plot(data['inc_mean'], lvls, 'C{}'.format(enum))
+                    plt.plot(smooth(data['count'],data['inc_mean']), lvls, 'C{}'.format(enum))
                     plt.axvline(x=0.0, color='black')
 #                elif p2 =='val':
 #                    plt.plot(data['val'], lvls, 'C{}'.format(enum))
