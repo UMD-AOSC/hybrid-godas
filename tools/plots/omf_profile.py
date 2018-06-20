@@ -7,7 +7,8 @@ import bisect
 import math
 import netCDF4 as nc
 
-vtgrid_file="../../DATA/grid/Vertical_coordinate.nc"
+cwd=os.path.dirname(os.path.realpath(__file__))
+vtgrid_file=cwd+"/../../DATA/grid/Vertical_coordinate.nc"
 lvls=nc.Dataset(vtgrid_file, 'r').variables["Layer"][:]
 
 def smooth(counts, vals):
