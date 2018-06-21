@@ -38,8 +38,9 @@ def processExp(e):
             "count"     : np.zeros(lvls.shape),
             "inc_mean"  : np.zeros(lvls.shape),
             "inc_mean2" : np.zeros(lvls.shape),
-            "inc_sprd"  : np.zeros(lvls.shape),
-            "val"       : np.zeros(lvls.shape)}
+            "inc_sprd2" : np.zeros(lvls.shape),
+            "val"       : np.zeros(lvls.shape),
+            "err"       : np.zeros(lvls.shape)}
         data.append(d2)
 
 
@@ -75,7 +76,7 @@ def processExp(e):
                 data[cnt]['count'][idx] = count
                 data[cnt]['inc_mean'][idx]  += (i_m    - data[cnt]['inc_mean'][idx])/count
                 data[cnt]['inc_mean2'][idx] += (i_m**2 - data[cnt]['inc_mean2'][idx])/count
-                data[cnt]['inc_sprd'][idx]  += (c*i_s**2 - data[cnt]['inc_sprd'][idx])/count
+                data[cnt]['inc_sprd2'][idx] += (c*i_s**2 - data[cnt]['inc_sprd2'][idx])/count
                 data[cnt]['val'][idx] += (v - data[cnt]['val'][idx])/count
     return data
  
@@ -179,16 +180,14 @@ if __name__=="__main__":
                 enum+=1
                 data=allData[enum][cnt]
                 if p2 == 'rmsd':
-                    plt.plot(np.sqrt(smooth(data['count'],data['inc_mean2'])), lvls, 'C{}'.format(enum),
-                             label=args.label[enum])
-                    plt.plot(np.sqrt(data['inc_sprd']), lvls, 'C{}'.format(enum), ls='--')
-#                    plt.plot(smooth(data['count'],data['err']),lvls, 'C{}'.format(enum), ls='--')
+                    plt.plot(np.sqrt(smooth(data['count'],data['inc_mean2'])), 
+                             lvls, 'C{}'.format(enum),label=args.label[enum])
+                    plt.plot(np.sqrt(smooth(data['count'],data['inc_sprd2'])),
+                             lvls, 'C{}'.format(enum), ls='--')
                     plt.axvline(x=0.0, color='black')
                 elif p2 == 'bias':
                     plt.plot(smooth(data['count'],data['inc_mean']), lvls, 'C{}'.format(enum))
                     plt.axvline(x=0.0, color='black')
-#                elif p2 =='val':
-#                    plt.plot(data['val'], lvls, 'C{}'.format(enum))
 
 
             plt.annotate('profiles: {}'.format(int(np.max(allData[0][cnt]['count']))),
