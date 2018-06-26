@@ -47,7 +47,7 @@ util:
 
 letkf:
 	mkdir -p src/letkf/build
-	(source config/env; cd src/letkf/build; CMAKE_PREFIX_PATH=$$NETCDF_DIR cmake ../; make)
+	(source config/env; cd src/letkf/build; CMAKE_PREFIX_PATH=$$NETCDF_DIR cmake ../; make  --no-print-directory)
 #	ln -sf ../../../config/env src/letkf/config/env
 #	cd src/letkf; make --no-print-directory
 

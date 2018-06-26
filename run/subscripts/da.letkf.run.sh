@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-cat << \#\#
+cat << EOF
 
 #================================================================================
 #================================================================================
@@ -14,12 +14,15 @@ cat << \#\#
 # 
 # Results:
 # 
+#================================================================================
+EOF
 # Required environment variables:
  envar=()
  envar+=("ROOT_GODAS_DIR")
  envar+=("TMP_DIR")
  envar+=("PPN")
  envar+=("NODES")
+ envar+=("ENS_SIZE")
  envar+=("ENS_LIST")
  envar+=("ANA_FILES")
  envar+=("DA_TS_ONLY")
@@ -50,15 +53,28 @@ mkdir -p $TMP_DIR
 cd $TMP_DIR
 ln -s $ROOT_GODAS_DIR/build/letkf .
 
+
 # configuration files
-source $ROOT_EXP_DIR/config/da/namelist.letkf.sh >> namelist.letkf
-ln -s $ROOT_EXP_DIR/config/da/{obsdef,platdef}.cfg .
-f=$ROOT_EXP_DIR/config/da/statedef.cfg
+#------------------------------------------------------------
+ln -s $ROOT_EXP_DIR/config/da/letkf*.json .
+
+# state  config file depens on whether we are doing T/S only update
+# or all variables
+f=letkf_state_all.json
 if [[ $DA_TS_ONLY -ne 0 ]]; then 
     echo "WARNING: configured to only update T/S state variables"
-    f=$f.ts_only
+    f=letkf_state_ts.json
 fi
-ln -s $f statedef.cfg
+ln -s $f letkf_state.json
+
+#ensemble size / node specific variables
+cat  > letkf_mpi.json <<EOF
+{
+ "ens_size" : ${ENS_SIZE},
+ "ppn" : ${PPN},
+}
+EOF
+#------------------------------------------------------------
 
 
 # grid definition files
