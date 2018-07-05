@@ -57,6 +57,7 @@ def processExp(e):
 
         m_valid = masks['q_valid']
         m_depth = np.logical_and (omfs.depth >= args.mindepth, omfs.depth <= args.maxdepth)
+        m_hr = np.logical_and(omfs.hr >= args.hr[0], omfs.hr <= args.hr[1])
 
         cnt=-1
         for p in plotTypes:
@@ -65,7 +66,8 @@ def processExp(e):
             mask=None
             for m in p['masks']:
                 mask = masks[m] if mask is None else (mask & masks[m])
-            obs = omfs[ m_valid & mask & m_depth]
+            obs = omfs[ m_valid & mask & m_depth & m_hr]
+
 
             for d,v,e,i_m,i_s in zip(
                     obs.depth.values, obs.val.values,
@@ -103,6 +105,7 @@ if __name__=="__main__":
         "start date in YYYYMMDD format"))
     parser.add_argument('-end', default="99999999", help=(
         "end date in YYYYMMDD format"))
+    parser.add_argument('-hr',nargs=2,type=int,default=(-9e10,9e10))
     parser.add_argument('-out', default="./omf_profile", help=(
         "output directory for generated plots (Default: %(default)s)"))
     parser.add_argument('-label', help=(

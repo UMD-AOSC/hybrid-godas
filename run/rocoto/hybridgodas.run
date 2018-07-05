@@ -179,7 +179,7 @@ runstep() {
 
 	# TODO, use the logic that is in the jobwrapper.sh script already?
 	DA_SLOT_NUM=$(( $CYCLE_LEN / $DA_SLOT_LEN ))
-	ss=$(( $DA_IAU_LEN - $CYCLE_LEN + $DA_SLOT_LEN/2 ))
+	ss=$(( $DA_WNDW_OFST - $CYCLE_LEN + $DA_SLOT_LEN/2 ))
 	se=$(( $ss + $DA_SLOT_LEN*($DA_SLOT_NUM-1) ))
 	export DA_SLOTS=$(seq -s ' ' -f "%+02g" $ss $DA_SLOT_LEN $se)
 

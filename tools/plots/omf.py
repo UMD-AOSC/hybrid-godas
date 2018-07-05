@@ -94,7 +94,7 @@ def read(filename):
     print (filename)
     ncd=nc.Dataset(filename,'r')
     df={}
-    fvars=('obid','plat','lat','lon','depth','qc', 'val','err')
+    fvars=('obid','plat','lat','lon','depth','hr','qc', 'val','err')
     for f in fvars:
         df[f] = ncd.variables[f][:]
 

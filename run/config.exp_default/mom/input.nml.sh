@@ -6,7 +6,7 @@ set -e
 #  FCST_START_TIME   start date in YYYYMMDDHH format
 #  FCST_RESTART      1 if starting from a restart, otherwise 0
 #  FCST_LEN          integration length, in hours
-
+#  FCST_RST_OFST     time (hours) from beginning of forecast until when restart file is to be saved.
 
 restart='n'
 if [[ "$FCST_RESTART" == 1 ]]; then restart='r'; fi
@@ -56,6 +56,7 @@ cat <<EOF
             use_lag_fluxes=.false.    
             check_stocks = 0
             do_endpoint_chksum=.false.
+            restart_interval=0,0,0,${FCST_RST_OFST},0 !< NOTE: not in default OM4_025 settings
 /
 
  &diag_manager_nml

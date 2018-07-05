@@ -109,15 +109,15 @@ echo ""
 # data assimilation window
 #------------------------------------------------------------
 export DA_WNDW_LEN=$CYCLE_LEN
-export DA_WNDW_END_TIME=$(date "+%Y%m%d%H" -d "$(dtz $CYCLE) + $DA_IAU_LEN hours")
+export DA_WNDW_END_TIME=$(date "+%Y%m%d%H" -d "$(dtz $CYCLE) + $DA_WNDW_OFST hours")
 export DA_WNDW_START_TIME=$(date "+%Y%m%d%H" -d "$(dtz $DA_WNDW_END_TIME) - $CYCLE_LEN hours")
 export DA_SLOT_NUM=$(($CYCLE_LEN / $DA_SLOT_LEN))
-ss=$(( $DA_IAU_LEN - $DA_WNDW_LEN  + $DA_SLOT_LEN/2))
+ss=$(( $DA_WNDW_OFST - $DA_WNDW_LEN  + $DA_SLOT_LEN/2))
 se=$(( $ss + $DA_SLOT_LEN*($DA_SLOT_NUM-1) ))
 export DA_SLOTS=$(seq -s ' ' -f "%+02g" $ss $DA_SLOT_LEN $se )
 #export DA_WNDW_CNTR_TIME=
 
-for v in DA_IAU_LEN  DA_WNDW_LEN  DA_WNDW_START_TIME  DA_WNDW_END_TIME\
+for v in DA_WNDW_OFST  DA_WNDW_LEN  DA_WNDW_START_TIME  DA_WNDW_END_TIME\
     DA_SLOT_LEN DA_SLOT_NUM DA_SLOTS; do
     echo " $v = ${!v}"
 done
@@ -131,10 +131,6 @@ echo ""
 # * slots are equal sizes
 # * don't do leap adj if da length is <= 24 hours
 
-if [[ $DA_IAU_LEN -gt 0 ]]; then
-    echo "ERROR: IAU is not yet supported. Set DA_IAU_LEN to 0 and try again..."
-    #exit 1
-fi
 if [[ $DA_SLOT_LEN -ne 24 ]]; then
     echo "ERROR: DA slots other than 24 hours is not supported (yet). set DA_SLOT_LEN to 24 and try again."
     #exit 1
@@ -143,12 +139,13 @@ fi
 
 # forecast length /restart times
 #------------------------------------------------------------
-export FCST_LEN=$(($CYCLE_LEN_PREV + $DA_IAU_LEN))
-export FCST_RST_TIME=$CYCLE
+export FCST_LEN=$(($CYCLE_LEN_PREV + $DA_WNDW_OFST))
 export FCST_START_TIME=$CYCLE_PREV
 export FCST_END_TIME=$DA_WNDW_END_TIME
+export FCST_RST_OFST=$CYCLE_LEN_PREV
+export FCST_RST_TIME=$CYCLE
 
-for v in FCST_LEN FCST_START_TIME FCST_END_TIME FCST_RST_TIME; do
+for v in FCST_LEN FCST_START_TIME FCST_END_TIME FCST_RST_OFST FCST_RST_TIME; do
     echo " $v = ${!v}"
 done
 

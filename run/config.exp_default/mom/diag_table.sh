@@ -5,11 +5,7 @@
 #  $FCST_LEN          forecast length (hours)
 #  $FCST_DIAG_DA      if 1, daily mean ouput files are saved (needed for data assimilation)
 #  $FCST_DIAG_OTHER   if 1, pentad (or 6 day pentad if leap day) files are saved
-
-#TODO : fix this
-#FCST_DIAG_DA=1
-#FCST_DIAG_OTHER=0
-#fcst_len=$(($FCST_LEN / 24 ))
+#  $FCST_RST_OFST
 
 # file header
 #------------------------------------------------------------
@@ -24,11 +20,16 @@ EOF
 
 #------------------------------------------------------------
 # Files needed for data assimilation
+#
+# daily output files, output does not begin unti the start of 
+# the DA window.
 #------------------------------------------------------------
 if [ "$FCST_DIAG_DA" = 1 ]; then
+D=$DA_WNDW_START_TIME
 cat <<EOF
 
-"ocean_daily%4yr%2mo%2dy",     1,"days",1,"days","time",1,"days"
+"ocean_daily%4yr%2mo%2dy",     1,"days", 1, "days","time", 1,"days", "${D:0:4} ${D:4:2} ${D:6:2} ${D:8:2} 0 0", 1, "days"
+
 
 'ocean_model',   'SST',      'SST',      'ocean_daily%4yr%2mo%2dy',    'all', 'min', 'none',2
 'ocean_model_z', 'temp',     'Temp',     'ocean_daily%4yr%2mo%2dy',    'all', 'mean','none',2
@@ -50,12 +51,15 @@ fi
 
 #------------------------------------------------------------
 # other diagnostic files
+# ouput ends at the restart file output time
 #------------------------------------------------------------
 if [ "$FCST_DIAG_OTHER" = 1 ]; then
+#D=$FCST_START_TIME
+#, "hours", "${D:0:4} ${D:4:2} ${D:6:2} ${D:8:2} 0 0", ${FCST_RST_OFST}, "hours"
 cat <<EOF
 
-"ocean_pentad%4yr%2mo%2dy",    ${FCST_LEN}, "hours",   1, "days",   "time", ${FCST_LEN}, "hours"
-"ice_pentad%4yr%2mo%2dy",      ${FCST_LEN}, "hours",   1, "days",   "time", ${FCST_LEN}, "hours"
+"ocean_pentad%4yr%2mo%2dy",    ${FCST_RST_OFST}, "hours",   1, "days", "time", ${FCST_RST_OFST}, "hours"
+"ice_pentad%4yr%2mo%2dy",      ${FCST_RST_OFST}, "hours",   1, "days", "time", ${FCST_RST_OFST}, "hours"
 #"ocean_static",                -1,          "months", 1, "days",   "time"
 
 # For some weird reason it seems MOM is often putting zeros in for the entire field of
