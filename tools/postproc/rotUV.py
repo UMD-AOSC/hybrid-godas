@@ -10,7 +10,7 @@ import mask
 
 _rootdir=os.path.dirname(os.path.abspath(__file__+'/../../'))
 _geomFile=_rootdir+'/DATA/grid/ocean_geometry.nc'
-_anglFile=_rootdir+'/tools/postproc/grid/grid_angle.nc'
+_anglFile=_rootdir+'/DATA/grid/remap.grid_t.angle.nc'
 _angles=None
 _lat=None
 _lon=None

@@ -77,6 +77,11 @@ cat << \#\#
                              #  ensemble member. 
                              # if =0, FORC_MEAN_FILE is not used at all.
 
+ envar+=("FORC_RUNOFF_CLIM")
+ envar+=("FORC_RUNOFF_PERTURB")
+ if [[ ! $FORC_RUNOFF_PERTURB -eq 0 ]]; then
+     envar+=("FORC_RUNOFF_VAR")
+ fi
 
 #================================================================================
 #================================================================================
@@ -140,14 +145,23 @@ echo "preparing surface forcing from $forc_start_dy to $forc_end_dy"
 echo " forcing variables are: ${forc_var[@]}"
 echo ""
 
+mkdir -p mem_0000
+
+#------------------------------------------------------------
+# Create the river runoff perturbations
+#------------------------------------------------------------
+echo "Generating river runoff files..."
+echo "------------------------------------------------------------"
+cp $FORC_RUNOFF_CLIM mem_0000/runoff.nc
+
 
 # ------------------------------------------------------------
 # Create the combined mean forcing file
 # TODO: don't need to do this if we are directly using the ensemble
 #  files (instead of using them as just perturbations)
 #------------------------------------------------------------
-mkdir -p mem_0000
 mkdir -p work/mean
+echo ""
 echo "Generating forcing mean files..."
 echo "------------------------------------------------------------"
 for f in ${forc_var[@]}; do
@@ -229,8 +243,7 @@ for f in ${forc_var[@]}; do
     done
 
     ncrcat $files mem_0000/$f.nc
-    ncatted -O -a axis,time,c,c,T mem_0000/$f.nc
-    ncatted -O -a calendar,,m,c,gregorian mem_0000/$f.nc
+    ncatted -O -a axis,time,c,c,T -a calendar,,m,c,gregorian mem_0000/$f.nc
 done
 echo ""
 
@@ -247,7 +260,29 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
     echo "Generating ensemble member forcing files..."
     echo "------------------------------------------------------------"
 
-    # Create the combined forcing file for each member
+    # generate river runoff files
+    echo "River Runoff"
+    yr=${date_cur:0:4}
+    mn=${date_cur:4:2}
+    for m in $ens_list; do
+	d=work/ens/mem_$m
+	mkdir -p $d
+ 	mkdir -p mem_$m
+
+	if [[ ! $FORC_RUNOFF_PERTURB -eq 0 ]]; then
+	    $ROOT_GODAS_DIR/tools/clim_noise.py -nx 1440 -ny 1080 -month $mn -year $yr -seed $m $d/runoff.noise.nc
+	    cdo -L add $FORC_RUNOFF_CLIM -mul $FORC_RUNOFF_VAR $d/runoff.noise.nc mem_$m/runoff.nc
+	    # cdo screws some things up, fix them..
+	    ncatted -O -a axis,i,d,, -a axis,j,d,, -a cartesian_axis,i,o,c,X -a cartesian_axis,j,o,c,Y \
+		       -a axis,time,d,, -a cartesian_axis,time,o,c,T -a calendar,time,o,c,noleap \
+                       -a modulo,time,o,c," " mem_$m/runoff.nc
+	else
+	    cp $FORC_RUNOFF_CLIM mem_$m/runoff.nc
+	fi
+    done
+
+	
+    # Create the combined atmospheric forcing file for each member
     for m in $ens_list; do
 	d=work/ens/mem_$m
 	mkdir -p $d
