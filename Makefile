@@ -46,8 +46,10 @@ util:
 	cd src/3dvar; make --no-print-directory
 
 letkf:
-	ln -sf ../../../config/env src/letkf/config/env
-	cd src/letkf; make --no-print-directory
+	mkdir -p src/letkf/build
+	(source config/env; cd src/letkf/build; CMAKE_PREFIX_PATH=$$NETCDF_DIR cmake ../; make  --no-print-directory)
+#	ln -sf ../../../config/env src/letkf/config/env
+#	cd src/letkf; make --no-print-directory
 
 clean-da:
 	rm -rf build/datetime
