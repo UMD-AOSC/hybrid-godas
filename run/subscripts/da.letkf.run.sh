@@ -114,3 +114,14 @@ ln -s $ANA_FILES OUTPUT
 
 # run the LETKF
 aprun -n $nproc ./letkf
+
+# move output files to OUPUT directory
+# (this is temporary, there is a bug in the LETKF code)
+mv {ana,bkg,letkf}.*.nc OUTPUT/
+cd OUTPUT/
+for f in *; do
+    mv $f ${f//.*}_${f#*.}
+done
+for f in ana_0*; do
+    mv $f ${f#*_}
+done

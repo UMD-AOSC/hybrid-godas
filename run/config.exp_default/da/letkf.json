@@ -5,7 +5,7 @@
 
     "solver": {
 	"inflation": {
-	    "rtps": 0.8,
+	    "rtps": 0.9,
 	    "rtpp": 0.0,
 	    "mul":  1.0,
 	},
@@ -58,6 +58,10 @@
 
 
     "localization": {
-	"class" : "loc_novrt",
+	"class" : "loc_ocean",
+	"hzloc_prof" : "0.0 550e3 / 10.0 300e3 / 50.0 100e3",
+	"hzloc_sat"  : "0.0 200e3 / 10.0 50e3",
+	"tloc_prof"  : 72,
+	"tloc_sat"   : 48,
     }
 }
