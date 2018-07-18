@@ -131,13 +131,13 @@
   t_varmin_len = 500.0
   t_varmax     = 1.8
   t_varmin_do  = 0.1
-  t_varmin_surf_const = 0.5
+  t_varmin_surf_const = -1
   t_dz = 20.0
 
   s_varmin_len= 250.0
   s_varmax    = 0.25
   s_varmin_do = 0.02
-  s_varmin_surf_const = 0.25
+  s_varmin_surf_const = 0.3
   s_dz = 2.5
   gauss_iter = 3
 /

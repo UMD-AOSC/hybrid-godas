@@ -25,3 +25,4 @@
 ! other 3dvar input fields
 !------------------------------------------------------------
 "vtloc",	"vtloc",	"vtloc.nc"   
+"t_varmin_surf", "inc_rms",     "bgvar_min.nc"

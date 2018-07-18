@@ -132,7 +132,21 @@ program bgvar
 
   allocate(bg_vtloc(grid_nx, grid_ny, grid_nz))
   call datatable_get('vtloc', bg_vtloc)
-  
+
+  allocate(t_varmin_surf(grid_nx, grid_ny)) 
+  if (t_varmin_surf_const < 0) then
+     call datatable_get('t_varmin_surf', t_varmin_surf)
+  else
+     t_varmin_surf = t_varmin_surf_const
+  end if
+
+  allocate(s_varmin_surf(grid_nx, grid_ny)) 
+  if (s_varmin_surf_const < 0) then
+     call datatable_get('s_varmin_surf', s_varmin_surf)
+  else
+     s_varmin_surf = s_varmin_surf_const
+  end if
+
 
   print *, ""
   print *, "------------------------------------------------------------"
@@ -169,13 +183,6 @@ program bgvar
   end do
 
 
-  ! calculate surface minium 
-  !----------------------------------------
-  ! TODO, use a horizontally varying varsurf read in from a file, eventually
-  allocate(t_varmin_surf(grid_nx, grid_ny)) 
-  allocate(s_varmin_surf(grid_nx, grid_ny)) 
-  t_varmin_surf = t_varmin_surf_const
-  s_varmin_surf = s_varmin_surf_const
 
 
   ! calculate dt/dz
