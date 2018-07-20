@@ -58,6 +58,7 @@ cd INPUT
 ln -s $ROOT_GODAS_DIR/DATA/grid/ocean_geometry.nc grid.nc
 ln -s $ROOT_GODAS_DIR/DATA/grid/Vertical_coordinate.nc vgrid.nc
 ln -s $ROOT_GODAS_DIR/DATA/grid/coast_dist.nc .
+ln -s $ROOT_GODAS_DIR/DATA/grid/bgvar_min.nc .
 ln -s $OBS_FILE obs.nc
 ln -s $BKG_FILE bkg.nc
 
