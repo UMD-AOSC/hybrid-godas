@@ -60,6 +60,8 @@ masks = {
     'r_nh'     : lambda d: (d.lat <= 60) & (d.lat >= 20),
     'r_sh'     : lambda d: (d.lat >= -60) & (d.lat <= -20),
     'r_tp'     : lambda d: (d.lat >= -20) & (d.lat <= 20),
+    'r_at_w'   : lambda d:  basin_check('AT', d) & (d.lon < -29.0),
+    'r_at_e'   : lambda d:  basin_check('AT', d) & (d.lon > -10.0),
 
     # depths                                                                                
     # 'd_surf' : lambda d: (d.depth <= 1),
@@ -77,6 +79,8 @@ region_list = (('global',  'GL 60S-60N',     ('r_gl',) ),
 #               ('pac_sh',  'Pacific 60S-20S',  ('r_sh','b_pa') ),
 #               ('ind_sh',  'Indian 60S-20S',   ('r_sh','b_in') ),                                      
                ('atl_tp',  'Atlatic TP 20S-20N',  ('r_tp','b_at') ),
+               ('atl_tp_w','Atlatic TP 20S-20N W (<29W)',('r_tp','r_at_w') ),
+               ('atl_tp_e','Atlatic TP 20S-20N E (>10W)',('r_tp','r_at_e') ),
                ('pac_tp',  'Pacific TP 20S-20N',  ('r_tp','b_pa') ),
                ('ind_tp',  'Indian TP 20S-20N',   ('r_tp','b_in') ),
                ('atl_nh',  'Atlantic NH 20N-60N', ('r_nh','b_at') ),

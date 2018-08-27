@@ -29,7 +29,8 @@ def processExp(f):
         mask = None
         for m in p['masks']:
             mask = masks[m] if mask is None else (mask & masks[m])            
-        obs = omfs[ m_valid & mask ]
+        m_hr = np.logical_and(omfs.hr >= args.hr[0], omfs.hr <= args.hr[1])
+        obs = omfs[ m_valid & mask  & m_hr]
 
         data['date'] = f.split('/')[-1][:-3]
         data['cnt_good'] = (m_valid & mask).sum()
@@ -43,6 +44,15 @@ def processExp(f):
         allData.append(data)
     return allData
 
+
+# TODO, this is inefficient, fix up
+def smoothData(xs,ys,cs):
+    ys0 = ys
+    for i, x in enumerate(ys):
+        i1 = max(0, i-args.smooth)
+        i2 = min(len(xs), i+args.smooth+1)
+        ys[i] = sum(np.multiply(ys0[i1:i2] ,cs[i1:i2])) / sum(cs[i1:i2])
+    return ys
 
 
 if __name__ == "__main__":
@@ -67,8 +77,11 @@ if __name__ == "__main__":
         "number of threads to use when reading input files. (Default: %(default)s)"))
     parser.add_argument('-out', default="./omf_timeseries", help=(
         "output directory for generated plots (Default: %(default)s)"))
+    parser.add_argument('-hr', nargs=2, type=int, default=(-9e10, 9e10))
     parser.add_argument('-label', help=(
         "A comma separated list of labels to use for the plot lines"))
+    parser.add_argument('-smooth', type=int, default=0, help=(
+        "number of steps in each direction to do a weighted smooth over (Default:%(default)s)"))
     args = parser.parse_args()        
     args.path = [os.path.abspath(p) for p in args.path]
     if args.label is not None:
@@ -140,7 +153,10 @@ if __name__ == "__main__":
             for i, e in enumerate(args.path):
                 xval = [ datetime.datetime.strptime(x[cnt]['date'],'%Y%m%d%H').date() for
                          x in allData[e] ]
+                vcount=[ x[cnt]['cnt_good'] for x in allData[e] ]
                 yval = [ x[cnt][p2]     for x in allData[e] ]
+                yval= smoothData(xval,yval, vcount)
+
 
                 # plot the experiment rmsd or bias
                 plt.plot(xval, yval,  'C{}'.format(i), label=args.label[i])
@@ -148,12 +164,13 @@ if __name__ == "__main__":
                 if p2 == 'rmsd':
                     # plot the ensemble spread
                     y2val= [ x[cnt]['sprd']  for x in allData[e] ]
+                    y2val = smoothData(xval,y2val, vcount)
                     plt.plot(xval, y2val, 'C{}'.format(i), ls='--')
 
                     # plot the avg obs err
-                    if i == 0:
-                        y3val= [ x[cnt]['err']  for x in allData[e] ]
-                        plt.plot(xval, y3val, 'gray', ls=':')
+#                    if i == 0:
+#                        y3val= [ x[cnt]['err']  for x in allData[e] ]
+#                        plt.plot(xval, y3val, 'gray', ls=':')
             plt.axhline(y=0.0, color='black')
 
             plt.legend()
