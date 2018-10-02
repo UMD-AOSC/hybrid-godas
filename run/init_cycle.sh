@@ -43,7 +43,10 @@ cat $root_dir/run/config.exp_default/hybridgodas.template.config | envsubst '$EX
 # setup the initial conditions
 icdir=$root_dir/DATA/ic/2004010100
 echo "Using initial conditions from $icdir"
-cp $icdir/cycle . -r
+mkdir cycle
+cp $icdir/cycle/cycle.status cycle/
+chmod u+w cycle/cycle.status
+ln -s  $icdir/cycle/?????????? cycle/
 
 # Save code version information
 touch version
