@@ -1,8 +1,11 @@
+!> sets up sea-ice specific grid information, including the category thicknesses and
+!! vertical structure of the ice.
+module ice_grid
+
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!
 ! ice_grid - sets up sea-ice specific grid information, including the          !
 !   category thicknesses and vertical structure of the ice. -Robert Hallberg   !
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!
-module ice_grid
 
 use MOM_error_handler, only : SIS_error=>MOM_error, FATAL, WARNING, SIS_mesg=>MOM_mesg
 use MOM_error_handler, only : is_root_pe
@@ -15,31 +18,26 @@ include 'netcdf.inc'
 
 public :: set_ice_grid, ice_grid_end
 
+!> Contains sea-ice specific grid elements, including information about the category descriptions
+!! and the vertical layers in the snow and ice.
 type, public :: ice_grid_type
-  ! This type contains sea-ice specific grid elements, including information
-  ! about the category descriptions and the vertical layers in the snow and ice.
-  integer :: CatIce     ! The number of sea ice categories.
-  integer :: NkIce      ! The number of vertical partitions within the
-                        ! sea ice.
-  integer :: NkSnow     ! The number of vertical partitions within the
-                        ! snow atop the sea ice.
-  real :: H_to_kg_m2    ! A constant that translates thicknesses from the
-                        ! internal units of thickness to kg m-2.
-  real :: kg_m2_to_H    ! A constant that translates thicknesses from kg m-2 to
-                        ! the internal units of thickness.
-  real :: H_subroundoff !   A thickness that is so small that it can be added to
-                        ! any physically meaningful positive thickness without
-                        ! changing it at the bit level, in thickness units.
-  real :: ocean_part_min ! The minimum value for the fractional open-ocean
-                         ! area.  This can be 0, but for some purposes it
-                         ! may be useful to set this to a miniscule value
-                         ! (like 1e-40) that will be lost to roundoff
-                         ! during any sums so that the open ocean fluxes
-                         ! can be used in interpolation across categories.
+  integer :: CatIce     !< The number of sea ice categories.
+  integer :: NkIce      !< The number of vertical partitions within the sea ice.
+  integer :: NkSnow     !< The number of vertical partitions within the snow atop the sea ice.
+  real :: H_to_kg_m2    !< A constant that translates thicknesses from the
+                        !! internal units of thickness to kg m-2.
+  real :: kg_m2_to_H    !< A constant that translates thicknesses from kg m-2 to
+                        !! the internal units of thickness.
+  real :: H_subroundoff !<   A thickness that is so small that it can be added to
+                        !! any physically meaningful positive thickness without
+                        !! changing it at the bit level, in thickness units.
+  real :: ocean_part_min !< The minimum value for the fractional open-ocean area.  This can be 0,
+                        !! but for some purposes it may be useful to set this to a miniscule value
+                        !! (like 1e-40) that will be lost to roundoff during any sums so that the
+                        !! open ocean fluxes can be used in interpolation across categories.
   real, allocatable, dimension(:) :: &
-    cat_thick_lim, &  ! The lower thickness limits for each ice category, in m.
-    mH_cat_bound  ! The lower mass-per-unit area limits for each ice category,
-                  ! in units of H (often kg m-2).
+    cat_thick_lim, &  !< The lower thickness limits for each ice category, in m.
+    mH_cat_bound      !< The lower mass-per-unit area limits for each ice category, in units of H (often kg m-2).
 
 end type ice_grid_type
 
@@ -48,18 +46,11 @@ contains
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!
 !> set_ice_grid initializes sea ice specific grid parameters
 subroutine set_ice_grid(IG, param_file, NCat_dflt, ocean_part_min_dflt)
-  type(ice_grid_type),   intent(inout) :: IG
-  type(param_file_type), intent(in)    :: param_file
-  integer,               intent(in)    :: NCat_dflt
-  real, optional,        intent(in)    :: ocean_part_min_dflt
+  type(ice_grid_type),   intent(inout) :: IG  !< The sea-ice specific grid type
+  type(param_file_type), intent(in)    :: param_file !< A structure to parse for run-time parameters
+  integer,               intent(in)    :: NCat_dflt !< The default number of ice categories
+  real, optional,        intent(in)    :: ocean_part_min_dflt !< The default value for the minimum open water area
 !   This subroutine sets up the necessary domain types and the sea-ice grid.
-
-! Arguments: IG - The sea-ice specific grid structure.
-!  (in)      param_file - A structure indicating the open file to parse for
-!                         model parameter values.
-!  (inout)   ice_domain - A domain with no halos that can be shared publicly.
-!  (in)      NCat_dflt - The default number of ice categories.
-!  (in,opt)  ocean_part_min_dflt - The default value for the minimum open water area.
 
 ! This include declares and sets the variable "version".
 #include "version_variable.h"
@@ -129,7 +120,7 @@ end subroutine set_ice_grid
 
 !> Allocate any required arrays in the ice_grid_type.
 subroutine allocate_ice_metrics(IG)
-  type(ice_grid_type), intent(inout) :: IG
+  type(ice_grid_type), intent(inout) :: IG  !< The sea-ice specific grid type
   integer :: isd, ied, jsd, jed, IsdB, IedB, JsdB, JedB, isg, ieg, jsg, jeg
 
   ! This subroutine allocates any extensive elements of the ice_grid_type
@@ -141,7 +132,7 @@ end subroutine allocate_ice_metrics
 !---------------------------------------------------------------------
 !> Release memory used by the ice_grid_type and related structures.
 subroutine ice_grid_end(IG)
-  type(ice_grid_type), intent(inout) :: IG
+  type(ice_grid_type), intent(inout) :: IG  !< The sea-ice specific grid type
 
   deallocate(IG%cat_thick_lim)
   deallocate(IG%mH_cat_bound)
