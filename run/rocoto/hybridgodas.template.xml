@@ -302,6 +302,11 @@ the following steps are performed:
 	<command>
 	  &SCRIPT_WRAPPER;
 
+	  export PROF_INTERP=F
+	  if [[ "&#36;DA_MODE" = "var" ]]; then
+	    export PROF_INTERP=T
+	  fi
+	  
 	  # combine the forecast daily files and run the obsop on it
 	  slots="#slot#"
 	  if [[ "&#36;slots" = "_all" ]]; then
@@ -514,7 +519,8 @@ the following steps are performed:
       else # hyb
         export OBS_FILE=&WORK_DIR;/da.prep.3dvar/omf/obs.nc
 	export BKG_FILE=&WORK_DIR;/da.letkf/OUTPUT/ana_mean.nc
-      fi      
+	fi
+      export PROF_INTERP=T	
       export AI_FILE=&ROOT_EXP_DIR;/cycle/&#36;CYCLE_NEXT/da.3dvar/ai.nc
 
       # run 3DVar

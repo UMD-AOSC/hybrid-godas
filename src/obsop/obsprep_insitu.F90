@@ -19,8 +19,10 @@ program obsprep_insitu
   real    :: err_t_d(4)=(/75.0,300.0,450.0,1000.0/)
   real    :: err_s_surf=0.18
   real    :: err_s_do=0.02
-  real    :: err_s_d=750.0  
-
+  real    :: err_s_d=750.0
+  logical :: vrt_interp = .FALSE.
+  real    :: vrt_interp_lvls(1000) = -1
+  
 
   ! variables read in from the command line
   character(len=1024) :: obsfile
@@ -41,25 +43,26 @@ program obsprep_insitu
 
 
   ! output data that is generated here
-  integer, parameter :: obsout_max = 1000000
+  ! TODO, remove the hardcoded max value (replace with vector)
+  integer, parameter :: obsout_max = 10000000
   type(observation)  :: obsout(obsout_max)
   integer            :: obsout_num
 
-
+  real, allocatable :: obs_depth2(:)
+  real, allocatable :: obs_val2(:)
+  
   ! other misc variables
   type(datetime) :: basedate
-  integer :: unit, i, j, p, v, z, idx1, idx2, cnt, prflen
+  integer :: unit, i, p, v, idx1, idx2, cnt, prflen
   type(obsio_nc) :: obsio
   character(len=1) :: var
   integer :: ncid, nc_v
   integer :: obid
-  type(cspline) :: spline
   real :: err(1000)
-  real :: se(2)
   character(len=1024) :: tmp_str
   integer :: yr,mn,dy
-  integer :: x,y
   real, parameter :: pi = 4*atan(1.0)
+  integer :: vrt_interp_lvls_cnt
 
 ! use this to get the repository version at compile time
 #ifndef CVERSION
@@ -69,11 +72,11 @@ program obsprep_insitu
 #define CTIME "Unknown"
 #endif
   
-!  namelist /obsprep_insitu_nml/ obid_t, obid_s, se_t, se_s
   namelist /obsprep_insitu_nml/ obid_t, obid_s, &
        err_cscale_mul, err_cscale_dist, &
        err_t_surf, err_t_max, err_t_do, err_t_d, &
-       err_s_surf, err_s_do, err_s_d
+       err_s_surf, err_s_do, err_s_d, &
+       vrt_interp, vrt_interp_lvls
 
   print *, "------------------------------------------------------------"
   print *, " insitu observation preparation "
@@ -104,7 +107,17 @@ program obsprep_insitu
   print obsprep_insitu_nml
   print *, ""
 
-
+  ! are we going to interpolate profiles to model levels?
+  ! count the number of levels
+  if(vrt_interp) then
+     vrt_interp_lvls_cnt = 0
+     do i=1,size(vrt_interp_lvls)
+        if(vrt_interp_lvls(i) == -1) exit
+        vrt_interp_lvls_cnt = vrt_interp_lvls_cnt + 1 
+     end do
+  end if
+    
+  
   obsout_num = 0
 
   ! for each of TMP and SALT obs types
@@ -112,15 +125,14 @@ program obsprep_insitu
      cnt = 0
      if (v == 1) then
         var = 'T'
-!        se = se_t
         obid=obid_t
      else
         var = 'S'
-!        se = se_s
         obid=obid_s
      end if
      
      ! read in observation
+     print *, ""
      print *,"READING ",trim(obsfile)//"."//var//".nc"
      call check(nf90_open(trim(obsfile)//"."//var//".nc", nf90_nowrite, ncid))
 
@@ -163,36 +175,57 @@ program obsprep_insitu
      print*,"loaded",obs_num,"obs from",prf_num,"profiles"
      call check(nf90_close(ncid))
 
+     ! for each profile, do optional interpolation
+     ! place interpolated values onto obs_*_interp arrays
+     if(vrt_interp) then
+        ! move values over to temporary array
+        allocate(obs_depth2(obs_num))
+        allocate(obs_val2(obs_num))
+        obs_depth2 = obs_depth
+        obs_val2 = obs_val
+        deallocate(obs_val, obs_depth)        
+        allocate(obs_depth(prf_num * vrt_interp_lvls_cnt))
+        allocate(obs_val(prf_num * vrt_interp_lvls_cnt))
+        obs_num=0
+
+        ! interpolate each profile, updating the obs_val and obs_depth arrays
+        do p=1,prf_num
+           idx1 = prf_obsidx(p)
+           idx2 = prf_obsidx(p) + prf_obslen(p) - 1
+
+           call interp(obs_depth2(idx1:idx2), obs_val2(idx1:idx2), &
+                obs_depth(obs_num+1:size(obs_depth)), &
+                obs_val(obs_num+1:size(obs_val)), &                
+                i)
+           
+           prf_obsidx(p) = obs_num + 1
+           prf_obslen(p) = i          
+           obs_num = obs_num + i           
+           
+        end do
+
+        ! cleanup
+        deallocate(obs_depth2)
+        deallocate(obs_val2)
+     end if
 
      ! for each profile, determine the error profile
      ! create output observations
      do p=1,prf_num
-!        print *,obid 
-!        print *, "" 
-!        print*, "Profile",p 
         idx1 = prf_obsidx(p)
         idx2 = prf_obsidx(p) + prf_obslen(p) - 1
         prflen = prf_obslen(p)
 
         ! calculate error profile
         if (v == 1) then
-           call calcErr_t(prf_lon(p), prf_lat(p), obs_depth(idx1:idx2), obs_val(idx1:idx2), err(1:prf_obslen(p)))
+           call calcErr_t(prf_lon(p), prf_lat(p), obs_depth(idx1:idx2), err(1:prf_obslen(p)))
         else
-           call calcErr_s(prf_lon(p), prf_lat(p), obs_depth(idx1:idx2), obs_val(idx1:idx2), err(1:prf_obslen(p)))
+           call calcErr_s(prf_lon(p), prf_lat(p), obs_depth(idx1:idx2), err(1:prf_obslen(p)))
         end if
-
-        ! calculate error profile
-!        call calcErr_db(obs_depth(idx1:idx2), obs_val(idx1:idx2), se(1), se(2), err(1:prf_obslen(p)))
-        
-
-        ! add interpolated obs where there is stratified ocean
-        ! TODO
-
-        ! thin the profile vertically
-!        call prfThin(obs_depth(idx1:idx2), obs_val(idx1:idx2), prflen)
 
         ! generate final observation object that will be saved
         do i=idx1,idx1+prflen-1
+!           print *, obs_depth(i), obs_val(i)
            cnt = cnt + 1
            obsout_num = obsout_num + 1
            obsout(obsout_num)%id   = obid
@@ -204,10 +237,9 @@ program obsprep_insitu
            obsout(obsout_num)%val  = obs_val(i)
            obsout(obsout_num)%err  = err(i-idx1+1)
            obsout(obsout_num)%qc   = 0
-!          print*, obs_depth(i), obs_val(i), err(i-idx1+1)
-        end do                
+        end do
      end do
- !    print *, obsout_num
+
      print *, cnt,"observations kept"
      deallocate(obs_depth)
      deallocate(obs_val)
@@ -217,50 +249,59 @@ program obsprep_insitu
      deallocate(prf_hr)
      deallocate(prf_obsidx)
      deallocate(prf_obslen)
+     
   end do
 
+  print *, ""
   print *, "Writing to output file...",trim(outfile)
+  print *, obsout_num, " total observations"
   call obsio%write(outfile,obsout(1:obsout_num), basedate)
 
 
 contains
 
 
-  subroutine prfThin(depth, val, count)
-    real, intent(inout) :: depth(:)
-    real, intent(inout) :: val(:)
-    integer, intent(inout) :: count
+  subroutine interp(depth_in, val_in, depth_out, val_out, cnt_out)
+    real, intent(in) :: depth_in(:), val_in(:)
+    real, intent(inout) :: depth_out(:), val_out(:)
+    integer, intent(out) :: cnt_out
 
-    integer :: lvl(size(depth))
-    real    :: lvl_dist(size(depth))
-    real    :: d
-    integer :: z, zprev, z2
-
-    lvl = -1
-    lvl_dist = 1e9
-
-    ! determine the closest level, and distance from center of level, for each ob    
-    do z=1,size(depth)
-       do z2=1,size(grid_depths)
-          d = abs(grid_depths(z2)-depth(z))
-          if(d <  lvl_dist(z)) then
-             lvl_dist(z) = d
-             lvl(z) = z2
-          end if
-       end do
-!       print *, depth(z), grid_depths(lvl(z)), lvl(z), lvl_dist(z), val(z)
+    type(cspline) :: spline
+    integer :: i
+    integer :: dst_lvl_start, dst_lvl_end
+    
+    ! if there are less than 2 levels, dont interpolate
+    if(size(val_in) < 2) then
+       cnt_out = size(val_in)
+       depth_out(1:cnt_out) = depth_in
+       val_out(1:cnt_out) = val_in
+       return
+    end if
+    
+    ! determien the relevant levels of the reference grid
+    dst_lvl_start = 0
+    cnt_out =0
+    dst_lvl_end =0
+    do i=1, vrt_interp_lvls_cnt
+       if(vrt_interp_lvls(i) > depth_in(size(depth_in))) exit
+       if(vrt_interp_lvls(i) >= depth_in(1)) then
+          cnt_out = cnt_out + 1
+          dst_lvl_end = i
+          if(dst_lvl_start ==0) dst_lvl_start = i
+       end if
     end do
 
+    ! interpolate to the desired levels
+    depth_out(1:cnt_out) = vrt_interp_lvls(dst_lvl_start:dst_lvl_end)    
+    spline = cspline(depth_in, val_in)
+    val_out = spline%interp(depth_out(1:cnt_out), .TRUE.)    
+  end subroutine interp
+  
 
-    ! do the thinning
-    ! TODO
-  end subroutine prfThin
 
-
-  subroutine calcErr_t(lon, lat, depth, val, err)
+  subroutine calcErr_t(lon, lat, depth, err)
     real, intent(in) :: lon, lat
     real, intent(in) :: depth(:)
-    real, intent(in) :: val(:)
     real, intent(out):: err(:)
 
     integer :: x,y
@@ -296,10 +337,9 @@ contains
 
 
 
-  subroutine calcErr_s(lon, lat, depth, val, err)
+  subroutine calcErr_s(lon, lat, depth, err)
     real, intent(in) :: lon, lat
     real, intent(in) :: depth(:)
-    real, intent(in) :: val(:)
     real, intent(out):: err(:)
 
     integer :: x, y, i 
