@@ -34,6 +34,7 @@ cat << \#\#
  envar+=("OBS_PROF_T")      # The path to the T profile data (using datetime placeholders)
  envar+=("OBS_PROF_S")      # The path to the S profile data (using datetime placeholders)
  envar+=("OBS_ERR_ON_MISS") # if == 1, an error is thrown if an obs file is missing
+ envar+=("PROF_INTERP")
 #================================================================================
 #================================================================================
 
@@ -83,8 +84,7 @@ mkdir -p $work_dir
 
 cd $work_dir
 ln -s $bkg_file obsop_bkg.nc
-ln -s $ROOT_GODAS_DIR/build/gsw_data_v3_0.nc .
-ln -s $EXP_DIR/config/da/obsprep.nml .
+source $EXP_DIR/config/da/obsprep.nml.sh  > obsprep.nml
 mkdir -p INPUT
 ln -s $ROOT_GODAS_DIR/DATA/grid/ocean_geometry.nc INPUT/grid.nc
 ln -s $ROOT_GODAS_DIR/DATA/grid/Vertical_coordinate.nc INPUT/vgrid.nc

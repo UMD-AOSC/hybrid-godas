@@ -52,7 +52,8 @@ mkdir -p $JOB_WORK_DIR
 cd $JOB_WORK_DIR
 
 basedate=$(date "+%Y,%m,%d,%H,0,0" -d "$(dtz $CYCLE)")
-ln -s $EXP_DIR/config/da/obsprep.nml .
+export PROF_INTERP=F
+source $EXP_DIR/config/da/obsprep.nml.sh > obsprep.nml
 
 rm -f $OUT_FILE
 $ROOT_GODAS_DIR/build/obsprep_combine -basedate $basedate $OMF_FILES $OUT_FILE
