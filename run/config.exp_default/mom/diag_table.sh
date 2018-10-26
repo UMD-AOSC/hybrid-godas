@@ -54,20 +54,12 @@ fi
 # ouput ends at the restart file output time
 #------------------------------------------------------------
 if [ "$FCST_DIAG_OTHER" = 1 ]; then
-#D=$FCST_START_TIME
-#, "hours", "${D:0:4} ${D:4:2} ${D:6:2} ${D:8:2} 0 0", ${FCST_RST_OFST}, "hours"
+D=$FCST_START_TIME
+D2="${D:0:4} ${D:4:2} ${D:6:2} ${D:8:2} 0 0"
 cat <<EOF
-
-"ocean_pentad%4yr%2mo%2dy",    ${FCST_RST_OFST}, "hours",   1, "days", "time", ${FCST_RST_OFST}, "hours"
-"ice_pentad%4yr%2mo%2dy",      ${FCST_RST_OFST}, "hours",   1, "days", "time", ${FCST_RST_OFST}, "hours"
-#"ocean_static",                -1,          "months", 1, "days",   "time"
-
-# For some weird reason it seems MOM is often putting zeros in for the entire field of
-# the first time averaged variable defined in this file (for averaging periods > ~2 days).
-#  As a work around I'm just defining a 2D field here that I don't care about, until the bug is fixed.
-"ocean_model", "tosga", "ignore_this",  "ocean_pentad%4yr%2mo%2dy",  "all", "mean", "none", 2
-"ocean_model", "tosga", "ignore_this",  "ice_pentad%4yr%2mo%2dy",    "all", "mean", "none", 2
-
+"ocean_pentad%4yr%2mo%2dy", ${FCST_RST_OFST}, "hours", 1, "days", "time", ${FCST_LEN}, "hours", "${D2}", ${FCST_RST_OFST}, "hours"
+"ice_pentad%4yr%2mo%2dy",   ${FCST_RST_OFST}, "hours", 1, "days", "time", ${FCST_LEN}, "hours", "${D2}", ${FCST_RST_OFST}, "hours"
+#"ocean_static",                -1,            "months", 1, "days",   "time"
 
 
 #------------------------------------------------------------
@@ -96,9 +88,10 @@ cat <<EOF
 
 ## U/V and derived quantities
 #------------------------------------------------------------
+"ocean_model",   "speed",      "speed",       "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 "ocean_model_z", "u",          "u",           "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 "ocean_model_z", "v",          "v",           "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
-"ocean_model",   "speed",      "speed",       "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+
 #"ocean_model",   "SSU",        "SSU",         "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 #"ocean_model",   "SSV",        "SSV",         "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 
@@ -259,7 +252,7 @@ cat <<EOF
 
 ## misc
 #------------------------------------------------------------
-#"ocean_model", "p_surf",  "p_surf",  "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # surface pressure over water / under ice
+"ocean_model", "p_surf",  "p_surf",  "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2  # surface pressure over water / under ice
 #"ice_model",   "SLP",     "SLP",     "ice_pentad%4yr%2mo%2dy",   "all", "mean", "none", 2
 
 
