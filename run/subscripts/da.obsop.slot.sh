@@ -30,6 +30,8 @@ cat << \#\#
  envar+=("OBSOP_FILE")      # Path for output observation operator data (using datetime placeholders)
  envar+=("OBS_USE_SST")     # ==1 if SST obs are to be used
  envar+=("OBS_USE_PROF")    # ==1 if T/S profiles are to be used
+ envar+=("OBS_USE_ADT")
+ envar+=("OBS_ADT")
  envar+=("OBS_SST")         # The path to the SST observation data (using datetime placeholders)
  envar+=("OBS_PROF_T")      # The path to the T profile data (using datetime placeholders)
  envar+=("OBS_PROF_S")      # The path to the S profile data (using datetime placeholders)
@@ -111,6 +113,25 @@ if [[ "$OBS_USE_SST" == 1 ]]; then
     fi
 fi
 
+
+# ADT altimetry
+#------------------------------------------------------------
+if [[ "$OBS_USE_ADT" == 1 ]]; then
+  obs_adt_dir="$(date "+$OBS_ADT" -d "$fdate")"
+  obs_adt=$obs_adt_dir/*.nc  
+  obsprep_exec="$ROOT_GODAS_DIR/build/obsprep_adt"
+  echo ""
+  echo "ADT observations using files:"
+  for f in $obs_adt; do
+      echo "  $f"
+  done
+
+  for f in $obs_adt; do
+      fn=${f##*/}
+      $obsprep_exec $f obsprep.$fn
+  done
+
+fi
 
 # insitu T/S observations
 #------------------------------------------------------------

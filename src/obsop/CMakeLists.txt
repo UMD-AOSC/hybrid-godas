@@ -85,6 +85,8 @@ set(SRCS obsprep_adt.F90)
 set(EXE  obsprep_adt)
 add_executable(${EXE} ${SRCS})
 target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS} ${DATETIMELIB})
+set_target_properties(${EXE} PROPERTIES
+    COMPILE_FLAGS "$ENV{OBSOP_COMPILE_FLAGS}")		      
 
 
 # obsprep - combine
