@@ -18,13 +18,17 @@ else()
 endif()
 
 # determine the repository version and compile time
-execute_process(COMMAND git describe --dirty --tags --always OUTPUT_VARIABLE GIT_VERSION RESULT_VARIABLE RES OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND git describe --dirty --tags --always
+  OUTPUT_VARIABLE GIT_VERSION
+  RESULT_VARIABLE RES
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 if(NOT ${RES} EQUAL "0")
   set(GIT_VERSION "Unknown")
 endif()
 add_definitions(-DCVERSION=\"${GIT_VERSION}\")
-string(TIMESTAMP TS %Y-%m-%d )
-add_definitions(-DCTIME=\"${TS}\")
+#string(TIMESTAMP TS %Y-%m-%d )
+#add_definitions(-DCTIME=\"${TS}\")
 
 
 # find required datetime library for fortran
@@ -37,7 +41,14 @@ find_library(DATETIMELIB NAMES datetime PATHS ../../build/datetime/lib)
 file(GLOB GSW_TB_SRC "../gsw/toolbox/*.[f,F]90")
 file(GLOB GSW_MD_SRC "../gsw/modules/*.[f,F]90")
 file(GLOB KDTREE_SRC "../geoKdTree/*.[f,F]90")
-set(SRCS obscom_obsio.f90 obscom_grid.f90 cubic_spline.f90 ${GSW_TB_SRC} ${GSW_MD_SRC} ${KDTREE_SRC})
+set(SRCS 
+  obscom_obsio.f90 
+  obscom_grid.f90 
+  cubic_spline.f90 
+  running_stats.F90
+  ${GSW_TB_SRC} 
+  ${GSW_MD_SRC} 
+  ${KDTREE_SRC})
 add_library( obsop_common STATIC ${SRCS} )
 set_target_properties(obsop_common PROPERTIES
     COMPILE_FLAGS "$ENV{OBSOP_COMPILE_FLAGS}")		      
@@ -67,6 +78,13 @@ add_executable(${EXE} ${SRCS})
 target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS} ${DATETIMELIB})
 set_target_properties(${EXE} PROPERTIES
     COMPILE_FLAGS "$ENV{OBSOP_COMPILE_FLAGS}")		      
+
+
+# obs prep - adt
+set(SRCS obsprep_adt.F90)
+set(EXE  obsprep_adt)
+add_executable(${EXE} ${SRCS})
+target_link_libraries(${EXE} obsop_common $ENV{NETCDF_LIBS} ${DATETIMELIB})
 
 
 # obsprep - combine
