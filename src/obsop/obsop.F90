@@ -17,6 +17,7 @@ program obsop
   integer :: obid_t   = 2210
   integer :: obid_pt  = 2211
   integer :: obid_s   = 2220
+  logical :: rm_adt_mean_inc = .true.
   real :: lat_bounds(2) = (/-90,90/)
 
   ! read in from command line
@@ -49,7 +50,7 @@ program obsop
 #define CTIME "Unknown"
 #endif
 
-  namelist /obsop_nml/ statefile, obid_t, obid_pt, obid_s, obid_adt, lat_bounds
+  namelist /obsop_nml/ statefile, obid_t, obid_pt, obid_s, obid_adt, lat_bounds, rm_adt_mean_inc
 
   
   print *, "------------------------------------------------------------"
@@ -257,6 +258,32 @@ program obsop
         obs(i)%qc = 0
      end if
   end do
+
+
+  ! remove the mean increment from the adt observations
+  if (rm_adt_mean_inc) then
+     num=0
+     v=0
+     ! calculate the running mean
+     do i=1,size(obs)
+        if (obs(i)%qc /= 0) cycle
+        if (obs(i)%id /= obid_adt) cycle
+        num = num + 1
+        v = v + (obs_inc(i) - v)/num
+     end do
+
+     if (num > 0) then
+        print *, ""
+        print *, "Removing mean ADT incrment of ",v
+     end if
+
+     ! go through and remove the mean 
+     do i=1, size(obs)
+        if(obs(i)%id /= obid_adt) cycle
+        obs_inc(i) = obs_inc(i) - v
+        obs(i)%val = obs(i)%val - v
+     end do
+  end if
 
   ! count the number of bad obs
   num=0
