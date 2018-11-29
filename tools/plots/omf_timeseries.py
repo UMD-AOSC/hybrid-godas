@@ -104,6 +104,12 @@ if __name__ == "__main__":
             'masks' : ('o_sst',) + r[2],
             'fn'    : 'sst/#p#/#p#_sst_'+r[0]})
 
+        # SSH, by region
+        plotTypes.append( {
+            'title' : 'SSH ('+r[1]+')',
+            'masks' : ('o_ssh',) + r[2],
+            'fn'    : 'ssh/#p#/#p#_ssh_'+r[0]})
+
         # T/S by region, and by depth
         for v in ( ('insitu-temp',  'insitu T', 'o_temp'),
                    ('insitu-salt',  'insitu S', 'o_salt')):
