@@ -42,9 +42,9 @@ masks = {
     'q_valid'  : lambda d: (d.qc == 0) & (d.err<1e10) & (d.inc_mean.abs() < 1e10),
 
     # obs types
-    'o_sst'  : lambda d: (d.obid == 2210) & (d.plat == 1000),
-    'o_temp' : lambda d: ((d.obid == 2211) | (d.obid == 2210)) & (d.plat == 1),
-    'o_salt' : lambda d: (d.obid == 2220)  & (d.plat == 1),
+    'o_sst'  : lambda d: (d.obid == 2210) & (d.plat >= 1000),
+    'o_temp' : lambda d: ((d.obid == 2211) | (d.obid == 2210)) & (d.plat <1000),
+    'o_salt' : lambda d: (d.obid == 2220)  & (d.plat < 1000),
 
     # by basin
     'b_pa' :  lambda d: basin_check('PA', d),

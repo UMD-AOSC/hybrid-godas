@@ -31,8 +31,7 @@ cat << \#\#
  envar+=("OBS_USE_SST")     # ==1 if SST obs are to be used
  envar+=("OBS_USE_PROF")    # ==1 if T/S profiles are to be used
  envar+=("OBS_SST")         # The path to the SST observation data (using datetime placeholders)
- envar+=("OBS_PROF_T")      # The path to the T profile data (using datetime placeholders)
- envar+=("OBS_PROF_S")      # The path to the S profile data (using datetime placeholders)
+ envar+=("OBS_PROF")      # The path to the T/S profile data (using datetime placeholders)
  envar+=("OBS_ERR_ON_MISS") # if == 1, an error is thrown if an obs file is missing
 #================================================================================
 #================================================================================
@@ -115,27 +114,19 @@ fi
 # insitu T/S observations
 #------------------------------------------------------------
 if [[ "$OBS_USE_PROF" == 1 ]]; then
-    #TODO : right now the obsprep_insitu program only takes 1 filename as input
-    #  let it take 2, or only specify 1 here
-
-    obs_t="$(date "+$OBS_PROF_T" -d "$fdate")"
-    obs_s="$(date "+$OBS_PROF_S" -d "$fdate")"
+    obs_prf="$(date "+$OBS_PROF" -d "$fdate")"
     obsprep_exec="$ROOT_GODAS_DIR/build/obsprep_insitu"
 
     echo ""
-    echo "T/S Profile observations, using files:"
-    echo " $obs_t"
-    echo " $obs_s"
+    echo "T/S Profile observations, using file:"
+    echo " $obs_prf"
     
     # make sure files exist
-    if [[ ! -f $obs_t ]]; then
-	echo " ERROR: Cannot find file for T profiles."
-	if [[ "$OBS_ERR_ON_MISS" == 1 ]]; then exit 1; fi
-    elif [[ ! -f $obs_s ]]; then
-	echo " ERROR: Cannot find file for S profiles."
+    if [[ ! -f $obs_prf ]]; then
+	echo " ERROR: Cannot find file for T/S profiles."
 	if [[ "$OBS_ERR_ON_MISS" == 1 ]]; then exit 1; fi
     else
-	$obsprep_exec ${obs_t:0: -5} obsprep.insitu.nc
+	$obsprep_exec $obs_prf obsprep.insitu.nc
     fi
 fi
 

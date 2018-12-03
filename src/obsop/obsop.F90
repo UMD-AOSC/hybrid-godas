@@ -165,7 +165,7 @@ program obsop
            ! TODO: not needed once switching to hybrid, need to use actual 
            !  interface depths though
            do btm = grid_nz,1,-1
-              if (grid_D(x,y) >= grid_depths(btm)) exit
+              if (grid_D(x,y) >= grid_depths(btm) .and. state_t(x,y,btm) < 1e5) exit
            end do
 
            ! fit a spline to the T/S

@@ -58,6 +58,10 @@ def processExp(e):
         m_valid = masks['q_valid']
         m_depth = np.logical_and (omfs.depth >= args.mindepth, omfs.depth <= args.maxdepth)
         m_hr = np.logical_and(omfs.hr >= args.hr[0], omfs.hr <= args.hr[1])
+        if args.plat is not None:
+             m_plat = omfs.plat == args.plat
+        else:
+            m_plat = omfs.plat > 0
 
         cnt=-1
         for p in plotTypes:
@@ -66,7 +70,7 @@ def processExp(e):
             mask=None
             for m in p['masks']:
                 mask = masks[m] if mask is None else (mask & masks[m])
-            obs = omfs[ m_valid & mask & m_depth & m_hr]
+            obs = omfs[ m_valid & mask & m_depth & m_hr & m_plat]
 
 
             for d,v,e,i_m,i_s in zip(
@@ -114,6 +118,7 @@ if __name__=="__main__":
         "number of threads to use when reading input files. (Default: %(default)s)"))
     parser.add_argument('-smooth', type=int, default=2, help=(
         "size of half width of window used in weighted smoothing of profile"))
+    parser.add_argument('-plat',type=int)
 
     args = parser.parse_args()
     args.path = [os.path.abspath(p) for p in args.path]

@@ -29,12 +29,14 @@ program obsprep_insitu
    
   ! variables read in from obs file
   integer ::prf_num
-  character(len=:), allocatable :: prf_type
+  integer,   allocatable :: prf_type(:)
   real,      allocatable :: prf_lat(:)
   real,      allocatable :: prf_lon(:)
   real,      allocatable :: prf_hr(:)
+  integer,   allocatable :: prf_plat(:)
   integer,   allocatable :: prf_obsidx(:)
   integer,   allocatable :: prf_obslen(:)
+
   integer :: obs_num
   real,      allocatable :: obs_depth(:)
   real,      allocatable :: obs_val(:)
@@ -108,26 +110,26 @@ program obsprep_insitu
   obsout_num = 0
 
   ! for each of TMP and SALT obs types
-  do v=1,2
+!  do v=1,2
      cnt = 0
-     if (v == 1) then
-        var = 'T'
+!     if (v == 1) then
+!        var = 'T'
 !        se = se_t
-        obid=obid_t
-     else
-        var = 'S'
+!        obid=obid_t
+!     else
+!        var = 'S'
 !        se = se_s
-        obid=obid_s
-     end if
+!        obid=obid_s
+!     end if
      
      ! read in observation
-     print *,"READING ",trim(obsfile)//"."//var//".nc"
-     call check(nf90_open(trim(obsfile)//"."//var//".nc", nf90_nowrite, ncid))
+     print *,"READING ",trim(obsfile)
+     call check(nf90_open(trim(obsfile), nf90_nowrite, ncid))
 
-     call check(nf90_get_att(ncid, nf90_global, "date", tmp_str))
-     read (tmp_str(1:4), *) yr
-     read (tmp_str(5:6), *) mn
-     read (tmp_str(7:8), *) dy
+     call check(nf90_get_att(ncid, nf90_global, "date", i))
+     yr = i/10000
+     mn = mod(i/100,100)
+     dy = mod(i,100)
      basedate=datetime(yr,mn,dy,0)
      
      call check(nf90_inq_dimid(ncid, 'obs', nc_v))
@@ -136,12 +138,13 @@ program obsprep_insitu
      call check(nf90_inquire_dimension(ncid, nc_v, len=prf_num))
      allocate(obs_depth(obs_num))
      allocate(obs_val(obs_num))
-     allocate(character(len=prf_num) :: prf_type)
+     allocate(prf_type(prf_num))
      allocate(prf_lat(prf_num))
      allocate(prf_lon(prf_num))
      allocate(prf_hr(prf_num))
      allocate(prf_obsidx(prf_num))
      allocate(prf_obslen(prf_num))
+     allocate(prf_plat(prf_num))
 
      call check(nf90_inq_varid(ncid, "obs_depth", nc_v))
      call check(nf90_get_var(ncid, nc_v, obs_depth))
@@ -159,6 +162,8 @@ program obsprep_insitu
      call check(nf90_get_var(ncid, nc_v, prf_obsidx))
      call check(nf90_inq_varid(ncid, "prf_obslen", nc_v))
      call check(nf90_get_var(ncid, nc_v, prf_obslen))
+     call check(nf90_inq_varid(ncid, "prf_plat", nc_v))
+     call check(nf90_get_var(ncid, nc_v, prf_plat))
 
      print*,"loaded",obs_num,"obs from",prf_num,"profiles"
      call check(nf90_close(ncid))
@@ -175,14 +180,11 @@ program obsprep_insitu
         prflen = prf_obslen(p)
 
         ! calculate error profile
-        if (v == 1) then
+        if (prf_type(p) == 1) then
            call calcErr_t(prf_lon(p), prf_lat(p), obs_depth(idx1:idx2), obs_val(idx1:idx2), err(1:prf_obslen(p)))
         else
            call calcErr_s(prf_lon(p), prf_lat(p), obs_depth(idx1:idx2), obs_val(idx1:idx2), err(1:prf_obslen(p)))
         end if
-
-        ! calculate error profile
-!        call calcErr_db(obs_depth(idx1:idx2), obs_val(idx1:idx2), se(1), se(2), err(1:prf_obslen(p)))
         
 
         ! add interpolated obs where there is stratified ocean
@@ -195,8 +197,8 @@ program obsprep_insitu
         do i=idx1,idx1+prflen-1
            cnt = cnt + 1
            obsout_num = obsout_num + 1
-           obsout(obsout_num)%id   = obid
-           obsout(obsout_num)%plat = 1
+           obsout(obsout_num)%id   = MERGE(obid_t, obid_s, prf_type(p) == 1)
+           obsout(obsout_num)%plat = prf_plat(p)
            obsout(obsout_num)%lat  = prf_lat(p)
            obsout(obsout_num)%lon  = prf_lon(p)
            obsout(obsout_num)%dpth = obs_depth(i)
@@ -215,9 +217,10 @@ program obsprep_insitu
      deallocate(prf_lat)
      deallocate(prf_lon)
      deallocate(prf_hr)
+     deallocate(prf_plat)
      deallocate(prf_obsidx)
      deallocate(prf_obslen)
-  end do
+!  end do
 
   print *, "Writing to output file...",trim(outfile)
   call obsio%write(outfile,obsout(1:obsout_num), basedate)
