@@ -106,18 +106,13 @@ done
 #ana ens files
 mkdir -p $ANA_FILES
 ln -s $ANA_FILES OUTPUT
-#mkdir -p OUTPUT
-#for mem in $ENS_LIST; do
-#    m=$(printf "%04g" $((10#$m+1)) )
-#    ln -s $ANA_FILES/$m.nc OUTPUT/$m.nc
-#done
 
 # run the LETKF
 aprun -n $nproc ./letkf
 
 # move output files to OUPUT directory
 # (this is temporary, there is a bug in the LETKF code)
-mv {ana,bkg,letkf}.*.nc OUTPUT/
+mv {ana,bkg,diag}.*.nc OUTPUT/
 cd OUTPUT/
 for f in *; do
     mv $f ${f//.*}_${f#*.}

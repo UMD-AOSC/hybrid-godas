@@ -42,6 +42,8 @@ program obsop
   real, allocatable :: state_t(:,:,:), state_s(:,:,:), state_sst(:,:), state_ssh(:,:)
   integer :: ncid, vid
 
+  logical :: has_ssh
+
 ! use this to get the repository version at compile time
 #ifndef CVERSION
 #define CVERSION "Unknown"
@@ -117,11 +119,16 @@ program obsop
   end if
 
   ! SSH
-  allocate(state_ssh(grid_nx, grid_ny))
   print *, "reading state SSH..."
-  call check(nf90_inq_varid(ncid, "SSH", vid))
-  call check(nf90_get_var(ncid, vid, state_ssh))
-
+  i = nf90_inq_varid(ncid, "SSH", vid)
+  has_ssh = i == NF90_NOERR
+  if (.not. has_ssh) then
+     print *, "WARNING: no SSH variable found, marking all SSH obs as bad"
+  else
+     allocate(state_ssh(grid_nx, grid_ny))
+     call check(nf90_inq_varid(ncid, "SSH", vid))
+     call check(nf90_get_var(ncid, vid, state_ssh))
+  end if
 
   call check(nf90_close(ncid))
 
@@ -219,6 +226,7 @@ program obsop
 
      !  calculate observation increment
      if(obs(i)%id == obid_adt) then
+        if(.not. has_ssh) cycle
         v = state_ssh(x,y)
      else if(obs(i)%id == obid_s) then
         ! salinity
