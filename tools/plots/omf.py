@@ -43,9 +43,9 @@ masks = {
 
     # obs types
     'o_ssh'  : lambda d: (d.obid == 2100),
-    'o_sst'  : lambda d: (d.obid == 2210) & (d.plat == 1000),
-    'o_temp' : lambda d: ((d.obid == 2211) | (d.obid == 2210)) & (d.plat == 1),
-    'o_salt' : lambda d: (d.obid == 2220)  & (d.plat == 1),
+    'o_sst'  : lambda d: (d.obid == 2210) & (d.plat >= 1000),
+    'o_temp' : lambda d: ((d.obid == 2211) | (d.obid == 2210)) & (d.plat <1000),
+    'o_salt' : lambda d: (d.obid == 2220)  & (d.plat < 1000),
 
     # by basin
     'b_pa' :  lambda d: basin_check('PA', d),
