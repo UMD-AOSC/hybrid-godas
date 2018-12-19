@@ -1,13 +1,11 @@
 find_package(MPI REQUIRED)
 
-
-add_definitions(
-  -fcray-pointer
-  -fdefault-double-8
-  -fdefault-real-8
-  -Waliasing
-  -ffree-line-length-none
-  -fno-range-check)
+#TODO add optimization flags
+if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-alias -auto -safe-cray-ptr -ftz -assume byterecl -i4 -r8 -nowarn -sox -traceback")
+elseif(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fcray-pointer -fdefault-double-8 -fdefault-real-8 -Waliasing -ffree-line-length-none -fno-range-check")
+endif()
 
 include_directories(
   ${NETCDF_INCLUDE_DIRS}

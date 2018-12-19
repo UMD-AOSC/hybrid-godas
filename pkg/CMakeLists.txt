@@ -14,7 +14,7 @@ set(datetime_LIBRARIES datetime
 # Gibbs Sewater toolbox for fortran
 file(GLOB GSW_TB_SRC "GSW-Fortran/toolbox/*.[f,F]90")
 file(GLOB GSW_MD_SRC "GSW-Fortran/modules/*.[f,F]90")
-add_library(gsw OBJECT ${GSW_TB_SRC} ${GSW_MD_SRC})
+add_library(gsw STATIC ${GSW_TB_SRC} ${GSW_MD_SRC})
 set_target_properties(gsw PROPERTIES
   Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gsw")
 set(gsw_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/gsw
@@ -22,7 +22,7 @@ set(gsw_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/gsw
 
 
 # geoKDTree
-add_library(geokdtree OBJECT geoKdTree/kdtree.f90)
+add_library(geokdtree STATIC geoKdTree/kdtree.f90)
 set_target_properties(geokdtree PROPERTIES
   Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/geokdtree")
 set(geokdtree_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/geokdtree
