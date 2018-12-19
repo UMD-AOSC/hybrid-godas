@@ -1,21 +1,18 @@
-[submodule "godas-3dvar"]
-	path = src/3dvar
-	url = https://github.com/UMD-AOSC/godas-3dvar.git
-[submodule "MOM6"]
-	path = src/MOM6
-	url = https://github.com/NOAA-GFDL/MOM6-examples.git
-[submodule "gsw"]
-	path = src/gsw
-	url = https://github.com/TEOS-10/GSW-Fortran.git
-[submodule "datetime"]
-	path = src/datetime
+[submodule "pkg/datetime-fortran"]
+	path = pkg/datetime-fortran
 	url = https://github.com/wavebitscientific/datetime-fortran.git
-[submodule "src/letkf"]
-	path = src/letkf
+[submodule "pkg/GSW-Fortran"]
+	path = pkg/GSW-Fortran
+	url = https://github.com/TEOS-10/GSW-Fortran.git
+[submodule "pkg/geoKdTree"]
+	path = pkg/geoKdTree
+	url = https://github.com/travissluka/geoKdTree.git
+[submodule "pkg/UMD-LETKF"]
+	path = pkg/UMD-LETKF
 	url = https://github.com/travissluka/UMD-LETKF.git
-[submodule "src/--force"]
-	path = src/--force
-	url = https://github.com/travissluka/geoKdTree.git
-[submodule "src/geoKdTree"]
-	path = src/geoKdTree
-	url = https://github.com/travissluka/geoKdTree.git
+[submodule "pkg/godas-3dvar"]
+	path = pkg/godas-3dvar
+	url = https://github.com/UMD-AOSC/godas-3dvar.git
+[submodule "pkg/MOM6-examples"]
+	path = pkg/model/MOM6
+	url = https://github.com/NOAA-GFDL/MOM6-examples.git
