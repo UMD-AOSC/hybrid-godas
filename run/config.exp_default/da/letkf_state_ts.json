@@ -5,7 +5,7 @@
 	"ana_bounds" : [-1.8, 40],
 	"ana_inc_max" : 3,
 	"input":  ["Temp", "INPUT/gues/#ENS4#.nc"],
-	"output": ["Temp", "#TYPE#.#ENS4#.nc"],
+	"output": ["Temp", "OUTPUT/#TYPE#_#ENS4#.nc"],
     },
     "ocn_s" : {
 	"hzgrid": "hz1",
@@ -13,6 +13,6 @@
 	"ana_bounds" : [0, 50],
 	"ana_inc_max": 2, 
 	"input":  ["Salt", "INPUT/gues/#ENS4#.nc"],
-	"output": ["Salt", "#TYPE#.#ENS4#.nc"],		
+	"output": ["Salt", "OUTPUT/#TYPE#_#ENS4#.nc"],		
     },
 }

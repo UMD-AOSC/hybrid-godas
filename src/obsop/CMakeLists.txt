@@ -17,6 +17,7 @@ set(EXE
   obsop_common)
 set(SRC
   cubic_spline.f90
+  running_stats.F90
   obscom_grid.f90
   obscom_obsio.f90)
 add_library( ${EXE} STATIC ${SRC})
@@ -50,6 +51,17 @@ target_link_libraries(${EXE}
 
 
 # ------------------------------
+# satellite ADT observation preparation
+set(EXE
+  obsprep_adt)
+set(SRC
+  obsprep_adt.F90)
+add_executable(${EXE} ${SRC})
+target_link_libraries(${EXE}
+  obsop_common)
+
+
+# ------------------------------
 # observation netcdf file combine
 set(EXE
   obsprep_combine)
@@ -58,7 +70,6 @@ set(SRC
 add_executable(${EXE} ${SRC})
 target_link_libraries(${EXE}
   obsop_common)
-
 
 # ------------------------------
 # observation operator

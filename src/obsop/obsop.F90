@@ -13,9 +13,11 @@ program obsop
 
   ! read in from namelist
   character(len=:), allocatable :: statefile
-  integer :: obid_t  = 2210
-  integer :: obid_pt = 2211
-  integer :: obid_s  = 2220
+  integer :: obid_adt = 2100
+  integer :: obid_t   = 2210
+  integer :: obid_pt  = 2211
+  integer :: obid_s   = 2220
+  logical :: rm_adt_mean_inc = .true.
   real :: lat_bounds(2) = (/-90,90/)
 
   ! read in from command line
@@ -37,8 +39,10 @@ program obsop
   integer :: unit
 
   type(cspline) :: spline_t, spline_s
-  real, allocatable :: state_t(:,:,:), state_s(:,:,:), state_sst(:,:)
+  real, allocatable :: state_t(:,:,:), state_s(:,:,:), state_sst(:,:), state_ssh(:,:)
   integer :: ncid, vid
+
+  logical :: has_ssh
 
 ! use this to get the repository version at compile time
 #ifndef CVERSION
@@ -48,7 +52,7 @@ program obsop
 #define CTIME "Unknown"
 #endif
 
-  namelist /obsop_nml/ statefile, obid_t, obid_pt, obid_s, lat_bounds
+  namelist /obsop_nml/ statefile, obid_t, obid_pt, obid_s, obid_adt, lat_bounds, rm_adt_mean_inc
 
   
   print *, "------------------------------------------------------------"
@@ -87,19 +91,23 @@ program obsop
   call grid_init(nml_file)
 
   ! read in the model state
+  !------------------------------------------------------------
   call check(nf90_open(statefile, nf90_nowrite, ncid))
 
+  ! temperature
   allocate(state_t(grid_nx, grid_ny, grid_nz))
   print *, "Reading state TEMP..."
   call check(nf90_inq_varid(ncid, "Temp", vid))
   call check(nf90_get_var(ncid, vid, state_t))
 
+  ! salinity
   allocate(state_s(grid_nx, grid_ny, grid_nz))
   print *, "Reading state SALT..."
   call check(nf90_inq_varid(ncid, "Salt", vid))
   call check(nf90_get_var(ncid, vid, state_s))
 
   ! TODO, modify this for hourly SST data
+  ! SST
   allocate(state_sst(grid_nx, grid_ny))
   print *, "Reading state SST..."
   i =nf90_inq_varid(ncid, "SST_min", vid)
@@ -110,8 +118,21 @@ program obsop
      call check(nf90_get_var(ncid, vid, state_sst))
   end if
 
+  ! SSH
+  print *, "reading state SSH..."
+  i = nf90_inq_varid(ncid, "SSH", vid)
+  has_ssh = i == NF90_NOERR
+  if (.not. has_ssh) then
+     print *, "WARNING: no SSH variable found, marking all SSH obs as bad"
+  else
+     allocate(state_ssh(grid_nx, grid_ny))
+     call check(nf90_inq_varid(ncid, "SSH", vid))
+     call check(nf90_get_var(ncid, vid, state_ssh))
+  end if
+
   call check(nf90_close(ncid))
 
+  !------------------------------------------------------------
 
   ! read in the observations
   call obsio%read(obsfile, obs, basedate)
@@ -144,8 +165,10 @@ program obsop
         cycle
      end if
      
-     ! get the model PT, S values at the observation location
-     if(obs(i)%plat .ge. 1000 .and. obs(i)%id == obid_t) then
+     ! get the model T/S values at the observation location
+     if(obs(i)%id == obid_adt) then
+        continue ! ssh doesn't need T/S
+     else if(obs(i)%plat .ge. 1000 .and. obs(i)%id == obid_t) then
         ! satellite SST, use the SST state
         pt = state_sst(x,y)
      else if(obs(i)%dpth <= grid_depths(1)) then
@@ -202,7 +225,10 @@ program obsop
 
 
      !  calculate observation increment
-     if(obs(i)%id == obid_s) then
+     if(obs(i)%id == obid_adt) then
+        if(.not. has_ssh) cycle
+        v = state_ssh(x,y)
+     else if(obs(i)%id == obid_s) then
         ! salinity
         v = s
      else if(obs(i)%id == obid_t) then
@@ -240,6 +266,32 @@ program obsop
         obs(i)%qc = 0
      end if
   end do
+
+
+  ! remove the mean increment from the adt observations
+  if (rm_adt_mean_inc) then
+     num=0
+     v=0
+     ! calculate the running mean
+     do i=1,size(obs)
+        if (obs(i)%qc /= 0) cycle
+        if (obs(i)%id /= obid_adt) cycle
+        num = num + 1
+        v = v + (obs_inc(i) - v)/num
+     end do
+
+     if (num > 0) then
+        print *, ""
+        print *, "Removing mean ADT incrment of ",v
+     end if
+
+     ! go through and remove the mean 
+     do i=1, size(obs)
+        if(obs(i)%id /= obid_adt) cycle
+        obs_inc(i) = obs_inc(i) - v
+        obs(i)%val = obs(i)%val - v
+     end do
+  end if
 
   ! count the number of bad obs
   num=0
