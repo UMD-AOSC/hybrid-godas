@@ -1,26 +1,29 @@
 #!/bin/bash
 set -e
-cat << \#\#
+cat << EOF
 
 #================================================================================
 #================================================================================
 # NCEP Hybrid-GODAS  -  fcst.run.sh
 #   MOM6 ocean forecast ensemble member model run
 #================================================================================
-##
+EOF
 #
 # Prerequisites:
+#  * The required atmospheric forcing files have been created in $FORC_DIR
 #
 # Results:
-#  * MOM6 forecasts will run in the $FCST_DIR location.
+#  * MOM6 forecasts will run in the $WORK_DIR location.
 #  * The restart files will be moved to $RST_DIR
 #  * other output files will NOT be moved out of the working directory by this
 #    script, other jobsteps handle that task
 #
 # Required environment variables:
  envar=()
- envar+=("FCST_DIR")         # The directory that the forecast will be run in
+ envar+=("WORK_DIR")         # The directory that the forecast will be run in
  envar+=("FORC_DIR")         # directory for the generated surface forcings
+ envar+=("MOM_CFG_DIR")
+ envar+=("MOM_INPUT_DIR")
  envar+=("RST_DIR_IN")
  envar+=("RST_DIR_OUT")
  envar+=("PPN")              # Number of cores per node (procs per node)
@@ -31,6 +34,10 @@ cat << \#\#
  envar+=("FCST_RESTART")     # 1 if yes, 0 if no
  envar+=("FCST_DIAG_DA")     # 1 if the diagnostic output required for DA is to be saved
  envar+=("FCST_DIAG_OTHER")  # 1 if other diag output (not needed for DA) is to be saved
+ envar+=("MOM6_EXE")
+ envar+=("NIPROC")
+ envar+=("NJPROC")
+ envar+=("MASKTABLE")
 #================================================================================
 #================================================================================
 
@@ -54,45 +61,47 @@ echo "Running with $NPROC cores"
 # setup the foreacst directory
 #------------------------------------------------------------
 echo "Setting up forecast working directory in:"
-echo " $FCST_DIR"
-if [[ -e "$FCST_DIR" ]]; then
-    echo "WARNING: $FCST_DIR already exists, removing."
-    rm -rf $FCST_DIR
+echo " $WORK_DIR"
+if [[ -e "$WORK_DIR" ]]; then
+    echo "WARNING: $WORK_DIR already exists, removing."
+    rm -rf $WORK_DIR
 fi
-mkdir -p $FCST_DIR
-cd $FCST_DIR
+mkdir -p $WORK_DIR
+cd $WORK_DIR
 
 mkdir -p OUTPUT
 ln -s $FORC_DIR FORC
-ln -s $ROOT_GODAS_DIR/build/MOM6 .
+ln -s $MOM6_EXE .
 
 # namelist files
-cp $ROOT_EXP_DIR/config/mom/* .
+ln -s $MOM_CFG_DIR/* .
 source diag_table.sh > diag_table
 source input.nml.sh > input.nml
 
 # static input files
-# TODO, these should be linked into exp's config dir at exp init
-# time?
 mkdir -p INPUT
-ln -s $ROOT_GODAS_DIR/run/config.exp_default/mom_input/* INPUT/
+ln -s $MOM_INPUT_DIR/* INPUT/
 
 # link restart files
-#dtz() { echo "${1:0:8}Z${1:8:10}"; }
-#t=$(dtz $FCST_START_TIME)
-#rst_dir_in=$(date "+$RST_DIR" -d "$t")
-#ln -s $rst_dir_in ./RESTART_IN
 ln -s $RST_DIR_IN ./RESTART_IN
 
 # output directory for restart files
 mkdir -p $RST_DIR_OUT
 ln -s $RST_DIR_OUT RESTART
 
+# processor layouts
+cat > MOM_layout << EOF 
+  IO_LAYOUT=${NIPROC},${NJPROC}
+  LAYOUT=${NIPROC},${NJPROC}
+  MASKTABLE="${MASKTABLE}"
+EOF
+cp MOM_layout SIS_layout
+
 
 # run the forecast
 #------------------------------------------------------------
 echo "running MOM..."
-aprun -n $NPROC ./MOM6
+aprun -n $NPROC ./mom6
 
 
 # the intermediate restart files are being a little weird currently.
@@ -102,3 +111,6 @@ cd RESTART
 for f in ????????.????00.*.res*; do 
     mv $f ${f:16}
 done
+
+# all done with forecast, leave a signal to other cycles watching
+touch $WORK_DIR/fcst_done

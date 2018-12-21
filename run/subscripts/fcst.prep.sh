@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-cat << \#\#
+cat << EOF
 
 #================================================================================
 #================================================================================
@@ -9,7 +9,7 @@ cat << \#\#
 #   Processes control forcing, ensemble perturbations, and climatological
 #   corrections.
 #================================================================================ 
-##
+EOF
 #
 # Prerequisites:
 #  * Daily forcing files for the appropriate date range must exist in the
@@ -36,7 +36,7 @@ cat << \#\#
  FORC_PERTURB=${FORC_PERTURB:-1}
  FORC_POS=${FORC_POS:" "}
 
- envar+=("JOB_WORK_DIR")     # The temporary directory in which this script
+ envar+=("WORK_DIR")     # The temporary directory in which this script
                              #  will do all of its work
 
  envar+=("ENS_SIZE")         # number of ensemble members
@@ -113,13 +113,13 @@ interp="bic"
 
 # setup working directory
 #------------------------------------------------------------
-if [[ -e "$JOB_WORK_DIR" ]]; then
-    echo "WARNING: JOB_WORK_DIR already exists, removing:"
-    echo " $JOB_WORK_DIR"
-    rm -rf "$JOB_WORK_DIR"
+if [[ -e "$WORK_DIR" ]]; then
+    echo "WARNING: WORK_DIR already exists, removing:"
+    echo " $WORK_DIR"
+    rm -rf "$WORK_DIR"
 fi
-mkdir -p "$JOB_WORK_DIR"
-cd $JOB_WORK_DIR
+mkdir -p "$WORK_DIR"
+cd $WORK_DIR
 mkdir -p work
 
 

@@ -1,6 +1,5 @@
 !********+*********+*********+*********+*********+*********+*********+*
-!*   This include file determines the JOINT compile-time memory settings    *
-!*  for the Sea Ice Simulator (SIS), versions 2 and later and         *
+!*   This include file determines the compile-time memory settings    *
 !*  for the Modular Ocean Model (MOM), versions 6 and later.          *
 !********+*********+*********+*********+*********+*********+*********+*
 
@@ -38,5 +37,18 @@
                                !   NIHALO_ and NJHALO_ are the sizes of the
                                ! memory halos on each side.
 
+#define MAX_FIELDS_ 80
+                               !    The maximum permitted number (each) of
+                               !  restart variables, time derivatives, etc.
+                               !  This is mostly used for the size of pointer
+                               !  arrays, so it should be set generously.
+
+#define BTHALO_ 0
+                               !   BTHALO_ is the size of the memory halos in
+                               ! the barotropic solver.
+
+#undef SYMMETRIC_MEMORY_
+
 #include <MOM_memory_macros.h>
-#include <SIS_memory_macros.h>
+
+

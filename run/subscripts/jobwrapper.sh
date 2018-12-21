@@ -11,9 +11,12 @@ cat << \#\#
 # Required environment variables:
 #  * The following need to be specified by the caller of this script
  envar=()
- envar+=("ROOT_GODAS_DIR")
- envar+=("ROOT_EXP_DIR")
  envar+=("CYCLE")
+ envar+=("CYCLE_LEN")
+ envar+=("CYCLE_LEAPADJ")
+ envar+=("DA_WNDW_OFST")
+ envar+=("DA_SLOT_LEN")
+ envar+=("MACHINE_CONFIG")
 #================================================================================
 #================================================================================
 
@@ -36,24 +39,24 @@ set -u
 # TODO: is this necessary? they should already be loaded into the environment
 #------------------------------------------------------------
 files=()
-files+=("${ROOT_GODAS_DIR}/config/env")
-files+=("${ROOT_EXP_DIR}/config/hybridgodas.config")
-for f in ${files[@]}; do
-    if [[ ! -f "$f" ]]; then
-	echo "ERROR: cannot find environment file: $f"
-	exit 1
-    fi
-    echo "loading config file: $f"
-    source $f
-done
-echo ""
+#files+=("${ROOT_GODAS_DIR}/config/env")
+# files+=("${ROOT_EXP_DIR}/config/hybridgodas.config")
+# for f in ${files[@]}; do
+if [[ ! -f "$MACHINE_CONFIG" ]]; then
+  echo "ERROR: cannot find environment file: $MACHINE_CONFIG"
+  exit 1
+fi
+echo "loading config file: $MACHINE_CONFIG"
+source $MACHINE_CONFIG
+# done
+# echo ""
 
 # env vars that should already be set 
 #for v in EXP_NAME ENS_SIZE DA_MODE DA_TIMESLOTS DA_WNDW_OFST FCST_RST_OFST FCST_IO_PROC FCST_IO_MISS; do
-for v in EXP_NAME ENS_SIZE; do
-    echo " $v = ${!v}"
-done
-echo ""
+# for v in EXP_NAME ENS_SIZE; do
+#     echo " $v = ${!v}"
+# done
+# echo ""
 
 
 

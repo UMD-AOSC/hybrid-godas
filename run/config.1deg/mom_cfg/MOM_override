@@ -1,0 +1,35 @@
+!================================================================================
+! The following are the Hybrid-GODAS specific overrides
+! over the default OM4_025 configuration from GFDL for MOM
+!================================================================================
+
+
+! diagnostics in Z space
+!------------------------------------------------------------
+#override NUM_DIAG_COORDS = 1
+#override DIAG_COORDS = "z Z ZSTAR"
+#override DIAG_COORD_DEF_Z = "FILE:vgrid_75_2m.nc,dz"
+
+
+! use Z* vertical coordinates instead of hybrid coords
+!------------------------------------------------------------
+#override REGRIDDING_COORDINATE_MODE = "Z*"
+#override ALE_COORDINATE_CONFIG="FILE:vgrid_75_2m.nc,dz"
+!#override THERMO_SPANS_COUPLING = False
+!#override DT_THERM = 900.0
+
+
+! change how the SSS restoration and freshwater balances are handled
+!------------------------------------------------------------
+!#override ADJUST_NET_SRESTORE_BY_SCALING = True
+!#override ADJUST_NET_FRESH_WATER_BY_SCALING = True
+!#override MAX_DELTA_RESTORE=1.0
+
+
+! other tweaks
+!------------------------------------------------------------
+#override MAX_P_SURF=3.e4
+#override USE_IDEAL_AGE_TRACER=False
+#override SEND_LOG_TO_STDOUT = True
+#override VERTEX_SHEAR=True
+#override RESTART_CHECKSUMS_REQUIRED=False

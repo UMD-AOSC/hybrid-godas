@@ -1,6 +1,5 @@
 find_package(MPI REQUIRED)
 
-#TODO add optimization flags
 if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-alias -auto -safe-cray-ptr -ftz -assume byterecl -i4 -r8 -nowarn -sox -traceback")
 elseif(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
@@ -43,33 +42,41 @@ set_property(SOURCE MOM6/src/FMS/fft/fft.F90 APPEND PROPERTY OBJECT_DEPENDS
 
 # MOM6
 set(MOM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/MOM6/src)
+set(MOM_CHANGES ${CMAKE_CURRENT_SOURCE_DIR}/MOM6-changes)
+
 set(SRC)
-addfiles(${MOM_DIR}/MOM6/config_src/dynamic)
-addfiles(${MOM_DIR}/MOM6/config_src/coupled_driver)
+
+addfiles(${MOM_CHANGES}/MOM6/config_src/static)
+addfiles(${MOM_CHANGES}/MOM6/config_src/coupled_driver)
+addfiles(${MOM_CHANGES}/coupler)
+addfiles(${MOM_CHANGES}/SIS2)
+
 addfiles(${MOM_DIR}/MOM6/src/*)
 addfiles(${MOM_DIR}/MOM6/src/*/*)
 addfiles(${MOM_DIR}/atmos_null)
-addfiles(${MOM_DIR}/coupler)
 addfiles(${MOM_DIR}/land_null)
 addfiles(${MOM_DIR}/ice_ocean_extras/*)
 addfiles(${MOM_DIR}/icebergs)
 addfiles(${MOM_DIR}/SIS2/config_src/dynamic)
-addfiles(${MOM_DIR}/SIS2/src)
 addfiles(${MOM_DIR}/FMS/coupler)
 addfiles(${MOM_DIR}/FMS/include)
+
 add_executable(mom6 ${SRC})
 
 target_include_directories(mom6 PUBLIC
+  ${MOM_CHANGES}/MOM6/config_src/static
+  ${MOM_CHANGES}/SIS2 
+  ${MOM_DIR}/SIS2/config_src/dynamic
   ${MOM_DIR}/FMS/include
   ${MOM_DIR}/MOM6/src/framework
-  ${MOM_DIR}/MOM6/config_src/dynamic
-  ${MOM_DIR}/SIS2/config_src/dynamic
-  ${MOM_DIR}/SIS2/src/)
+)
 target_link_libraries(mom6 PUBLIC
   fms
   ${NETCDF_LIBRARIES}
   ${MPI_Fortran_LIBRARIES})
 target_compile_definitions(mom6 PRIVATE
+  -DNIPROC_=${MOM6_NIPROC}
+  -DNJPROC_=${MOM6_NJPROC}
   -Duse_libMPI
   -Duse_netCDF
   -DSPMD
