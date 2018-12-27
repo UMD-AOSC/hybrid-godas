@@ -18,6 +18,7 @@ program obsop
   integer :: obid_pt  = 2211
   integer :: obid_s   = 2220
   logical :: rm_adt_mean_inc = .true.
+  real :: rm_adt_mean_inc_bounds = 50
   real :: lat_bounds(2) = (/-90,90/)
 
   ! read in from command line
@@ -52,7 +53,7 @@ program obsop
 #define CTIME "Unknown"
 #endif
 
-  namelist /obsop_nml/ statefile, obid_t, obid_pt, obid_s, obid_adt, lat_bounds, rm_adt_mean_inc
+  namelist /obsop_nml/ statefile, obid_t, obid_pt, obid_s, obid_adt, lat_bounds, rm_adt_mean_inc, rm_adt_mean_inc_bounds
 
   
   print *, "------------------------------------------------------------"
@@ -276,6 +277,7 @@ program obsop
      do i=1,size(obs)
         if (obs(i)%qc /= 0) cycle
         if (obs(i)%id /= obid_adt) cycle
+        if (abs(obs(i)%lat) > rm_adt_mean_inc_bounds) cycle
         num = num + 1
         v = v + (obs_inc(i) - v)/num
      end do

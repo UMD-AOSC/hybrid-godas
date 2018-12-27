@@ -57,3 +57,10 @@
   densityvar="rhopot0"
   density_sigma=0.125
 /
+
+&obsprep_adt_nml
+  err_obs=0.05
+  err_rep_base=0.1
+  obid=2100
+  platid=1000
+/

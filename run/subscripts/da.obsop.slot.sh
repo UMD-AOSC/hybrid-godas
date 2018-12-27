@@ -125,11 +125,7 @@ if [[ "$OBS_USE_ADT" == 1 ]]; then
       echo "  $f"
   done
 
-  for f in $obs_adt; do
-      fn=${f##*/}
-      $obsprep_exec $f obsprep.$fn
-  done
-
+  $obsprep_exec obsprep.adt.nc $obs_adt 
 fi
 
 # insitu T/S observations
