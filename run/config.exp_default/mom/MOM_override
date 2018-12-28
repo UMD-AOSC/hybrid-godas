@@ -33,3 +33,6 @@
 #override SEND_LOG_TO_STDOUT = True
 #override VERTEX_SHEAR=True
 #override RESTART_CHECKSUMS_REQUIRED=False
+#override U_TRUNC_FILE = ""
+#override V_TRUNC_FILE = "" 
+#override MAXTRUNC=1000000
