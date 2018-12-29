@@ -120,12 +120,19 @@ if [[ "$OBS_USE_ADT" == 1 ]]; then
   obs_adt=$obs_adt_dir/*.nc  
   obsprep_exec="$ROOT_GODAS_DIR/build/obsprep_adt"
   echo ""
-  echo "ADT observations using files:"
-  for f in $obs_adt; do
-      echo "  $f"
-  done
 
-  $obsprep_exec obsprep.adt.nc $obs_adt 
+  # make sure directory exists
+  if [[ ! -f $obs_adt ]]; then
+      echo  "ERROR: ADT observations do not exist for given date"
+      if [[ "$OBS_ERR_ON_MISS" == 1 ]]; then exit 1; fi
+  else
+      echo "ADT observations using files:"
+      for f in $obs_adt; do
+	  echo "  $f"
+      done
+
+      $obsprep_exec obsprep.adt.nc $obs_adt 
+  fi
 fi
 
 # insitu T/S observations
