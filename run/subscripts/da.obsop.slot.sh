@@ -122,7 +122,7 @@ if [[ "$OBS_USE_ADT" == 1 ]]; then
   echo ""
 
   # make sure directory exists
-  if [[ ! -f $obs_adt ]]; then
+  if [[ ! -d $obs_adt_dir ]]; then
       echo  "ERROR: ADT observations do not exist for given date"
       if [[ "$OBS_ERR_ON_MISS" == 1 ]]; then exit 1; fi
   else

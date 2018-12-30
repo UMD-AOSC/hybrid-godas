@@ -65,5 +65,6 @@
 	"hzloc_sat"  : "0.0 200e3 / 10.0 50e3",
 	"tloc_prof"  : 72,
 	"tloc_sat"   : 72,
+	"surf_plats" : [ "ocn_sat"],
     }
 }
