@@ -216,12 +216,22 @@ the following steps are performed:
 	export RST_DIR_IN=&ROOT_EXP_DIR;/cycle/&#36;CYCLE/rst/mem_#mem#/
 	export RST_DIR_OUT=&ROOT_EXP_DIR;/cycle/&#36;CYCLE_NEXT/rst/mem_#mem#/
 	export MEM=#mem#
+
 	# update the restart files if we did DA in previous cycle
 	export FCST_RESTART=$([[ $(cat cycle/cycle.status) == "ini:&CYCLE;" ]] &#38;&#38; echo 0 || echo 1)
 	if [[ &#36;FCST_RESTART -eq 1 &#38;&#38; ! &#36;DA_MODE == "none" ]]; then 
   	  export JOB_WORK_DIR=&WORK_DIR;/fcst.rst/mem_#mem#
 	  time &SCRIPT_DIR;/da.update.sh
 	  export RST_DIR_IN=&WORK_DIR;/fcst.rst/mem_#mem#
+
+ 	  # apply pressure bias correction
+	  export JOB_WORK_DIR=&WORK_DIR;/fcst.bias/mem_#mem#
+	  export BIAS_FILES_IN=&ROOT_EXP_DIR;/cycle/&#36;CYCLE/da.bias/
+	  export BIAS_FILES_OUT=&ROOT_EXP_DIR;/cycle/&#36;CYCLE_NEXT/da.bias/
+
+	  time &SCRIPT_DIR;/fcst.bias_corr.sh
+	  export FORC_DIR=&WORK_DIR;/fcst.bias/mem_#mem#/FORC
+
 	fi
 
 	# run the forecast

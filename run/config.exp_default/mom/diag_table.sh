@@ -119,6 +119,7 @@ cat <<EOF
 #------------------------------------------------------------
 "ocean_model", "ssh",         "ssh",         "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 "ocean_model", "ssh_ga",      "ssh_ga",      "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
+"ocean_model", "p_surf",      "p_surf",      "ocean_pentad%4yr%2mo%2dy", "all", "mean", "none", 2
 
 
 

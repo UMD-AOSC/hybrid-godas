@@ -1,0 +1,17 @@
+&pressure_correction_nml
+  grid_nx = 1440
+  grid_ny = 1080
+  grid_nz = 75
+
+  timescales = 1
+  bias_decay = 0.04
+  bias_gain = 0.2
+  lat_dist1 = 13.0
+  lat_dist2 = 23.0
+ 
+  data_file = "pressure_correction.data_table"
+  input_bias_file = "INPUT/ts_bias.nc"
+  output_bias_file = "OUTPUT/ts_bias.nc"
+  output_pres_file = "pres.corr.nc"
+/
+  

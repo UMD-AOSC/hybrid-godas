@@ -33,11 +33,25 @@ string(TIMESTAMP TS %Y-%m-%d )
 add_definitions(-DCTIME=\"${TS}\")
 
 
+# find GSW, 
+# TODO, do this correctly
+file(GLOB GSW_TB_SRC "../gsw/toolbox/*.[f,F]90")
+file(GLOB GSW_MD_SRC "../gsw/modules/*.[f,F]90")
+
 # common objects
 set(SRCS ../geoKdTree/kdtree.f90 datatable.f90 hzsmooth.f90)
 add_library( util_common STATIC ${SRCS} )
 set_target_properties(util_common PROPERTIES 
     COMPILE_FLAGS "${OpenMP_C_FLAGS} $ENV{UTIL_COMPILE_FLAGS}")
+
+
+# pressure bias correction
+set(SRCS pressure_correction.F90 ${GSW_TB_SRC} ${GSW_MD_SRC})
+set(EXE pressure_correction)
+add_executable(${EXE} ${SRCS})
+target_link_libraries(${EXE} util_common $ENV{NETCDF_LIBS})
+set_target_properties(${EXE} PROPERTIES
+    COMPILE_FLAGS "$ENV{UTIL_COMPILE_FLAGS}" )
 
 
 # bgerr var
@@ -61,6 +75,7 @@ set_target_properties(${EXE} PROPERTIES
     LINK_FLAGS "${OpenMP_C_FLAGS}")
 
 
+# mppnccombine
 set(EXE mppnccombine)
 add_executable(${EXE} mppnccombine.c)
 target_link_libraries(${EXE} $ENV{NETCDF_LIBS})

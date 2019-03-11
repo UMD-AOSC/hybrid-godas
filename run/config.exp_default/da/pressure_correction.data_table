@@ -1,0 +1,11 @@
+# Grid specification
+"lat",            "geolat",    "hgrid.nc"
+"lon",            "geolon",    "hgrid.nc"
+"max_depth",      "D",         "hgrid.nc"
+"vert_interface", "Interface", "vgrid.nc"
+
+# input state analysis/background
+"temp_bkg",  "Temp",   "bkg.nc"
+"temp_ana",  "Temp",   "ana.nc"
+"salt_bkg",  "Salt",   "bkg.nc"
+"salt_ana",  "Salt",   "ana.nc"

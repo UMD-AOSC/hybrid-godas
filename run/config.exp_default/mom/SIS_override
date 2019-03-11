@@ -10,3 +10,5 @@ ADD_DIURNAL_SW = True ! This must ONLY be used in the ice-ocean mode, NOT fully 
 !------------------------------------------------------------
 #override ICE_BULK_SALINITY = 5.0
 #override ICE_RELATIVE_SALINITY = 0.0
+
+#override APPLY_SLP_TO_OCEAN = T
