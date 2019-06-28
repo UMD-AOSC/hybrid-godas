@@ -1,3 +1,6 @@
+Jian Kuang 20190627
+This will likely become the /workflow folder
+
 All the scripts to needed to initialize and run experiments.
 
 | directory | description |

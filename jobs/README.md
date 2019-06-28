@@ -1,3 +1,6 @@
+Jian Kuang 20190627
+These will be separated into J-Jobs and scripts
+
 These are the scripts that are combined by rocoto to form the multiple job steps needed to run the Hybrid-GODAS. Further documentation on each step is available within the script files.
 
 | script                  | descrtiption |

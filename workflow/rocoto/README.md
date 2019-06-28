@@ -1,3 +1,6 @@
+Jian Kuang 20190627
+These scripts will be decommissioned after CROW
+
 These are the files that generate the XML control file used by `rocoto` to manage the hybrid-godas job steps.
 
 `hybridgodas.run` and `hybridgodas.status` should only be called by the user via the links that are created within an individual experiment directory.
