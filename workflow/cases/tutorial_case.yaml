@@ -8,3 +8,6 @@ case:
     run_gsi: No
     chgres_and_convert_ics: No
     gfs_cyc: 4 # run gfs every cycle
+
+  places:
+    workflow_file: layout/3dvar_only.yaml

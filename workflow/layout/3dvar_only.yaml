@@ -1,0 +1,9 @@
+suite: !Cycle
+  <<: *suite_defaults
+
+      fcst_prep: !Task
+        <<: *shared_task_template
+        Trigger: !Depend  analysis.at('-6:00:00')
+        resources: !calc partition.resources.run_prep
+        config: [ base.yaml, prep.yaml ]
+        J_JOB: J_FCST_PREP

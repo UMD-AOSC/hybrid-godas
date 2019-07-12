@@ -1,0 +1,57 @@
+# This file has the top-level logic to merge other YAML data
+# structures into the document-level settings.  It merges the contents
+# of the case files, default files, platform file, and everywhere
+# else, and applies any validation from the schema/ directory.
+
+schedvar: !Immediate
+  - !MergeMapping
+    - !calc doc.case.get('schedvar',{})
+    - Template: *schedvar_schema
+    - !calc doc.get('schedvar_defaults',{})
+
+mom_output_settings: !Immediate
+  - !MergeMapping
+    - !calc doc.gfs_output_settings_defaults
+    - { Template: *gfs_output_settings_template }
+    - !calc doc.case.get('gfs_output_settings',{})
+    - !calc doc.get('user_gfs_output_settings',{})
+
+data_assimilation: !Immediate
+  - !MergeMapping
+    - { Template: *data_assimilation_template }
+    - !calc doc.case.get('data_assimilation',{})
+    - !calc doc.get('user_data_assimilation',{})
+  
+post: !Immediate
+  - !MergeMapping
+    - { Template: *post_schema }
+    - !calc doc.case.get('post',{})
+    - !calc doc.get('user_post',{})
+  
+places: !Immediate
+  - !MergeMapping
+    - Template: *places_schema
+    - !calc doc.default_places
+    - !calc doc.case.get('places',{})
+    - !calc doc.user_places
+
+exclusive_resources: !calc doc.platform.partitions.default_exclusive.resources
+shared_resources: !calc doc.platform.partitions.default_shared.resources
+service_resources: !calc doc.platform.partitions.default_service.resources
+
+settings: !Immediate
+  - !MergeMapping
+    - Template: *settings_schema
+    - !calc doc.default_settings
+    - !calc doc.case.settings
+    - !calc doc.get('user_settings',{})
+    - Template: *settings_schema
+
+validate_me:
+  - mom_output_settings
+  - data_assimilation
+  - post
+  - downstream
+  - settings
+  - places
+  - schedvar
