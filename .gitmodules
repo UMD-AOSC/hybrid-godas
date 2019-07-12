@@ -21,4 +21,4 @@
 	url = https://github.com/travissluka/geoKdTree.git
 [submodule "workflow/CROW"]
 	path = workflow/CROW
-	url = gerrit:CROW
+	url = https://github.com/NOAA-EMC/CROW.git 
