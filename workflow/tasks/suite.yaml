@@ -1,0 +1,37 @@
+# This file contains suite default definition for the workflow
+
+suite_defaults: &suite_defaults
+  # Clock - the list of cycles to run
+  Clock: !Clock
+    start: !calc doc.settings.SDATE
+    end: !calc doc.settings.EDATE
+    step: !timedelta "6:00:00"
+
+  # Rocoto - contains settings specific to Rocoto workflow generation
+  Rocoto: &Rocoto
+    # workflow_xml - the contents of this variable are written to the Rocoto XML file.
+    workflow_xml: !expand |
+      <?xml version="1.0"?>
+      <!DOCTYPE workflow [
+        <!-- experiment specific parameters -->
+        <!ENTITY ROOT_GODAS_DIR "{doc.settings.ROOT_GODAS_DIR}">
+        <!ENTITY ROOT_EXP_DIR "{doc.settings.EXPDIR}">
+        <!ENTITY TASK_THROTTLE "{doc.settings.rocoto_task_throttle}">
+        <!ENTITY CYCLE_THROTTLE "{doc.settings.rocoto_cycle_throttle}">
+        <!ENTITY MAX_TRIES "{doc.settings.max_job_tries}">
+        <!ENTITY EXP_NAME "{doc.places.EXPDIR}">
+        <!ENTITY COM "{doc.places.ROTDIR}">
+        <!ENTITY ENS_LIST_FCST "{doc.settings.fcst_hours}">
+        <!ENTITY ENS_LIST_DA "{doc.settings.da_hours}">
+        <!ENTITY {doc.schedvar.script_home} "{doc.places.HOMEgodas}">
+        <!ENTITY COM "{doc.places.ROTDIR}">
+      {tools.indent(doc.platform.metasched_more,"  ")}
+      ]>
+      <workflow realtime="F"
+                cyclethrottle="&CYCLE_THROTTLE;"
+                scheduler="{doc.platform.partitions.default_exclusive.scheduler.rocoto_name.lower()}"
+                taskthrottle="&TASK_THROTTLE;" >
+        <log><cyclestr>&COM;/logs/@Y@m@d@H/rocoto.log</cyclestr></log>
+      {to_rocoto.make_time_xml(indent=1)}
+      {to_rocoto.make_task_xml(indent=1)}
+      </workflow>

@@ -19,3 +19,6 @@
 [submodule "src/geoKdTree"]
 	path = src/geoKdTree
 	url = https://github.com/travissluka/geoKdTree.git
+[submodule "workflow/CROW"]
+	path = workflow/CROW
+	url = gerrit:CROW
