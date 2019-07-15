@@ -10,4 +10,4 @@ case:
     gfs_cyc: 4 # run gfs every cycle
 
   places:
-    workflow_file: layout/3dvar_only.yaml
+    workflow_file: workflow/3dvar_only.yaml

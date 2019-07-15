@@ -15,8 +15,40 @@ platform: !Platform
   # and false otherwise
   detect: !calc tools.isdir("/scratch4") and tools.isdir("/scratch3")
 
-  MOMFIX: "/scratch4/NCEPDEV/da/save/Michael.Lueken/nwprod/lib/crtm/2.2.3/fix_update"
+  # public_release_ics: location of input conditions that have been 
+  # prepared for the public release.
+  public_release_ics: /scratch4/NCEPDEV/global/noscrub/glopara/FV3GFS_V1_RELEASE/ICs
 
+  # CHGRP_RSTPROD_COMMAND - this specifies the command to use to
+  # restrict access to NOAA "rstprod" data restriction class.
+  # This only used for observation processing, data assimilation, and
+  # data assimilation archiving, which are not in the public release.
+  CHGRP_RSTPROD_COMMAND: "chgrp rstprod"
+
+  # NWPROD - location of the NCEP operational "nwprod" directory, which
+  # only has meaning on the NCEP WCOSS machines.  It is used to get
+  # the paths to certain programs and scripts.
+  NWPROD: "/scratch4/NCEPDEV/global/save/glopara/nwpara"
+
+  # DMPDIR - location of the global dump data.  This is used by the observation
+  # processing scripts, which are not included in the public release.
+  DMPDIR: "/scratch4/NCEPDEV/global/noscrub/dump"
+
+  # RTMFIX - location of the CRTM fixed data files used by the GSI data
+  # assimilation.  The data assimilation is not included in this public release
+  # so this path is unused.
+  RTMFIX: "/scratch4/NCEPDEV/da/save/Michael.Lueken/nwprod/lib/crtm/2.2.3/fix_update"
+
+  # BASE_SVN - a directory maintained by emc global model developers
+  # that contains recent versions of source code and executables for
+  # various repositories.  This is used on some platforms to find
+  # executables for this workflow.
+  BASE_SVN: "/scratch4/NCEPDEV/global/save/glopara/svn"
+
+  # BASE_GIT - a directory maintained by emc global model developers
+  # that contains recent versions of source code and executables for
+  # various git repositories. This is used on some platforms to find
+  # executables for this workflow.
   BASE_GIT: "/scratch4/NCEPDEV/global/save/glopara/git"
 
   # config_base_extras - Additional configuration data to put in the

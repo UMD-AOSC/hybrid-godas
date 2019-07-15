@@ -27,10 +27,9 @@ post: !Immediate
     - { Template: *post_schema }
     - !calc doc.case.get('post',{})
     - !calc doc.get('user_post',{})
-  
+
 places: !Immediate
   - !MergeMapping
-    - Template: *places_schema
     - !calc doc.default_places
     - !calc doc.case.get('places',{})
     - !calc doc.user_places

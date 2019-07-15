@@ -14,46 +14,12 @@ godas_resource_table: !Select
   otherwise: !error "Unknown FV3 deterministic grid: {doc.fv3_gfs_settings.CASE}"
   cases:
     C192:
-      #          ranks   ppn wallclock            threads MB_per_rank
-      prep:     [  12,   12, !timedelta "00:15:00", null, null ]
-      anal:     [ 144,    6, !timedelta "01:30:00", max, null  ]
-      gdaspost: [  72,   12, !timedelta "00:30:00", 1, null    ]
-      gfspost:  [  72,   12, !timedelta "00:10:00", 1, null    ]
-      gdasvrfy: [   1,    1, !timedelta "03:00:00", null, null ]
-      gfsvrfy:  [   5,    1, !timedelta "06:00:00", null, null ]
-      gdasfcst_wall:  !timedelta "00:15:00"
-      gfsfcst_wall:  !timedelta "06:00:00"
-      gdasfcst_ppn: 12
-      gfsfcst_ppn: 12
-      post_manager_wallclock_extra: !timedelta "00:15:00"
-    C384:
-      #          ranks   ppn wallclock            threads MB_per_rank
-      prep:     [  12,   12, !timedelta "00:15:00", null, null ]
-      anal:     [ 144,    6, !timedelta "01:30:00", max, null  ]
-      gdaspost: [  72,   12, !timedelta "00:30:00", 1, null    ]
-      gfspost:  [  72,   12, !timedelta "00:10:00", 1, null    ]
-      gdasvrfy: [   1,    1, !timedelta "03:00:00", null, null ]
-      gfsvrfy:  [   5,    1, !timedelta "03:00:00", null, null ]
-      gdasfcst_wall:  !timedelta "00:15:00"
-      gfsfcst_wall:  !timedelta "06:00:00"
-      gdasfcst_ppn: 12
-      gfsfcst_ppn: 12
-      post_manager_wallclock_extra: !timedelta "00:15:00"
-    C768:
-      #          ranks ppn  wallclock            threads  MB_per_rank
-      prep:     [   4,    4, !timedelta "00:45:00", max,  null  ]
-      anal:     [ 360,    6, !timedelta "05:30:00", max,  7000  ]
-      gdaspost: [  84,   12, !timedelta "00:45:00", null, 3770  ]
-      gfspost:  [  84,   12, !timedelta "00:30:00", null, 3770  ]
-      gdasvrfy: [   1,    1, !timedelta "03:00:00", null, null  ]
-      gfsvrfy:  [   5, null, !timedelta "06:00:00", null, null  ]
-      gdasfcst_mem_per_rank: 3.124e+3
-      gfsfcst_mem_per_rank:  3.124e+3
-      gdasfcst_wall:  !timedelta "01:00:00"
-      gfsfcst_wall:  !timedelta "06:00:00"
-      gdasfcst_ppn: 12
-      gfsfcst_ppn: 12
-      post_manager_wallclock_extra: !timedelta "00:15:00"
+      #              ranks   ppn wallclock            threads MB_per_rank
+      fcst_prep:    [  12,   12, !timedelta "00:15:00", null, null ]
+      fcst_run:     [ 144,    6, !timedelta "01:30:00", max, null  ]
+      da_prep:      [  72,   12, !timedelta "00:30:00", 1, null    ]
+      da_3dvar_run: [  72,   12, !timedelta "00:10:00", 1, null    ]
+      post:         [   1,    1, !timedelta "03:00:00", null, null ]
 
 default_resources: &default_resources
 
