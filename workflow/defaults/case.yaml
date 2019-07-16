@@ -50,7 +50,6 @@ validate_me:
   - mom_output_settings
   - data_assimilation
   - post
-  - downstream
   - settings
   - places
   - schedvar
