@@ -2,7 +2,6 @@
 # Individual tasks in the suite may override some settings
 
 eoln: "\n"
-parm_config_source_line: "source $HOMEgfs/parm/config/config.%s"
 expdir_config_source_line: "source $EXPDIR/parm/config/config.%s"
 
 task_template: &task_template
