@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu
+#set -eu
 #================================================================================
 # Main configuration script for MOM6 Hybrid-GODAS run system
 #================================================================================
@@ -14,9 +14,12 @@ set -eu
 #               TODO: Currently the single process jobs are hardcoded to use
 #                 "ldtn" on Gaea
 #--------------------------------------------------------------------------------
-export EXP_NAME="${EXP_NAME}"
-export SCHED_ACCT="cpo_hyb_go"
-export SCHED_QUEUE="batch"
+##
+## These names have been defined in base.yaml
+##
+#export EXP_NAME="${EXP_NAME}"
+#export SCHED_ACCT="cpo_hyb_go"
+#export SCHED_QUEUE="batch"
 
 
 

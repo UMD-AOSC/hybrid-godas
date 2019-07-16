@@ -8,9 +8,10 @@
 #               TODO: Currently the single process jobs are hardcoded to use
 #                 "ldtn" on Gaea
 #--------------------------------------------------------------------------------
-export EXP_NAME="${EXP_NAME}"
-export SCHED_ACCT="cpo_hyb_go"
-export SCHED_QUEUE="batch"
+experiment: &experiment
+  EXP_NAME: "EXP_GOGDAS"
+  SCHED_ACCT: "cpo_hyb_go"
+  SCHED_QUEUE: "batch"
 
 #--------------------------------------------------------------------------------
 # Timing
@@ -25,11 +26,12 @@ export SCHED_QUEUE="batch"
 #                 averages should be run for 6 days if a leap day is encountered
 #                 so that the analysis days are the same for each year.
 #--------------------------------------------------------------------------------
-export CYCLE_START=2004010100
-export CYCLE_END=2005123100
-export CYCLE_LEN=120
-export CYCLE_LEAPADJ=1
 
+settings: &default_setting
+  CYCLE_START: 201905010000 
+  CYCLE_END: 201905030000
+  CYCLE_LEN: 120
+  CYCLE_LEAPADJ: 1
 
 default_places: &default_places
   PROJECT_DIR: !error Please select a project directory.
@@ -50,11 +52,10 @@ default_places: &default_places
 #                the steps of a given cycle are complete, the output in WORK_DIR
 #                is removed automatically
 #--------------------------------------------------------------------------------
-export ROOT_DIR="${ROOT_DIR}"
-export EXP_DIR="${EXP_DIR}"
-export WORK_DIR="${ROOT_DIR}/WRK/${EXP_NAME}"
-
-
+work_dirs: &work_dirs
+  ROOT_DIR: "/scratch3/NCEPDEV/nceplibs/Dexin.Zhang/"
+  EXP_DIR:  !expand "{ROOT_DIR}/EXP_DIR"
+  WORK_DIR: !expand "{ROOT_DIR}/WRK/{EXP_NAME}"
 
 #--------------------------------------------------------------------------------
 # Data cycle / timeslots
@@ -76,14 +77,13 @@ export WORK_DIR="${ROOT_DIR}/WRK/${EXP_NAME}"
 # DA_TS_ONLY    : if 1, only T/S fields are updated by the LETKF, otherwise
 #                 T/S/U/V will be updated. 3DVar ONLY updates T/S no matter what.
 #--------------------------------------------------------------------------------
-export ENS_SIZE=1
-export DA_MODE="none"
-export DA_HYB_ALPHA=0.5
-export DA_SLOT_LEN=24
-export DA_WNDW_OFST=48
-export DA_TS_ONLY=0
-
-
+da_settings: &da_settings
+  ENS_SIZE:     1
+  DA_MODE:      "none"
+  DA_HYB_ALPHA: 0.5
+  DA_SLOT_LEN:  24
+  DA_WNDW_OFST: 48
+  DA_TS_ONLY:   0
 
 #--------------------------------------------------------------------------------
 # Observation files
@@ -102,14 +102,14 @@ export DA_TS_ONLY=0
 #                    and OBS_PROF_S
 # OBS_PROF       : a path to the insitu temperature/salinity profile observations
 #--------------------------------------------------------------------------------
-export OBS_ERR_ON_MISS=0
-export OBS_USE_PROF=1
-export OBS_USE_SST=1
-export OBS_USE_ADT=1
-export OBS_PROF=${D}ROOT_DIR/DATA/obs/profile_wod18/%Y/%Y%m%d.nc
-export OBS_SST=${D}ROOT_DIR/DATA/obs/sst_acspo_avhrr/%Y/%Y%m/%Y%m%d.nc
-export OBS_ADT=${D}ROOT_DIR/DATA/obs/rads_adt/%Y/%Y%m%d/
-
+obs_settings: &obs_settings
+  OBS_ERR_ON_MISS: 0
+  OBS_USE_PROF:    1
+  OBS_USE_SST:     1
+  OBS_USE_ADT:     1
+  OBS_PROF:        !expand "{D}ROOT_DIR/DATA/obs/profile_wod18/%Y/%Y%m%d.nc"
+  OBS_SST:         !expand "{D}ROOT_DIR/DATA/obs/sst_acspo_avhrr/%Y/%Y%m/%Y%m%d.nc"
+  OBS_ADT:         !expand "{D}ROOT_DIR/DATA/obs/rads_adt/%Y/%Y%m%d/"
 
 #--------------------------------------------------------------------------------
 # Surface forcing files.
@@ -162,22 +162,19 @@ export OBS_ADT=${D}ROOT_DIR/DATA/obs/rads_adt/%Y/%Y%m%d/
 #                    multiplicative correction applied from the bias correction
 #                    files
 #--------------------------------------------------------------------------------
-export FORC_MEAN_FILE=$ROOT_DIR/DATA/fluxes/cfsr.6hr/%Y/%Y%m%d/cfsr.%Y%m%d.'#var#'.nc
-export FORC_VAR=PRATE,SLP,TMP.2m,SPFH.2m,UGRD.10m,VGRD.10m,DLWRF.sfc,DSWRF.sfc
-export FORC_VAR_POS=PRATE,SPFH.2m,DLWRF.sfc,DSWRF.sfc
-
-export FORC_ENS_FILE=$ROOT_DIR/DATA/fluxes/20CRv2c.6hr/%Y/%Y%m%d/'#mem2#'/20cr.%Y%m%d.'#var#'.nc
-export FORC_VAR_ENS=PRATE,TMP.2m,SPFH.2m,UGRD.10m,VGRD.10m,DLWRF.sfc,DSWRF.sfc
-
-export FORC_CORR=1
-export FORC_CORR_DIR=$ROOT_DIR/DATA/fluxes/bias.cfsr_dfs52
-export FORC_CORR_ADD=UGRD.10m,VGRD.10m
-export FORC_CORR_MUL=PRATE,DLWRF.sfc,DSWRF.sfc
-
-export FORC_RUNOFF_PERTURB=1
-export FORC_RUNOFF_CLIM=${D}ROOT_DIR/DATA/fluxes/runoff/runoff.daitren.v20180328.clim.nc
-export FORC_RUNOFF_VAR=${D}ROOT_DIR/DATA/fluxes/runoff/runoff.daitren.v20180328.var.nc
-
+forc_settings: &forc_settings
+  FORC_MEAN_FILE:      !expand "{ROOT_DIR}/DATA/fluxes/cfsr.6hr/%Y/%Y%m%d/cfsr.%Y%m%d.'#var#'.nc"
+  FORC_VAR:            "PRATE,SLP,TMP.2m,SPFH.2m,UGRD.10m,VGRD.10m,DLWRF.sfc,DSWRF.sfc"
+  FORC_VAR_POS:        "PRATE,SPFH.2m,DLWRF.sfc,DSWRF.sfc"
+  FORC_ENS_FILE:       !expand "{ROOT_DIR}/DATA/fluxes/20CRv2c.6hr/%Y/%Y%m%d/'#mem2#'/20cr.%Y%m%d.'#var#'.nc"
+  FORC_VAR_ENS:        "PRATE,TMP.2m,SPFH.2m,UGRD.10m,VGRD.10m,DLWRF.sfc,DSWRF.sfc"
+  FORC_CORR:           1
+  FORC_CORR_DIR:       !expand "{ROOT_DIR}/DATA/fluxes/bias.cfsr_dfs52"
+  FORC_CORR_ADD:       "UGRD.10m,VGRD.10m"
+  FORC_CORR_MUL:       "PRATE,DLWRF.sfc,DSWRF.sfc"
+  FORC_RUNOFF_PERTURB: 1
+  FORC_RUNOFF_CLIM:    !expand "{ROOT_DIR}/DATA/fluxes/runoff/runoff.daitren.v20180328.clim.nc"
+  FORC_RUNOFF_VAR:     !expand "{ROOT_DIR}/DATA/fluxes/runoff/runoff.daitren.v20180328.var.nc"
 
 #--------------------------------------------------------------------------------
 # MOM6 File I/O formats
@@ -190,10 +187,9 @@ export FORC_RUNOFF_VAR=${D}ROOT_DIR/DATA/fluxes/runoff/runoff.daitren.v20180328.
 #                 output files if entirely on land.
 #                 TODO: I think this can already be safely removed?
 #--------------------------------------------------------------------------------
-export FCST_IO_PROC=36
-export FCST_IO_MISS="0024"
-
-
+fcst_settings: &fcst_settings
+  FCST_IO_PROC: 36
+  FCST_IO_MISS: "0024"
 
 #--------------------------------------------------------------------------------
 # Output files
@@ -235,21 +231,18 @@ export FCST_IO_MISS="0024"
 # SAVE_RST_ANNUAL    : If =1, the restart files (for the whole ensemble) are saved
 #                      at the beginning of each year
 #--------------------------------------------------------------------------------
-export SAVE_FORMAT_GRID="native"
-export SAVE_COMP_LEVEL=4
-
-export SAVE_BKG_ENS=0
-export SAVE_BKG_SLOT=0
-export SAVE_BKG_MEAN=1
-export SAVE_BKG_SPRD=1
-
-export SAVE_ANA_ENS=0
-export SAVE_ANA_MEAN=1
-export SAVE_ANA_MEAN_LETKF=1
-export SAVE_ANA_SPRD=1
-
-export SAVE_OMF=1
-
-export SAVE_RST_MINCYCLES=3
-export SAVE_RST_REGEX="^....(0101|0401|0705|1003)00"
-export SAVE_RST_ANNUAL=0
+save_settings: &save_settings
+  SAVE_FORMAT_GRID:    "native"
+  SAVE_COMP_LEVEL:     4
+  SAVE_BKG_ENS:        0
+  SAVE_BKG_SLOT:       0
+  SAVE_BKG_MEAN:       1
+  SAVE_BKG_SPRD:       1
+  SAVE_ANA_ENS:        0
+  SAVE_ANA_MEAN:       1
+  SAVE_ANA_MEAN_LETKF: 1
+  SAVE_ANA_SPRD:       1
+  SAVE_OMF:            1
+  SAVE_RST_MINCYCLES:  3
+  SAVE_RST_REGEX:      "^....(0101|0401|0705|1003)00"
+  SAVE_RST_ANNUAL:     0
