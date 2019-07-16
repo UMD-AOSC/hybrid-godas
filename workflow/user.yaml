@@ -1,0 +1,6 @@
+user_places: &user_places
+ PROJECT_DIR: /scratch3/NCEPDEV/nceplibs/Dexin.Zhang/
+
+accounting: &accounting
+ cpu_project: fv3-cpu
+ hpss_project: emc-global
