@@ -12,6 +12,7 @@ include:
   - 'static*yaml'
   - defaults/
   - case.yaml
+  - schema/
   - runtime/
   - workflow.yaml
   - config/

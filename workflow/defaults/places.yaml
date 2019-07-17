@@ -7,7 +7,5 @@ default_places: &default_places
   LONG_TERM_TEMP:  !calc doc.platform.long_term_temp
 #  SHORT_TERM_TEMP: !error GOT HERE
 #  LONG_TERM_TEMP:  !error GOT HERE TOO
-
-
   YAMLDIR: !calc EXP_DIR
   rocoto_workflow_xml: !expand '{YAMLDIR}/workflow.xml'

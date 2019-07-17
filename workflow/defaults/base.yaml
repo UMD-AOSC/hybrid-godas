@@ -33,11 +33,6 @@ settings: &default_setting
   CYCLE_LEN: 120
   CYCLE_LEAPADJ: 1
 
-default_places: &default_places
-  PROJECT_DIR: !error Please select a project directory.
-  HOMEcrow:    !calc tools.crow_install_dir()
-  MOMFIX:      !calc doc.platform.MOMFIX
-   
 #--------------------------------------------------------------------------------
 # Fixed directories. 
 #
