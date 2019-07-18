@@ -1,6 +1,11 @@
 user_places: &user_places
- PROJECT_DIR: /scratch3/NCEPDEV/nceplibs/Dexin.Zhang/
+  PROJECT_DIR: /Users/jiankuang/Documents/Eclipse_workspace/
 
 accounting: &accounting
- cpu_project: fv3-cpu
- hpss_project: emc-global
+  user_email: none
+  cpu_project: fv3-cpu
+  hpss_project: emc-global
+  ecflow_header: envir-p3.h
+  shared_partition: !calc doc.platform.partitions.default_shared
+  exclusive_partition: !calc doc.platform.partitions.default_exclusive
+  service_partition: !calc doc.platform.partitions.default_service

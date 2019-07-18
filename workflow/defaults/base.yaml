@@ -27,11 +27,42 @@ experiment: &experiment
 #                 so that the analysis days are the same for each year.
 #--------------------------------------------------------------------------------
 
-settings: &default_setting
+default_settings: &default_setting
   CYCLE_START: 201905010000 
   CYCLE_END: 201905030000
   CYCLE_LEN: 120
   CYCLE_LEAPADJ: 1
+  fcst_hours: 48
+  da_hours: 8
+  max_job_tries: 2
+  four_cycle_mode: False
+  nco_mode: False
+  rocoto_log_path: !calc ("<cyclestr>&LOG_DIR;/@Y@m@d@H/"+task_path_var+".log</cyclestr>")
+  rocoto_task_throttle: 4
+  rocoto_cycle_throttle: 2
+  ecf_log_path: !FirstTrue
+    - when: !calc doc.settings.four_cycle_mode
+      # in four cycle mode ,the log name is the last path component,
+      # with the leading "j" removed.
+      do: !calc ( '%COM%/output/%ENVIR%/today/' + task_path_list[-1][1:] + '_%CYC%.o%J' )
+    - otherwise: !calc ( '%COM%/logs/%PDY%%CYC%/'+ task_path_var + '.log.%J')
+  ecflow_rocoto_cdate_workaround: !FirstTrue
+    - when: !calc doc.settings.four_cycle_mode
+      take: |
+        # When sourcing config files, the $PDY must be set:
+        datedir=/tmp/date.$$.$RANDOM
+        mkdir -p "$datedir"
+        pushd "$datedir"
+        export cyc="%CYC%"
+        export cycle="t%CYC%z"
+        setpdy.sh
+        . ./PDY
+        set -u
+        export CDATE="$PDY$cyc"
+        set +u
+        popd
+        rm -rf "$datedir"
+    - otherwise: '# date variables will be set by header file.'
 
 #--------------------------------------------------------------------------------
 # Fixed directories. 

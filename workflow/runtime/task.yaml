@@ -7,7 +7,7 @@ expdir_config_source_line: "source $EXPDIR/parm/config/config.%s"
 task_template: &task_template
 
   # Template - specifies a schema that is used to validate the variables in this scope.
-  Template: *task_schema
+#  <<: *task_schema
 
   # Together, accounting and default_accounting set the accounting
   # information, such as queues, projects, and partitions.
@@ -84,10 +84,6 @@ task_template: &task_template
     <envar><name>CDUMP</name><value>{CDUMP}</value></envar>
     <envar><name>RUN_ENVIR</name><value>emc</value></envar>
     <envar><name>DATAROOT</name><value>&DATAROOT;</value></envar>
-    <envar><name>HOMEgfs</name><value>{metasched.varref(doc.schedvar.script_home)}</value></envar>
-    <envar><name>HOMEobsproc_network</name><value>{metasched.varref(doc.schedvar.obsproc_network_home)}</value></envar>
-    <envar><name>HOMEobsproc_global</name><value>{metasched.varref(doc.schedvar.obsproc_network_home)}</value></envar>
-    <envar><name>HOMEobsproc_prep</name><value>{metasched.varref(doc.schedvar.obsproc_prep_home)}</value></envar>
     <envar><name>job</name><value>{task_path_list[-1]}_<cyclestr>@H</cyclestr></value></envar>
     {rocoto_more_vars}
     {rocoto_platform_vars}
@@ -137,7 +133,7 @@ task_template: &task_template
   ecf_model_include: !FirstTrue
     - when: !calc doc.settings.nco_mode
       take: '%include <model_ver.h>'
-    - when: !calc doc.settings.use_nco_ecflow_headers
+    - when: !calc doc.settings.nco_mode
       take: |
         export NWROOT=%NWROOT%   # EMC override
         export DATAROOT=%DATAROOT% # EMC override
@@ -145,7 +141,7 @@ task_template: &task_template
     - otherwise: !calc ecf_experiment_overrides
 
   ecf_experiment_overrides: !FirstTrue
-    - when: !calc doc.settings.use_nco_ecflow_headers
+    - when: !calc doc.settings.nco_mode
       take: ''
     - otherwise: !expand "%include <experiment-{doc.names.experiment}.h>"
 
@@ -233,7 +229,6 @@ task_template: &task_template
         export CDUMP="$RUN"
         export ROTDIR="$COMROOT"
     - otherwise: !expand |
-        module load {doc.settings.ecflow_module}
         module list
         export ECF_PORT=%ECF_PORT%  # workaround for ecflow module bug
 
