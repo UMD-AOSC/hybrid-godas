@@ -1,10 +1,10 @@
 user_places: &user_places
-  PROJECT_DIR: /Users/jiankuang/Documents/Eclipse_workspace/
+  PROJECT_DIR: !error Please select a project directory.
 
 accounting: &accounting
   user_email: none
-  cpu_project: fv3-cpu
-  hpss_project: emc-global
+  cpu_project: !error Please select your cpu project
+  hpss_project: !error Please select your hpss project
   ecflow_header: envir-p3.h
   shared_partition: !calc doc.platform.partitions.default_shared
   exclusive_partition: !calc doc.platform.partitions.default_exclusive
