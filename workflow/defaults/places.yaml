@@ -1,5 +1,20 @@
 # This file sets default values for data and executable locations.
 # See the schema/places.yaml for details.
+#--------------------------------------------------------------------------------
+## Fixed directories. 
+##
+## These should be filled out automatically, the only one worth changing might be
+##  the WORK_DIR variable
+##
+## ROOT_DIR     : path to the root hybrid-godas directory containing all the 
+##                necessary scripts and executables to run the system
+## EXP_DIR      : path to the root directory for the current experiment, where
+##                all the experiment configuration and DA output files are stored
+## WORK_DIR     : A temporary directory used during the steps of a cycle. Once all
+##                the steps of a given cycle are complete, the output in WORK_DIR
+##                is removed automatically
+##--------------------------------------------------------------------------------
+#
 default_places: &default_places
   PROJECT_DIR: !error Please select a project directory.
   ROOT_GODAS_DIR: !calc ( tools.realpath(tools.abspath("../../")) ) 

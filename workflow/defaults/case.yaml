@@ -9,28 +9,18 @@ schedvar: !Immediate
     - !calc doc.case.get('schedvar',{})
     - !calc doc.get('schedvar_defaults',{})
 
-mom_output_settings: !Immediate
+da_settings: !Immediate
   - !MergeMapping
-    - 0
-#    - !calc doc.gfs_output_settings_defaults
-#    - !calc doc.case.get('gfs_output_settings',{})
-#    - !calc doc.get('user_gfs_output_settings',{})
-
-data_assimilation: !Immediate
-  - !MergeMapping
-    - 0
-#    - !calc doc.case.get('data_assimilation',{})
-#    - !calc doc.get('user_data_assimilation',{})
+    - !calc doc.da_settings_default
+    - !calc doc.case.get('da_settings',{})
   
 post: !Immediate
   - !MergeMapping
-    - 0
-#    - !calc doc.case.get('post',{})
-#    - !calc doc.get('user_post',{})
+    - !calc doc.post_defaults
+    - !calc doc.case.get('post',{})
 
 places: !Immediate
   - !MergeMapping
-    - 0
     - !calc doc.default_places
     - !calc doc.case.get('places',{})
     - !calc doc.user_places
@@ -46,8 +36,7 @@ settings: !Immediate
 #    - !calc doc.get('user_settings',{})
 
 validate_me:
-  - mom_output_settings
-  - data_assimilation
+  - da_settings
   - post
   - settings
   - places

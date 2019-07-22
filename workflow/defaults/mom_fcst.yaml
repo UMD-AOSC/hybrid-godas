@@ -1,1 +1,67 @@
 #place holder for default settings of mom6 forecast
+#--------------------------------------------------------------------------------
+## Surface forcing files.
+##
+## The forcing files are generated from a set of preprocessed files combining
+##  a high resolution mean forcing, perturbations from a lower resolution ensemble
+##  and a climatological correction. The ensemble perturbations are obviously only
+##  used when doing an ensemble run.
+##
+## NOTE: the paths listed below provide a template to locate the files fore a 
+##  given date. Use the %Y, %m, %d placeholders to subsitute the desired year,
+##  month, day, into the path name.
+##
+## NOTE: you can also use the '#var#' and '#mem2#' place holders to fill in for
+##  the forcing variable, and 2 digit ensemble number.
+##
+## Mean forcing
+## ------------------------------
+##  FORC_VAR        : a list of all variables that are to be prepared for a given
+##                    forecast run
+##  FORC_MEAN_FILE  : a path to the mean forcing files containing the variables
+##                    given in FORC_VAR
+##  FORC_VAR_POS    : a list of the variables that are to be kept positive. During
+##                    the generation of the ensemble files, perturbations added 
+##                    might result in negative values, which is bad for some fields.
+##  FORC_RUNOFF_CLIM : river runoff monthly climatology file
+##
+##
+## Ensemble perturbations
+## ------------------------------
+##  FORC_ENS_FILE   : a path to the ensemble forcing files from which
+##                    perturbations are obtained to addto the FORC_MEAN_FILE files
+##  FORC_VAR_ENS    : a list of the variables that are to have ensemble
+##                    perturbations added to them. If a variable is in FORC_VAR
+##                    but not in FORC_VAR_ENS, each ensemble member will have an
+##                    identical copy of the field from FORC_MEAN_FILE
+##  FORC_RUNOFF_PERTURB : if not =1, random ensemble perturbations with be
+##                    generated based on the variance in the FORC_RUNOFF_VAR file
+##  FORC_RUNOFF_VAR : climatological variance of the river runoff
+##
+##
+## Climatological bias correction
+## ------------------------------
+##  FORC_CORR       : if =1, a monthly climatology bias correction will be added
+##                    to the fields specified by FORC_CORR_ADD and FORC_CORR_MUL
+##  FORC_CORR_DIR   : the path to the bias correction climatologies
+##  FORC_CORR_ADD   : A comma separated list of variables which have an additive
+##                    correction applied from the bias correction files
+##  FORC_CORR_MUL   : A comma separated list of variables which have a
+##                    multiplicative correction applied from the bias correction
+##                    files
+##--------------------------------------------------------------------------------
+#
+
+forc_settings: &forc_settings
+  FORC_MEAN_FILE:      !expand "{ROOT_DIR}/DATA/fluxes/cfsr.6hr/%Y/%Y%m%d/cfsr.%Y%m%d.'#var#'.nc"
+  FORC_VAR:            "PRATE,SLP,TMP.2m,SPFH.2m,UGRD.10m,VGRD.10m,DLWRF.sfc,DSWRF.sfc"
+  FORC_VAR_POS:        "PRATE,SPFH.2m,DLWRF.sfc,DSWRF.sfc"
+  FORC_ENS_FILE:       !expand "{ROOT_DIR}/DATA/fluxes/20CRv2c.6hr/%Y/%Y%m%d/'#mem2#'/20cr.%Y%m%d.'#var#'.nc"
+  FORC_VAR_ENS:        "PRATE,TMP.2m,SPFH.2m,UGRD.10m,VGRD.10m,DLWRF.sfc,DSWRF.sfc"
+  FORC_CORR:           1
+  FORC_CORR_DIR:       !expand "{ROOT_DIR}/DATA/fluxes/bias.cfsr_dfs52"
+  FORC_CORR_ADD:       "UGRD.10m,VGRD.10m"
+  FORC_CORR_MUL:       "PRATE,DLWRF.sfc,DSWRF.sfc"
+  FORC_RUNOFF_PERTURB: 1
+  FORC_RUNOFF_CLIM:    !expand "{ROOT_DIR}/DATA/fluxes/runoff/runoff.daitren.v20180328.clim.nc"
+  FORC_RUNOFF_VAR:     !expand "{ROOT_DIR}/DATA/fluxes/runoff/runoff.daitren.v20180328.var.nc"

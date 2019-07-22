@@ -1,1 +1,44 @@
 # observations
+#
+#--------------------------------------------------------------------------------
+## MOM6 File I/O formats
+##
+## NOTE: this whole section will likely be removed once the workflow is cleaned
+##  up some more.
+##
+## FCST_IO_PROC  : number of processors that the MOM6 I/O is done on.
+## FCST_IO_MISS  : due to the MOM6 masking, some I/O procs will not save any 
+##                 output files if entirely on land.
+##                 TODO: I think this can already be safely removed?
+##--------------------------------------------------------------------------------
+
+fcst_settings: &fcst_settings
+  FCST_IO_PROC: 36
+  FCST_IO_MISS: "0024"
+
+#--------------------------------------------------------------------------------
+## Observation files
+##
+## NOTE: the paths listed below provide a template to locate the files fore a 
+##  given date. Use the %Y, %m, %d placeholders to subsitute the desired year,
+##  month, day, into the path name.
+##
+## OBS_ERR_ON_MISS  : if =1, the scripts throw an error if the observation file
+##                    for a single date is not found. Otherwise just a warning is
+##                    given. Useful to leave at 0 for now if, for example, there
+##                    are some days missing SST data.
+## OBS_USE_SST      : if =1, use the SST data pointed to by OBS_SST
+## OBS_SST          : a path to the preprocessed SST observation files
+## OBS_USE_PROF     : if =1, use the T/S insitu profiles pointed to by OBS_PROF_T
+##                    and OBS_PROF_S
+## OBS_PROF       : a path to the insitu temperature/salinity profile observations
+##--------------------------------------------------------------------------------
+
+obs_settings: &obs_settings
+  OBS_ERR_ON_MISS: 0
+  OBS_USE_PROF:    1
+  OBS_USE_SST:     1
+  OBS_USE_ADT:     1
+  OBS_PROF:        !expand "{D}ROOT_DIR/DATA/obs/profile_wod18/%Y/%Y%m%d.nc"
+  OBS_SST:         !expand "{D}ROOT_DIR/DATA/obs/sst_acspo_avhrr/%Y/%Y%m/%Y%m%d.nc"
+  OBS_ADT:         !expand "{D}ROOT_DIR/DATA/obs/rads_adt/%Y/%Y%m%d/"
