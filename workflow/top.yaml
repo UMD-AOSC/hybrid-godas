@@ -7,16 +7,6 @@ schedvar: !Immediate
   - !MergeMapping
     - !calc doc.case.get('schedvar',{})
 
-da_settings: !Immediate
-  - !MergeMapping
-    - !calc doc.da_settings_default
-    - !calc doc.case.get('da_settings',{})
-  
-post: !Immediate
-  - !MergeMapping
-    - !calc doc.post_defaults
-    - !calc doc.case.get('post',{})
-
 places: !Immediate
   - !MergeMapping
     - !calc doc.default_places
@@ -34,8 +24,6 @@ settings: !Immediate
 #    - !calc doc.get('user_settings',{})
 
 validate_me:
-  - da_settings
-  - post
   - settings
   - places
   - schedvar

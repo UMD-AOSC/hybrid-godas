@@ -9,7 +9,6 @@
 include:
   - names.yaml
   - platform.yaml
-  - 'static*yaml'
   - defaults/
   - case.yaml
   - runtime/

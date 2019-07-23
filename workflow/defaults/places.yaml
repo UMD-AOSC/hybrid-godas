@@ -27,3 +27,13 @@ default_places: &default_places
 #  LONG_TERM_TEMP:  !error GOT HERE TOO
   YAMLDIR: !calc EXPDIR
   rocoto_workflow_xml: !expand '{YAMLDIR}/workflow.xml'
+
+## initial_directory: location from which the setup script was run.
+## HOMEgfs: top level of the installation area (directory above ush,
+## jobs, ecf)
+
+static_locations:
+  HOMEgodas: !Immediate
+    - !calc ( tools.realpath(tools.abspath("../../")) )
+  initial_directory: !Immediate
+    - !calc ( tools.realpath(tools.abspath('.')) )
