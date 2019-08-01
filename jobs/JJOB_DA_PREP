@@ -1,13 +1,44 @@
 #!/bin/bash
 set -e
-cat << \#\#
 
 #================================================================================
 #================================================================================
-# Prep SOCA-3DVAR
+# Prep SOCA-DA
+
+module use -a /contrib/da/modulefiles
+module load jedi
+module load nco
 
 # HARDCODED !!!
-cd /scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/workflowrun/test001
+MODEL_SCRATCH=/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/mom6-cice5-fv3/test-initcice5/
+SOCA_STATIC=/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/soca-static/1440x1080x75/
+SOCA_OBS=/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/staged-obs/
+RUNDIR=/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/workflowrun/test001/
 
-# Copy static
+cd $RUNDIR
+
+# Copy static files into RUNDIR
+#------------------------------
+cp -r $SOCA_STATIC/* .
+
+# Prepare observations
+#---------------------
+mkdir Data
+ln -s $SOCA_OBS/sst-2011100112.nc ./Data/sst.nc
+ln -s $SOCA_OBS/adt-2011100112.nc ./Data/adt.nc
+ln -s $SOCA_OBS/icec-2011100112.nc ./Data/icec.nc
+
+# Ocean bkg files
+#----------------
+ln -s $MODEL_SCRATCH/INPUT/MOM.res*.nc ./INPUT_MOM6/
+
+# Sea-ice bkg files
+#------------------
+# Get bkg sea-ice file. TODO: DATE IS HARDCODED!!!!
+cp $MODEL_SCRATCH/restart/iced.2011-10-01-43200.nc ./INPUT_MOM6/cice_bkg.nc  
+# Make cice_bkg.nc fms compliant
+ncks -O -C -v aicen,vicen,vsnon ./INPUT_MOM6/cice_bkg.nc ./INPUT_MOM6/cice_bkg.nc
+ncrename -O -d ni,xaxis_1 -d nj,yaxis_1 -d ncat,zaxis_1 ./INPUT_MOM6/cice_bkg.nc
+ncecat -O -v aicen,vicen,vsnon -u Time ./INPUT_MOM6/cice_bkg.nc ./INPUT_MOM6/cice_bkg.nc
+ncks -A -v Time,xaxis_1,yaxis_1,zaxis_1 ./INPUT_MOM6/ice_model.res.nc ./INPUT_MOM6/cice_bkg.nc
 

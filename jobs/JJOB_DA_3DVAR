@@ -1,2 +1,18 @@
 #!/bin/bash
-echo "3D Var section J_JOB script here"
+set -e
+
+#================================================================================
+#================================================================================
+# Run SOCA 3DVAR
+
+module use -a /contrib/da/modulefiles
+module load jedi
+module load nco
+
+SOCA_EXEC=/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/soca-bundle/build/bin/
+RUNDIR=/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/workflowrun/test001/
+
+cd $RUNDIR
+#srun -n 312 $SOCA_EXEC/soca_3dvar.x ./yaml/3dvar_godas.yml
+
+

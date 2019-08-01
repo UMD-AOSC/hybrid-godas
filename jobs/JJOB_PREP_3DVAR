@@ -1,2 +1,20 @@
 #!/bin/bash
-echo "PREP 3D VAR J_JOB script"
+set -e
+
+#================================================================================
+#================================================================================
+# Prep SOCA Static B
+
+module use -a /contrib/da/modulefiles
+module load jedi
+module load nco
+
+SOCA_EXEC=/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/soca-bundle/build/bin/
+RUNDIR=/scratch4/NCEPDEV/ocean/scrub/Guillaume.Vernieres/JEDI/soca/workflowrun/test001/
+
+cd $RUNDIR
+
+echo $SOCA_EXEC
+# Create BUMP convolution operator
+mkdir bump
+#srun -n 312 $SOCA_EXEC/soca_staticbinit.x ./yaml/static_SocaError_init.yml
