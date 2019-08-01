@@ -3,37 +3,37 @@ suite: !Cycle
       fcst_prep: !Task
         <<: *shared_task_template
         resources: !calc partition.resources.run_nothing
-        config: [ base.yaml, prep.yaml ]
-        J_JOB: J_FCST_PREP
+        config: [ base ]
+        J_JOB: JJOB_FCST_PREP
 
       fcst_run: !Task
         <<: *exclusive_task_template
         Trigger: !Depend  fcst_prep & ( da_3dvar_run.at('-6:00:00') | ~ suite.has_cycle('-6:00:00') )
         resources: !calc partition.resources.run_nothing
-        config: [ base.yaml, fcst.yaml ]
-        J_JOB: J_FCST_RUN
+        config: [ base ]
+        J_JOB: JJOB_FORECAST
 
       da_prep: !Task
         <<: *shared_task_template
         Trigger: !Depend  fcst_run
         resources: !calc partition.resources.run_nothing
-        config: [ base.yaml, da.yaml ]
-        J_JOB: J_DA_PREP
+        config: [ base ]
+        J_JOB: JJOB_DA_PREP
 
       da_3dvar_run: !Task
         <<: *exclusive_task_template
         Trigger: !Depend  da_prep
         resources: !calc partition.resources.run_nothing
-        config: [ base.yaml, da.yaml ]
-        J_JOB: J_3DVAR_RUN
+        config: [ base ]
+        J_JOB: JJOB_DA_3DVAR
 
       post: !Task
         <<: *shared_task_template
         Trigger: !Depend  da_3dvar_run
         resources: !calc partition.resources.run_nothing
 #        rocoto_command: "echo post"
-        config: [ base.yaml, post.yaml ]
-        J_JOB: J_POST
+        config: [ base ]
+        J_JOB: JJOB_POST
 
       final: !Task
         <<: *service_task_template
