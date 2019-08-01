@@ -1,7 +1,7 @@
 case:
   settings:
     SDATE: 2016-02-10t00:00:00
-    EDATE: 2016-02-12t00:00:00
+    EDATE: 2016-02-10t00:00:00
     da_cyc: 24 # run gfs every cycle
 
   places:
