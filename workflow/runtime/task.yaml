@@ -31,7 +31,6 @@ task_template: &task_template
   # rocoto_command - command rocoto executes to pass control to the
   # j-job (jobs/ directory) for this task.
   rocoto_command: !expand >-
-     {rocoto_load_modules} ;
      {rocoto_config_source} ;
      {J_JOB_PATH}/{J_JOB}
 
