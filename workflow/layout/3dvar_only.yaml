@@ -2,35 +2,40 @@ suite: !Cycle
       <<: *suite_defaults
       fcst_prep: !Task
         <<: *shared_task_template
-        resources: !calc partition.resources.run_dwn
+        resources: !calc partition.resources.run_nothing
+        rocoto_command: "echo fcst_prep"
         config: [ base.yaml, prep.yaml ]
         J_JOB: J_FCST_PREP
 
       fcst_run: !Task
         <<: *exclusive_task_template
         Trigger: !Depend  fcst_prep & da_3dvar_run.at('-6:00:00')
-        resources: !calc partition.resources.run_dwn
+        resources: !calc partition.resources.run_nothing
+        rocoto_command: "echo fcst_run"
         config: [ base.yaml, fcst.yaml ]
         J_JOB: J_FCST_RUN
 
       da_prep: !Task
         <<: *shared_task_template
         Trigger: !Depend  fcst_run
-        resources: !calc partition.resources.run_dwn
+        resources: !calc partition.resources.run_nothing
+        rocoto_command: "echo da_prep"
         config: [ base.yaml, da.yaml ]
         J_JOB: J_DA_PREP
 
       da_3dvar_run: !Task
         <<: *exclusive_task_template
         Trigger: !Depend  da_prep
-        resources: !calc partition.resources.run_dwn
+        resources: !calc partition.resources.run_nothing
+        rocoto_command: "echo da_3dvar_run"
         config: [ base.yaml, da.yaml ]
         J_JOB: J_3DVAR_RUN
 
       post: !Task
         <<: *shared_task_template
         Trigger: !Depend  da_3dvar_run
-        resources: !calc partition.resources.run_dwn
+        resources: !calc partition.resources.run_nothing
+        rocoto_command: "echo post"
         config: [ base.yaml, post.yaml ]
         J_JOB: J_POST
 
@@ -38,6 +43,7 @@ suite: !Cycle
         <<: *service_task_template
         Disable: !calc not metasched.type=="rocoto"
         resources: !calc partition.resources.run_nothing
+        rocoto_command: "echo final"
         rocoto_command: /bin/true
         RUN: gfs # useless but required
 
