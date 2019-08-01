@@ -9,7 +9,7 @@ suite: !Cycle
 
       fcst_run: !Task
         <<: *exclusive_task_template
-        Trigger: !Depend  fcst_prep & da_3dvar_run.at('-6:00:00')
+        Trigger: !Depend  fcst_prep & ( da_3dvar_run.at('-6:00:00') | ~ suite.has_cycle('-6:00:00') )
         resources: !calc partition.resources.run_nothing
         rocoto_command: "echo fcst_run"
         config: [ base.yaml, fcst.yaml ]
