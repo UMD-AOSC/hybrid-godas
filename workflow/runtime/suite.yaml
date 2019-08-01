@@ -20,6 +20,8 @@ suite_defaults: &suite_defaults
         <!ENTITY CYCLE_THROTTLE "{doc.settings.rocoto_cycle_throttle}">
         <!ENTITY MAX_TRIES "{doc.settings.max_job_tries}">
         <!ENTITY EXPDIR "{doc.places.EXPDIR}">
+        <!ENTITY DATAROOT "{doc.places.DATAROOT}">
+        <!ENTITY LOG_DIR "{doc.places.LOG_DIR}">
         <!ENTITY COM "{doc.places.ROTDIR}">
         <!ENTITY ENS_LIST_DA "{doc.settings.fcst_hours}">
         <!ENTITY ENS_LIST_DA "{doc.settings.da_hours}">

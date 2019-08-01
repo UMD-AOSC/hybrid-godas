@@ -20,7 +20,9 @@ default_places: &default_places
   ROOT_GODAS_DIR: !calc ( tools.realpath(tools.abspath("../../")) ) 
   HOMEcrow:    !calc tools.crow_install_dir()
   EXPDIR :     !expand '{PROJECT_DIR}/{doc.names.experiment}'
+  LOG_DIR:     !expand "{EXPDIR}/log"
   ROTDIR: !expand "{LONG_TERM_TEMP}/comrot/{doc.names.experiment}"
+  DATAROOT:    !expand "{SHORT_TERM_TEMP}/RUNDIR/{doc.names.experiment}"
   SHORT_TERM_TEMP: !calc doc.platform.short_term_temp
   LONG_TERM_TEMP:  !calc doc.platform.long_term_temp
 #  SHORT_TERM_TEMP: !error GOT HERE
