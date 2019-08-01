@@ -22,6 +22,7 @@ default_places: &default_places
   EXPDIR :     !expand '{PROJECT_DIR}/{doc.names.experiment}'
   LOG_DIR:     !expand "{EXPDIR}/log"
   ROTDIR: !expand "{LONG_TERM_TEMP}/comrot/{doc.names.experiment}"
+  ICSDIR: !expand "{LONG_TERM_TEMP}" 
   DATAROOT:    !expand "{SHORT_TERM_TEMP}/RUNDIR/{doc.names.experiment}"
   SHORT_TERM_TEMP: !calc doc.platform.short_term_temp
   LONG_TERM_TEMP:  !calc doc.platform.long_term_temp
