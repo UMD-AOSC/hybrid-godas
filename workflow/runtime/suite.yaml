@@ -5,7 +5,7 @@ suite_defaults: &suite_defaults
   Clock: !Clock
     start: !calc doc.settings.SDATE
     end: !calc doc.settings.EDATE
-    step: !timedelta "6:00:00"
+    step: !timedelta "24:00:00"
 
   # Rocoto - contains settings specific to Rocoto workflow generation
   Rocoto: &Rocoto

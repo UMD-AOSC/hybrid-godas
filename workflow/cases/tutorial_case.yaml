@@ -1,13 +1,8 @@
 case:
   settings:
-    CASE: C192
-    LEVS: 65
     SDATE: 2016-02-10t00:00:00
     EDATE: 2016-02-12t00:00:00
-    DUMP_SUFFIX: "p"
-    run_gsi: No
-    chgres_and_convert_ics: No
-    gfs_cyc: 4 # run gfs every cycle
+    da_cyc: 24 # run gfs every cycle
 
   places:
     workflow_file: layout/3dvar_only.yaml
