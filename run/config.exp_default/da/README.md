@@ -1,1 +1,0 @@
-configuration files needed by the data assimilation programs (`3dvar`, `bgvar`,`letkf`,`obsop`,`obsprep_*`,`vtloc`)
