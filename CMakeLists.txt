@@ -6,7 +6,7 @@ project(HybridGODAS C Fortran)
 find_package(Git)
 option(GIT_SUBMODULE "Check submodules during build" OFF)
 if(GIT_SUBMODULE)
-  message(STATUS "updating git submodules...")	
+  message(STATUS "updating git submodules...")
   execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     RESULT_VARIABLE GIT_SUBMOD_RESULT)
@@ -25,6 +25,11 @@ IF(NOT ${RES} EQUAL "0")
   SET(GIT_VERSION "Unknown")
 ENDIF()
 
+# set output directories for the build
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/mod)
 
 # external libraries
 #------------------------------------------------------------

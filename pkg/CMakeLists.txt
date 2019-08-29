@@ -1,8 +1,3 @@
-
-add_subdirectory(UMD-LETKF)
-add_subdirectory(godas-3dvar)
-add_subdirectory(model)
-
 # datetime module for fortran
 add_subdirectory(datetime-fortran)
 set(datetime_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/datetime-fortran/include
@@ -29,3 +24,9 @@ set(geokdtree_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/geokdtree
   CACHE INTERNAL "geokdtree include directories for modules" FORCE)
 set(geokdtree_LIBRARIES geokdtree
   CACHE INTERNAL "geoKdTree library" FORCE)
+
+
+# other packages that are already properly cmake enabled
+add_subdirectory(UMD-LETKF)
+add_subdirectory(godas-3dvar)
+add_subdirectory(model)
