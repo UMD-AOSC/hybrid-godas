@@ -1,3 +1,7 @@
+[![docs](https://readthedocs.org/projects/hybrid-godas/badge/?version=latest)](http://hybrid-godas.readthedocs.io)
+
+For complete set of documentation, visit [hybrid-godas.readthedocs.io](http://hybrid-godas.readthedocs.io/).
+
 # hybrid-godas
 This repository provides the code and configuration for the hybrid global ocean data assimilation system (hybrid-GODAS) being developed by NCEP/UMD.
 
