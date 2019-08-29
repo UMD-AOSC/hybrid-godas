@@ -12,7 +12,6 @@ program obsop
   implicit none
 
   ! read in from namelist
-  character(len=:), allocatable :: statefile
   integer :: obid_adt = 2100
   integer :: obid_t   = 2210
   integer :: obid_pt  = 2211
@@ -22,24 +21,29 @@ program obsop
 
   ! read in from command line
   character(len=1024) :: obsfile
+  character(len=1024) :: statefile
   character(len=1024) :: outfile
   
   character(len=1024) :: nml_file
+  character(len=1024) :: str1, str2
+
 
   type(datetime) :: basedate
   type(observation), allocatable :: obs(:)
   real, allocatable :: obs_inc(:)
   type(obsio_nc) :: obsio
 
-  integer :: i, bad_val, bad_inc, bad_err, bad_land, num
-  integer :: x, y, z
+  integer :: decomp_x(4), decomp_y(4), dims(4)
+  integer :: i, bad_val, bad_inc, bad_err, bad_land, num, n, args, j
+  integer :: x, y, z, ierr
   integer :: btm
   integer :: prev_x, prev_y
   real :: s, pt, v
   integer :: unit
 
   type(cspline) :: spline_t, spline_s
-  real, allocatable :: state_t(:,:,:), state_s(:,:,:), state_sst(:,:), state_ssh(:,:)
+  real, allocatable :: state_t(:,:,:), state_s(:,:,:), state_sst(:,:), state_ssh(:,:), state_valid(:,:)
+  real, allocatable :: tmp3d(:,:,:), tmp2d(:,:)
   integer :: ncid, vid
 
   logical :: has_ssh
@@ -52,37 +56,35 @@ program obsop
 #define CTIME "Unknown"
 #endif
 
-  namelist /obsop_nml/ statefile, obid_t, obid_pt, obid_s, obid_adt, lat_bounds, rm_adt_mean_inc
+  namelist /obsop_nml/ obid_t, obid_pt, obid_s, obid_adt, lat_bounds, rm_adt_mean_inc
 
   
   print *, "------------------------------------------------------------"
-  print *, " Ocean observation operaetor, for standard variables"
+  print *, " Ocean observation operator, for standard variables"
   print *, " (T,Pt,S,U,V)"
   print *, ""
   print *, " version:  ", CVERSION
-  print *, " compiled: ", CTIME
   print *, "------------------------------------------------------------"
   
   
   nml_file = "obsprep.nml"
   
   ! read command line arguments
-  i = command_argument_count()
-  if (i/=2) then
-     print *, 'ERROR: command line arguments'
+  args = command_argument_count()
+  if (args < 3) then
+     print *, 'ERROR, usage: obsop <input_obs> <input_state(s)> <output_obs>'
      stop 1
   end if
   call get_command_argument(1, value=obsfile)
-  call get_command_argument(2, value=outfile)
+  call get_command_argument(args, value=outfile)
+
   print *, "In:  ", trim(obsfile)
   print *, "Out: ", trim(outfile)
 
   ! read the namelist
-  allocate(character(len=1024) :: statefile)
   open(newunit=unit, file=nml_file)
   read(unit, obsop_nml)
   close(unit)
-  statefile=trim(statefile)
   print *, ""
   print obsop_nml
   print *, ""
@@ -90,47 +92,99 @@ program obsop
   ! read in the grid
   call grid_init(nml_file)
 
-  ! read in the model state
+
+
+  ! read in the model state(s)
   !------------------------------------------------------------
-  call check(nf90_open(statefile, nf90_nowrite, ncid))
-
-  ! temperature
   allocate(state_t(grid_nx, grid_ny, grid_nz))
-  print *, "Reading state TEMP..."
-  call check(nf90_inq_varid(ncid, "Temp", vid))
-  call check(nf90_get_var(ncid, vid, state_t))
-
-  ! salinity
   allocate(state_s(grid_nx, grid_ny, grid_nz))
-  print *, "Reading state SALT..."
-  call check(nf90_inq_varid(ncid, "Salt", vid))
-  call check(nf90_get_var(ncid, vid, state_s))
-
-  ! TODO, modify this for hourly SST data
-  ! SST
   allocate(state_sst(grid_nx, grid_ny))
-  print *, "Reading state SST..."
-  i =nf90_inq_varid(ncid, "SST_min", vid)
-  if (i /= NF90_NOERR) then
-     print *, " WARNING: no SST  variable found, using top level of Temp"
-     state_sst=state_t(:,:,1)
-  else
-     call check(nf90_get_var(ncid, vid, state_sst))
+  allocate(state_ssh(grid_nx, grid_ny))
+  allocate(state_valid(grid_nx, grid_ny))
+
+  state_valid=0.0
+
+  do i =2,args-1
+     call get_command_argument(i, value=statefile)
+     call check(nf90_open(statefile, nf90_nowrite, ncid))
+
+     ! find the x/y dimensions
+     call check(nf90_inq_varid(ncid, "Temp", vid))
+     call check(nf90_inquire_variable(ncid, vid, dimids=dims))
+     call check(nf90_inquire_dimension(ncid, dims(1), name=str1))
+     call check(nf90_inquire_dimension(ncid, dims(2), name=str2))
+     if (i==2) THEN
+        print *, ""
+        print *, "X dimension: ", TRIM(str1)
+        print *, "Y dimension: ", TRIM(str2)
+        print *, ""
+     end if
+
+
+     ! is this a decomposed grid?
+     decomp_x=(/1,grid_nx,1,grid_nx/)
+     decomp_y=(/1,grid_ny,1,grid_ny/)
+     call check(nf90_inq_varid(ncid, str1, vid))
+     ierr=nf90_inquire_attribute(ncid, vid, "domain_decomposition", attnum=j)
+     if(j > 0) then
+        call check(nf90_get_att(ncid, vid, "domain_decomposition", decomp_x))
+     end if
+     call check(nf90_inq_varid(ncid, str2, vid))
+     ierr=nf90_inquire_attribute(ncid, vid, "domain_decomposition", attnum=j)
+     if(j > 0) then
+        call check(nf90_get_att(ncid, vid, "domain_decomposition", decomp_y))
+     end if
+
+     allocate(tmp3d(decomp_x(4)-decomp_x(3)+1, decomp_y(4)-decomp_y(3)+1, grid_nz))
+     allocate(tmp2d(decomp_x(4)-decomp_x(3)+1, decomp_y(4)-decomp_y(3)+1))
+     state_valid(decomp_x(3):decomp_x(4), decomp_y(3):decomp_y(4)) = 1.0
+     
+
+     ! read state variables
+     call check(nf90_inq_varid(ncid, "Temp", vid))
+     call check(nf90_get_var(ncid, vid, tmp3d))
+     state_t(decomp_x(3):decomp_x(4), decomp_y(3):decomp_y(4), :) = tmp3d
+
+     call check(nf90_inq_varid(ncid, "Salt", vid))
+     call check(nf90_get_var(ncid, vid, tmp3d))
+     state_s(decomp_x(3):decomp_x(4), decomp_y(3):decomp_y(4), :) = tmp3d
+
+     j=nf90_inq_varid(ncid, "SST_min", vid)
+     if (j /= NF90_NOERR) then
+        if(i==2) then
+           print *, " WARNING: no SST  variable found, using top level of Temp"
+        end if
+        state_sst(decomp_x(3):decomp_x(4), decomp_y(3):decomp_y(4))=&
+             state_t(decomp_x(3):decomp_x(4), decomp_y(3):decomp_y(4),1)
+     else
+        call check(nf90_get_var(ncid, vid, tmp2d))
+        state_sst(decomp_x(3):decomp_x(4), decomp_y(3):decomp_y(4)) = tmp2d
+     end if
+
+     j = nf90_inq_varid(ncid, "SSH", vid)
+     has_ssh = j == NF90_NOERR
+     if (.not. has_ssh) then
+        if(i==2) then
+           print *, "WARNING: no SSH variable found, marking all SSH obs as bad"
+        end if
+     else
+        call check(nf90_get_var(ncid, vid, tmp2d))
+        state_ssh(decomp_x(3):decomp_x(4), decomp_y(3):decomp_y(4)) = tmp2d
+     end if
+
+
+     ! cleanup
+     call check(nf90_close(ncid))
+     deallocate(tmp3d)
+     deallocate(tmp2d)
+  end do
+
+  if(minval(state_valid) == 0.0) then
+     print *, ""
+     print *, "WARNING: there are gridpoints that were not read in. If reading tiled files, make sure all filenames were given."
   end if
 
-  ! SSH
-  print *, "reading state SSH..."
-  i = nf90_inq_varid(ncid, "SSH", vid)
-  has_ssh = i == NF90_NOERR
-  if (.not. has_ssh) then
-     print *, "WARNING: no SSH variable found, marking all SSH obs as bad"
-  else
-     allocate(state_ssh(grid_nx, grid_ny))
-     call check(nf90_inq_varid(ncid, "SSH", vid))
-     call check(nf90_get_var(ncid, vid, state_ssh))
-  end if
 
-  call check(nf90_close(ncid))
 
   !------------------------------------------------------------
 
@@ -141,6 +195,7 @@ program obsop
 
 
   ! process each observation
+  obs_inc=0
   bad_land=0
   bad_val=0
   bad_err=0
@@ -197,8 +252,10 @@ program obsop
            spline_t = cspline(grid_depths(:btm), state_t(x,y,:btm))
            spline_s = cspline(grid_depths(:btm), state_s(x,y,:btm))
         end if
+
         if (obs(i)%dpth > grid_depths(btm)) then
            bad_land = bad_land+1
+           obs(i)%err = 0
            obs(i)%qc = 1
            cycle
         end if

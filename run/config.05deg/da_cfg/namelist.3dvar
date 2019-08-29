@@ -1,0 +1,139 @@
+!================================================================================
+! MOM6 GODAS-3DVar namelist
+! For godas programs (3dvar, bgvar, vtloc)
+!================================================================================
+
+
+
+!--------------------------------------------------------------------------------
+! g3dv_grid  : Grid dimensions
+!--------------------------------------------------------------------------------
+&g3dv_grid
+  grid_nx = 720
+  grid_ny = 576
+  grid_nz = 75
+/
+
+
+
+!--------------------------------------------------------------------------------
+! g3dv_obs  : Observations
+!--------------------------------------------------------------------------------
+&g3dv_obs
+  ! single obs tests
+  test_obs = .false.
+  test_obs_max  = 20
+
+  ioclass = "OBSIO_NC"
+  obsfile = "obs.nc"
+  
+  depth_max = -1
+  use_t = T
+  use_s = T
+
+  qc_max = 10.0
+  inc_max_t = 5.0
+  inc_max_s = 2.0
+  obs_block_dx = 15
+  obs_block_dy = 15
+
+  obs_id_t = 2210
+  obs_id_s = 2220
+/
+
+
+
+!--------------------------------------------------------------------------------
+! g3dv_solver : PCG Solver
+! 
+! * maxitr = maximum number of iterations of the solver 
+! * conv_ratio = the ratio of the inital gradient norm to current
+!       gradient norm at which the solver terminates
+!--------------------------------------------------------------------------------
+&g3dv_solver
+  maxitr = 10
+  conv_ratio = 1e2
+/
+
+
+
+!--------------------------------------------------------------------------------
+! g3dv_hzloc  : horizontal localization distances
+!
+! * hz_loc  : the maximum and minimum horizontal localization distance in meters
+! * hz_loc_scale  : 
+!--------------------------------------------------------------------------------
+&g3dv_hzcor
+  ! horizontal localization distance
+!  hz_loc = 350e3, 50e3
+!  hz_loc_scale = 1.5
+!  hz_loc_c = 2.7 
+/
+
+
+!--------------------------------------------------------------------------------
+! vtloc_nml : Vertical localization parameterization
+!
+! * rho_delta : 
+! * mld_only  : if true, the density based length scales are done only for the mixed
+!       layer, with values below the mixed layer simply set to the layer thickness
+! * vtloc_min : minimum vertical correlation length (meters)
+! * vtloc_max : maximum vertical correlation length (meters)
+! * gauss_iter : number of iterations of the horizontal recursive filter. The 
+!       resulting fields will be smoothed with length scales given by &g3dv_hzloc 
+!--------------------------------------------------------------------------------
+&g3dv_vtcor
+  rho_delta = 0.025
+  vtcor_min= 1.0
+  vtcor_max = 250.0
+!  mld_only=T
+/
+
+
+!--------------------------------------------------------------------------------
+! g3dv_bgcov : background error covariance
+!
+! * time_loc  : scale length for temporal localization (hours) as difference of
+!        observations from the analysis time
+! * tnsr_surf  : localization scale length for the surface based tensor
+!       (ssh field by default, with units in meters)
+! * tnsr_coast_dist  : localization scale length (meters) for distance-from-coast tensor.
+!       Does not affect observations in open ocean, causes observations near 
+!       coast to be spread along coastline.
+! * bgvar_t  : global background error temperature variance (K), if <= 0 the variance 
+!       is read in from the "bgvar_t" field in the datatable. (Default: -1)
+! * bgvar_s  : global background error salinity variance (K), if <= 0 the variance 
+!       is read in from the "bgvar_s" field in the datatable. (Default: -1)
+! * vt_loc_diff_scale : 
+!--------------------------------------------------------------------------------
+&g3dv_bgcov
+  gauss_iter=2
+  time_loc = 120.0
+
+  tnsr_surf  = 0.05
+  tnsr_coast_dist = 75e3
+!  tnsr_coast_min  = 0.3
+
+!  bgvar_t = 0.8
+!  bgvar_s = 0.25
+
+  vt_loc_diff_scale=-1 !0.5
+
+  ! T depth based variance 
+  t_varmin_len = 500.0
+  t_varmax     = 1.8
+  t_varmin_do  = 0.1
+  t_varmin_surf_const = 0.5
+  t_dz = 20.0
+
+  ! S depth based variance 
+  s_varmin_len= 250.0
+  s_varmax    = 0.25
+  s_varmin_do = 0.02
+  s_varmin_surf_const = 0.3
+  s_dz = 2.5
+
+/
+
+
+

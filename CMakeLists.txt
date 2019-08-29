@@ -4,7 +4,7 @@ project(HybridGODAS C Fortran)
 
 # update the git submodules
 find_package(Git)
-option(GIT_SUBMODULE "Check submodules during build" ON)
+option(GIT_SUBMODULE "Check submodules during build" OFF)
 if(GIT_SUBMODULE)
   message(STATUS "updating git submodules...")	
   execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive

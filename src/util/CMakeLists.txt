@@ -8,43 +8,15 @@ add_definitions(-DCVERSION=\"${GIT_VERSION}\")
 FIND_PACKAGE( OpenMP REQUIRED)
 include_directories(${NETCDF_INCLUDE_DIRS})
 
-
-# ------------------------------
-# common objects
+#-------------------------------
+# restart update
 set(EXE
-  util_common)
+  rst_update)
 set(SRC
-  datatable.f90
-  hzsmooth.f90)
-add_library(${EXE} STATIC ${SRC})
-
-
-# ------------------------------
-# background error variance calculator
-set(EXE
-  bgvar)
-set(SRC
-  bgvar.F90)
+  rst_update.F90)
 add_executable(${EXE} ${SRC})
 target_link_libraries(${EXE}
-  util_common
   ${NETCDF_LIBRARIES})
-set_target_properties(${EXE} PROPERTIES
-  LINK_FLAGS "${OpenMP_Fortran_FLAGS}" )
-
-
-# ------------------------------
-# vertical localization calculator
-set(EXE
-  vtloc)
-set(SRC
-  vtloc.F90)
-add_executable(${EXE} ${SRC})
-target_link_libraries(${EXE}
-  util_common
-  ${NETCDF_LIBRARIES})
-set_target_properties(${EXE} PROPERTIES 
-  LINK_FLAGS "${OpenMP_Fortran_FLAGS}")
 
 
 # ------------------------------

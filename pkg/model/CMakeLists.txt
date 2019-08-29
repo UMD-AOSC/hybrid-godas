@@ -70,11 +70,15 @@ target_include_directories(mom6 PUBLIC
   ${MOM_DIR}/FMS/include
   ${MOM_DIR}/MOM6/src/framework
 )
+
 target_link_libraries(mom6 PUBLIC
   fms
   ${NETCDF_LIBRARIES}
   ${MPI_Fortran_LIBRARIES})
+
 target_compile_definitions(mom6 PRIVATE
+  -DNIGLOBAL_=${MOM6_NIGLOBAL}				
+  -DNJGLOBAL_=${MOM6_NJGLOBAL}				
   -DNIPROC_=${MOM6_NIPROC}
   -DNJPROC_=${MOM6_NJPROC}
   -Duse_libMPI

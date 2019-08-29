@@ -1,0 +1,235 @@
+#!/bin/bash
+set -e
+
+cat <<EOF
+
+
+#================================================================================
+#================================================================================
+# NCEP Hybrid-GODAS   -  da.sh
+#================================================================================
+EOF
+
+envar=()
+envar+=("PPN")
+envar+=("CYCLE")
+envar+=("DA_SLOTS")
+envar+=('DA_MODE')
+envar+=("WORK_DIR")
+envar+=("ENS_SIZE")
+envar+=("ENS_LIST")
+envar+=("BIN_DIR")
+envar+=("DA_CFG_DIR")
+envar+=("GRID_DIR")
+envar+=("SCRIPT_DIR")
+
+
+# make sure required env vars exist
+for v in ${envar[@]}; do
+    if [[ -z "${!v}" ]]; then
+	echo "ERROR: env var $v is not set."; exit 1
+    fi
+    echo " $v = ${!v}"
+done
+set -u
+echo ""
+
+
+# setup working directory
+if [[ -e $WORK_DIR ]]; then rm -r $WORK_DIR; fi
+mkdir -p $WORK_DIR
+cd $WORK_DIR
+
+
+# determine if the files needed for da are present
+do_da=1
+for mem in $ENS_LIST; do
+    if [[ ! -d $WORK_DIR/../da.prep/bkg/mem_$mem/fcst.diag ]]; then
+	do_da=0
+    fi
+done
+if [[ $do_da == 0 ]]; then 
+    echo "WARNING: no DA will be performed because the forecast diag files were not found."
+    exit 0
+fi
+
+
+#ln -s $DA_CFG_DIR/obsprep.nml .
+mkdir INPUT
+ln -s $GRID_DIR/{hgrid,vgrid,coast_dist}.nc INPUT/
+
+
+# finish setting up working directory
+for mem in $ENS_LIST; do 
+    mkdir -p mem_$mem
+    ln -s $WORK_DIR/../da.prep/bkg/mem_$mem/fcst.rst mem_$mem/fcst.rst
+    mkdir $WORK_DIR/mem_$mem/letkf
+done
+
+
+dtz(){ echo ${1:0:8}Z${1:8:10}; }
+
+
+
+#------------------------------------------------------------
+# observation operator
+#------------------------------------------------------------
+
+# generate the list of slot/mem combinations
+# and setup working directories
+sm=()
+for slot_offset in $DA_SLOTS; do
+    slot=$(date "+%Y%m%d" -d "$(dtz $CYCLE) + $slot_offset hours")
+    for mem in $ENS_LIST; do
+	# setup working directory
+	d=$WORK_DIR/mem_$mem/obsop/$slot
+	mkdir -p $d
+
+	sm+=("$slot/$mem")
+    done
+done
+
+
+# submit in batches, one script per node
+echo "running observation operators..."
+idx=0
+while [[ $idx -lt ${#sm[@]} ]]; do
+    s=${sm[@] :$idx:$PPN}
+    aprun -n 1 -d $PPN $SCRIPT_DIR/da.obsop.sh $s &
+    idx=$(( $idx + $PPN ))
+done
+wait
+
+
+# combine all the slots for a given member
+echo ""
+echo "combining slots for each member..."
+ens_list=($ENS_LIST)
+idx=0
+while [[ $idx -lt ${#ens_list[@]} ]]; do
+    s=${ens_list[@] :$idx:$PPN}
+    aprun -n 1 -d $PPN $SCRIPT_DIR/da.obsop.comb.sh $s &
+    idx=$(( $idx + $PPN ))
+done
+wait
+
+
+# if [[ $do_DA == 0 ]]; then
+#     echo "WARNING: skipping DA because there are no observations and/or background files."
+#     exit 0
+# fi
+
+
+
+#-------------------------------------------------------------------------------- 
+#-------------------------------------------------------------------------------- 
+
+
+# determine the ids of the restart tiles
+tiles=()
+for f in $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.*; do
+    tiles+=(${f##*.})
+done
+echo ""
+echo "restart files used in data assimilation have ${#tiles[@]} tiles"
+echo ""
+
+
+#------------------------------------------------------------
+# LETKF
+#------------------------------------------------------------
+if [[ "$DA_MODE" == "hyb" || "$DA_MODE" == "ekf" ]]; then
+    cd $WORK_DIR
+    mkdir -p mem_{mean,sprd}/letkf
+    mkdir -p letkf.log
+    mkdir -p letkf.diag
+    mkdir -p letkf.cfg
+
+    for t in ${tiles[@]}; do
+	# get the tile position in the grid
+	tile_x=$(ncks -m -v lonh $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.$t | grep domain_decomposition | cut -d ' ' -f 13- )
+	tile_y=$(ncks -m -v lath $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.$t | grep domain_decomposition | cut -d ' ' -f 13- )
+
+ 	# generate the letkf yaml file
+ 	sed -e "s/#ENS_SIZE#/$ENS_SIZE/" -e "s/#TILE_NUM#/$t/" -e "s/#TILE_X#/$tile_x/" -e "s/#TILE_Y#/$tile_y/" $DA_CFG_DIR/letkf.yaml > $WORK_DIR/letkf.cfg/$t.yaml
+    done
+
+
+    # submit in batches, one script per node
+    echo "Running LETKF..."
+    idx=0
+    export OMP_NUM_THREADS=1
+    for t in ${tiles[@]}; do
+	aprun -n $PPN $BIN_DIR/letkfdriver letkf.cfg/$t.yaml &> letkf.log/$t.log &
+    done
+    wait
+
+    # ensemble member 0000 actually uses the ensemble mean, so link those files
+    cd $WORK_DIR/mem_0000/letkf
+    for f in $WORK_DIR/mem_mean/letkf/ana.*; do
+	f2=${f##*/}
+	ln -s $f $f2
+    done
+
+    # add required netcdf domain_decomposition attributes to letkf files
+    cd ../../
+    for t in ${tiles[@]}; do
+	# get the tile position in the grid
+	decomp_x=$(ncks -m -v lonh $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.$t | grep domain_decomposition | cut -d ' ' -f 11- )
+	decomp_y=$(ncks -m -v lath $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.$t | grep domain_decomposition | cut -d ' ' -f 11- )
+
+	for ms in mean sprd; do
+	    for ba in ana bkg; do
+		ncatted -a domain_decomposition,lon,o,i,"$decomp_x" -a domain_decomposition,lat,o,i,"$decomp_y" -O $WORK_DIR/mem_$ms/letkf/$ba.nc.$t
+	    done
+	done
+    done
+
+fi 
+
+
+
+#--------------------------------------------------------------------------------
+# perform observation operator on the analysis ensemble mean
+#--------------------------------------------------------------------------------
+if [[ "$DA_MODE" == "hyb" ]]; then
+    echo ""
+    echo "Rerunning the observation operator on LETKF analysis..."
+
+
+    mkdir $WORK_DIR/obsop.var
+    cd $WORK_DIR/obsop.var
+    ln -s $WORK_DIR/INPUT .
+    ln -s $DA_CFG_DIR/obsprep.nml .
+
+    bkg_files=../mem_mean/letkf/ana.*
+    obs_file=$WORK_DIR/mem_0000/obsop/obs.nc
+
+    # run observation operator
+    aprun -n 1 $BIN_DIR/obsop $obs_file $bkg_files obs.nc > obsop.log  &
+fi
+
+
+
+#--------------------------------------------------------------------------------
+# run 3DVar
+#--------------------------------------------------------------------------------
+if [[ "$DA_MODE" == "var" || "$DA_MODE" == "hyb" ]]; then
+
+    mkdir $WORK_DIR/var
+    cd $WORK_DIR/var
+    
+    mkdir INPUT
+    ln -s $GRID_DIR/{hgrid,vgrid,coast_dist}.nc INPUT/
+    ln -s $DA_CFG_DIR/*.3dvar .
+    ln -s ../obsop.var/obs.nc .
+
+    # combine the background files
+    echo "combining background tiles for 3dvar..."
+    aprun -n 1 $BIN_DIR/mppnccombine -64 bkg.nc $bkg_files &
+    wait
+
+    echo ""
+    echo "Running 3dvar..."
+    aprun -n $PPN $BIN_DIR/godas_3dvar
+fi

@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e
+
+
 cat << EOF
 
 #================================================================================
@@ -10,7 +12,7 @@ cat << EOF
 #   corrections.
 #================================================================================ 
 EOF
-#
+
 # Prerequisites:
 #  * Daily forcing files for the appropriate date range must exist in the
 #    $FORC_MEAN_FILE (and $FORC_ENS_FILE locations if doing ensemble DA)

@@ -75,7 +75,7 @@ target_link_libraries(${EXE}
 # observation operator
 set(EXE
   obsop)
-set(SRCS
+set(SRC
   obsop.F90)
 add_executable(${EXE} ${SRC})
 target_link_libraries(${EXE}

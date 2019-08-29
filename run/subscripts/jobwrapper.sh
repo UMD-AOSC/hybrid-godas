@@ -2,12 +2,12 @@
 set +x
 set -e
 
-cat << \#\#
+cat << EOF
 #================================================================================
 #================================================================================
 # NCEP Hybrid-GODAS  -  jobwrapper.sh"
 #================================================================================
-##
+EOF
 # Required environment variables:
 #  * The following need to be specified by the caller of this script
  envar=()
@@ -38,7 +38,7 @@ set -u
 # TODO: check for env vars existing
 # TODO: is this necessary? they should already be loaded into the environment
 #------------------------------------------------------------
-files=()
+#files=()
 #files+=("${ROOT_GODAS_DIR}/config/env")
 # files+=("${ROOT_EXP_DIR}/config/hybridgodas.config")
 # for f in ${files[@]}; do
@@ -66,6 +66,7 @@ source $MACHINE_CONFIG
 export TZ=UTC
 dtz() { echo "${1:0:8}Z${1:8:10}"; }
 
+#TODO check the leap day logic... i probably screwed it up again
 
 #cycle length, next, previous.... adjustments are done for leap days
 #------------------------------------------------------------
@@ -142,11 +143,12 @@ fi
 
 # forecast length /restart times
 #------------------------------------------------------------
-export FCST_LEN=$(($CYCLE_LEN_PREV + $DA_WNDW_OFST))
-export FCST_START_TIME=$CYCLE_PREV
-export FCST_END_TIME=$DA_WNDW_END_TIME
-export FCST_RST_OFST=$CYCLE_LEN_PREV
-export FCST_RST_TIME=$CYCLE
+export FCST_LEN=$(($CYCLE_LEN_NEXT + $DA_WNDW_OFST))
+export FCST_START_TIME=$CYCLE
+export FCST_DIAG_START_TIME=$(date "+%Y%m%d%H" -d "$(dtz $CYCLE) + $DA_WNDW_OFST hours")
+export FCST_END_TIME=$(date "+%Y%m%d%H" -d "$(dtz $CYCLE_NEXT) + $DA_WNDW_OFST hours")
+export FCST_RST_OFST=$CYCLE_LEN_NEXT
+export FCST_RST_TIME=$CYCLE_NEXT
 
 for v in FCST_LEN FCST_START_TIME FCST_END_TIME FCST_RST_OFST FCST_RST_TIME; do
     echo " $v = ${!v}"

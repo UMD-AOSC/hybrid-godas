@@ -4,8 +4,13 @@
 !********+*********+*********+*********+*********+*********+*********+*
 
 !  Specify the numerical domain.
+#ifndef NIGLOBAL_
 #define NIGLOBAL_ 1440
+#endif
+
+#ifndef NJGLOBAL_
 #define NJGLOBAL_ 1080
+#endif
                                !    NIGLOBAL_ and NJGLOBAL_ are the number of thickness
                                !  grid points in the zonal and meridional
                                !  directions of the physical domain.

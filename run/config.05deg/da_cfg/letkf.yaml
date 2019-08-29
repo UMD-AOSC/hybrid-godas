@@ -1,0 +1,113 @@
+---
+
+# note: this file is a template, the following variables need to be 
+#  replaced by a bash script before this config file can be used:
+#  #ENS_SIZE
+#  #TILE_NUM
+#  #TILE_X
+#  #TILE_Y
+
+
+
+mpi:
+  ens_size: #ENS_SIZE#
+
+solver:
+  save_diag: true
+  diag_file: letkf.diag/diag.solver.nc.#TILE_NUM#
+
+  inflation:
+    rtps: 0.6
+    rtpp: 0.0
+    mul:  1.0
+
+
+observation:
+  obsdef:
+  - ["ocn_t", 2210, "ocean insitu temperature (C)"]
+  - ["ocn_s", 2220, "ocean salinity (PSU)"]
+  - ["ocn_ssh", 2100, "ADT altimetry (m)"]
+
+  platdef:
+  - ["ocn_prf", 1, "all insitu obs"]
+  - ["ocn_sat", 1000, "all satellite based obs"]
+
+  class: obsio_nc
+
+  obsio_nc:
+    filename_obs: "mem_0000/obsop/obs.nc"
+    filename_obshx: "mem_#ENS4#/obsop/obs.nc"
+    read_inc: true
+
+    
+state: 
+  verbose: false
+  class: stateio_nc
+
+  hzgrid:
+  - name: hz1
+    subsetX: [#TILE_X#]
+    subsetY: [#TILE_Y#]
+    lat2d: ["geolat", "INPUT/hgrid.nc"]
+    lon2d: ["geolon", "INPUT/hgrid.nc"]
+    lat1d: ["lath", "INPUT/hgrid.nc"]
+    lon1d: ["lonh", "INPUT/hgrid.nc"]
+    mask:  ["wet", "INPUT/hgrid.nc"]
+
+  vtgrid:
+  - name: vt1
+    vert1d: ["Layer", "INPUT/vgrid.nc"]
+  - name: vt_surf
+    vert1d: [0.0, "#CONST#"]
+
+  statedef:
+  - name: ocn_t
+    hzgrid: hz1
+    vtgrid: vt1
+    ana_bounds: [-1.8, 40]
+    ana_inc_max: 3
+    input:  ["Temp", "mem_#ENS4#/fcst.rst/MOM.res.nc.#TILE_NUM#"]
+    output: ["Temp", "mem_#ENS4#/letkf/#TYPE#.nc.#TILE_NUM#"]
+
+  - name: ocn_s
+    hzgrid: hz1
+    vtgrid: vt1
+    ana_bounds: [0, 50.0]
+    ana_inc_max: 2
+    input:  ["Salt", "mem_#ENS4#/fcst.rst/MOM.res.nc.#TILE_NUM#"]
+    output: ["Salt", "mem_#ENS4#/letkf/#TYPE#.nc.#TILE_NUM#"]
+
+  - name: ocn_u
+    hzgrid: hz1
+    vtgrid: vt1
+    ana_bounds: [-3, 3]
+    ana_inc_max: 0.5
+    input:  ["u", "mem_#ENS4#/fcst.rst/MOM.res.nc.#TILE_NUM#"]
+    output: ["u", "mem_#ENS4#/letkf/#TYPE#.nc.#TILE_NUM#"]
+
+  - name: ocn_v
+    hzgrid: hz1
+    vtgrid: vt1
+    ana_bounds: [-3,3]
+    ana_inc_max: 0.5
+    input:  ["v", "mem_#ENS4#/fcst.rst/MOM.res.nc.#TILE_NUM#"]
+    output: ["v", "mem_#ENS4#/letkf/#TYPE#.nc.#TILE_NUM#"]
+
+  - name: ocn_ssh
+    hzgrid: hz1
+    vtgrid: vt_surf
+    input:  ["ave_ssh", "mem_#ENS4#/fcst.rst/MOM.res.nc.#TILE_NUM#"]
+    output: ["SSH",     "mem_#ENS4#/letkf/#TYPE#.nc.#TILE_NUM#"]
+
+
+localization:
+  class: loc_ocean
+
+  save_diag: false
+  diag_file: letkf.diag/diag.loc_ocean.nc.#TILE_NUM#
+
+  hzloc_prof: "0.0 550e3 / 10.0 300e3 / 50.0 100e3"
+  hzloc_sat: "0.0 200e3 / 10.0 50e3"
+  surf_plats: ["ocn_sat"]
+  tloc_prof: 72
+  tloc_sat: 72
