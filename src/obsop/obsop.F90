@@ -315,6 +315,8 @@ program obsop
      else if( .not. ieee_is_finite(obs(i)%err)) then
         bad_err = bad_err + 1
         obs(i)%err = 0
+     else if (obs(i)%err == 0.0) then
+        bad_err = bad_err + 1
      else if ( .not. ieee_is_finite(obs_inc(i))) then
         bad_inc = bad_inc + 1
         obs_inc(i) = 0
