@@ -46,11 +46,12 @@ set(MOM_CHANGES ${CMAKE_CURRENT_SOURCE_DIR}/MOM6-changes)
 
 set(SRC)
 
-addfiles(${MOM_CHANGES}/MOM6/config_src/static)
+#addfiles(${MOM_CHANGES}/MOM6/config_src/static)
 addfiles(${MOM_CHANGES}/MOM6/config_src/coupled_driver)
 addfiles(${MOM_CHANGES}/coupler)
 addfiles(${MOM_CHANGES}/SIS2)
 
+addfiles(${MOM_DIR}/MOM6/config_src/dynamic)
 addfiles(${MOM_DIR}/MOM6/src/*)
 addfiles(${MOM_DIR}/MOM6/src/*/*)
 addfiles(${MOM_DIR}/atmos_null)
@@ -64,8 +65,9 @@ addfiles(${MOM_DIR}/FMS/include)
 add_executable(mom6 ${SRC})
 
 target_include_directories(mom6 PUBLIC
-  ${MOM_CHANGES}/MOM6/config_src/static
-  ${MOM_CHANGES}/SIS2 
+  #${MOM_CHANGES}/MOM6/config_src/static
+  ${MOM_DIR}/MOM6/config_src/dynamic
+  ${MOM_CHANGES}/SIS2
   ${MOM_DIR}/SIS2/config_src/dynamic
   ${MOM_DIR}/FMS/include
   ${MOM_DIR}/MOM6/src/framework
@@ -77,14 +79,12 @@ target_link_libraries(mom6 PUBLIC
   ${MPI_Fortran_LIBRARIES})
 
 target_compile_definitions(mom6 PRIVATE
-  -DNIGLOBAL_=${MOM6_NIGLOBAL}				
-  -DNJGLOBAL_=${MOM6_NJGLOBAL}				
-  -DNIPROC_=${MOM6_NIPROC}
-  -DNJPROC_=${MOM6_NJPROC}
+  #-DNIGLOBAL_=${MOM6_NIGLOBAL}
+  #-DNJGLOBAL_=${MOM6_NJGLOBAL}
+  #-DNIPROC_=${MOM6_NIPROC}
+  #-DNJPROC_=${MOM6_NJPROC}
   -Duse_libMPI
   -Duse_netCDF
   -DSPMD
   -Duse_AM3_physics
   -D_USE_LEGACY_LAND_)
-
-
