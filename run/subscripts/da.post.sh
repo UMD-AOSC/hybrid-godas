@@ -54,7 +54,7 @@ function combtiles(){
        echo "WARNING: not combining $2, source files not found"
        return
    fi
-
+   
    # create output directory
    d=$(dirname $2)
    mkdir -p $d
@@ -74,8 +74,6 @@ function combtiles(){
 # Save O-F stats
 #------------------------------------------------------------
 if [[ "$SAVE_OMF" -gt 0 ]]; then
-    echo ""
-    echo ""
     echo "Saving O-F..."
 
     e=( $ENS_LIST )
@@ -153,37 +151,50 @@ fi
 #------------------------------------------------------------
 # Save ensemble background/analysis mean/spread
 #------------------------------------------------------------
+# TODO: renable masking and tile combination
 if [[ ( "$DA_MODE" == "hyb" ) || ( "$DA_MODE" == "ekf" ) ]]; then
+    echo -e "\nSaving ensemble mean/spread..."
     maskopt="-geomFile $GRID_DIR/hgrid.nc -vertFile $GRID_DIR/vgrid.nc -d2 SSH -d3 Temp,Salt,u,v"
     compopt="-compression 5 -lsd"
 
-    # background mean
-    combtiles $WORK_DIR/../da.run/mem_mean/letkf/bkg. tmp.nc
-    $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt
-    $POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $OUTPUT_DIR/bkg/mean/${CYCLE:0:4}/${CYCLE}.nc
-    rm tmp*.nc
+    # # background mean
+    # combtiles $WORK_DIR/../da.run/mem_mean/letkf/bkg. tmp.nc
+    # $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt
+    #$POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $OUTPUT_DIR/bkg/mean/${CYCLE:0:4}/${CYCLE}.nc
+    f=$OUTPUT_DIR/bkg/mean/${CYCLE:0:4}/${CYCLE}.nc
+    mkdir -p $(dirname $f)
+    ncks -7 -L 4 -O --ppc default=4  $WORK_DIR/../da.run/mem_mean/letkf/bkg.nc $f
 
-    # background spread
-    combtiles $WORK_DIR/../da.run/mem_sprd/letkf/bkg. tmp.nc
-    $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt
-    $POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $OUTPUT_DIR/bkg/sprd/${CYCLE:0:4}/${CYCLE}.nc
-    rm tmp*.nc
+    # # background spread
+    # combtiles $WORK_DIR/../da.run/mem_sprd/letkf/bkg. tmp.nc
+    # $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt
+    # $POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $OUTPUT_DIR/bkg/sprd/${CYCLE:0:4}/${CYCLE}.nc
+    # rm tmp*.nc
+    f=$OUTPUT_DIR/bkg/sprd/${CYCLE:0:4}/${CYCLE}.nc
+    mkdir -p $(dirname $f)
+    ncks -7 -L 4 -O --ppc default=3  $WORK_DIR/../da.run/mem_sprd/letkf/bkg.nc $f
 
-    # analysis spread
-    combtiles $WORK_DIR/../da.run/mem_sprd/letkf/ana. tmp.nc
-    $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt
-    $POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $OUTPUT_DIR/ana/sprd/${CYCLE:0:4}/${CYCLE}.nc
-    rm tmp*.nc
+    
+    # # analysis spread
+    # combtiles $WORK_DIR/../da.run/mem_sprd/letkf/ana. tmp.nc
+    # $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt
+    # $POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $OUTPUT_DIR/ana/sprd/${CYCLE:0:4}/${CYCLE}.nc
+    # rm tmp*.nc
+    f=$OUTPUT_DIR/ana/sprd/${CYCLE:0:4}/${CYCLE}.nc
+    mkdir -p $(dirname $f)
+    ncks -7 -L 4 -O --ppc default=3  $WORK_DIR/../da.run/mem_sprd/letkf/ana.nc $f
 
     # analysis mean (letkf)
     ofile=$OUTPUT_DIR/ana/mean/${CYCLE:0:4}/${CYCLE}.nc
     if [[ "$DA_MODE" == "hyb" ]]; then
 	ofile=$OUTPUT_DIR/ana/mean_letkf/${CYCLE:0:4}/${CYCLE}.nc
     fi
-    combtiles $WORK_DIR/../da.run/mem_mean/letkf/ana. tmp.nc
-    $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt
-    $POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $ofile
-    rm tmp*.nc
+    # combtiles $WORK_DIR/../da.run/mem_mean/letkf/ana. tmp.nc
+    # $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt
+    # $POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $ofile
+    # rm tmp*.nc
+    mkdir -p $(dirname $ofile)
+    ncks -7 -L 4 -O --ppc default=4  $WORK_DIR/../da.run/mem_mean/letkf/ana.nc $ofile
 
     # analysis mean (hybrid)
     if [[ "$DA_MODE" == "hyb" ]]; then
