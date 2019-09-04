@@ -101,7 +101,7 @@ for v in ${envar[@]}; do
     echo " $v = ${!v}"
 done
 set -u
-echo ""
+echo -e "\n================================================================================\n"
 
 
 # deal with comma separated lists
@@ -115,8 +115,7 @@ if [[ "$FORC_CORR" -eq 1 ]]; then
 fi
 
 # surface forcing interpolation method ("bil" or "bic")
-interp="bic"
-
+interp="bil"
 
 
 # setup working directory
@@ -156,6 +155,7 @@ echo ""
 
 mkdir -p mem_0000
 
+
 #------------------------------------------------------------
 # Create the river runoff mean
 #------------------------------------------------------------
@@ -172,7 +172,6 @@ fi
 #  files (instead of using them as just perturbations)
 #------------------------------------------------------------
 mkdir -p work/mean
-echo ""
 echo "Generating forcing mean files..."
 echo "------------------------------------------------------------"
 for f in ${forc_var[@]}; do
@@ -293,13 +292,11 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
 	done
     fi
 
-
     # Create the combined atmospheric forcing file for each member
-    echo "Generating combined atmospheric focing file for each member..."
+    echo "  Generating combined atmospheric forcing file for each member..."
     for m in $ens_list; do
 	d=work/ens/mem_$m
 	mkdir -p $d
-	echo " member: $m"
 
  	for f in ${forc_var_ens[@]}; do
  	    files=()
@@ -315,37 +312,30 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
  	    ncrcat ${files[@]} $d/$f.nc
  	done
      done
-     echo ""
 
      # Calculate the mean of the ens files,
-     echo "Generating ensemble forcing mean..."
+     echo "  Generating ensemble forcing mean..."
      mkdir -p work/ens_mean
      for f in ${forc_var_ens[@]}; do
- 	cdo -L ensmean "work/ens/*/$f.nc" work/ens_mean/$f.nc
+	 ncea work/ens/*/$f.nc -o work/ens_mean/$f.nc
      done
-     echo ""
 
      # generate remap weights
      # (assuming all variables use the same grid
-     echo 'Generating "ens->mean" interpolation weights...'
-#     mkdir -p work/ens_weights
-     v=${forc_var_ens[0]}
-     cdo -L gen${interp},mem_0000/$v.nc work/ens_mean/$v.nc work/remap_weights.nc    
-#     for f in ${forc_var_ens[@]}; do
-# 	cdo -L gen${interp},mem_0000/$f.nc work/ens_mean/$f.nc work/ens_weights/$f.nc
-#     done
-     echo ""
+     echo '  Generating "ens->mean" interpolation weights...'
+     v=${forc_var_ens[0]} 
+     cdo -s --no_warnings -L gen${interp},mem_0000/$v.nc work/ens_mean/$v.nc work/remap_weights.nc     
 
      # remap the ens means and calculate mean-ens_mean
-     echo 'Calculating "mean - ens_mean"...'
+     echo '  Calculating "mean - ens_mean"...'
      mkdir -p work/ens_offset
      for f in ${forc_var_ens[@]}; do
- 	cdo -L sub mem_0000/$f.nc -remap,mem_0000/$f.nc,work/remap_weights.nc work/ens_mean/$f.nc work/ens_offset/$f.nc
+ 	 cdo -s --no_warnings -L remap,mem_0000/$f.nc,work/remap_weights.nc work/ens_mean/$f.nc tmp.nc
+	 cdo -s --no_warnings -L sub mem_0000/$f.nc tmp.nc work/ens_offset/$f.nc	 
      done
-     echo ""
 
      # generate the final individual ensemble forcing files
-     echo "Generating final ensemble members forcings..."
+     echo "  Generating final ensemble members forcings..."
      for m in $ens_list; do
  	d=mem_$m
  	mkdir -p $d
@@ -361,7 +351,7 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
 	    # if this is a variable that should have an ensemble
 	    # perturbation added to it...
 	    if [[ $is_ens -ne 0 ]]; then
-		cdo -L add work/ens_offset/$f.nc -remap,mem_0000/$f.nc,work/remap_weights.nc work/ens/mem_$m/$f.nc $d/$f.nc
+		cdo -s --no_warnings -L add work/ens_offset/$f.nc -remap,mem_0000/$f.nc,work/remap_weights.nc work/ens/mem_$m/$f.nc $d/$f.nc
  		ncatted -O -a axis,time,c,c,T $d/$f.nc
  		ncatted -O -a calendar,,m,c,gregorian $d/$f.nc
 	    else
@@ -378,12 +368,12 @@ ens_list="0000 $ens_list"
 # ------------------------------------------------------------
 # some fields need to be kept positive, check those
 # ------------------------------------------------------------
-echo ""
-echo "Checking that the positiveness of the variables: ${forc_var_pos[@]}"
+echo "  Checking that the positiveness of the variables..."
+echo "     vars: ${forc_var_pos[@]}"
 for m in $ens_list; do
     for v in ${forc_var_pos[@]}; do
 	f=mem_$m/$v.nc
-	cdo -L setrtoc,-1e10,0,0 $f $f.2
+	cdo -s --no_warnings -L setrtoc,-1e10,0,0 $f $f.2
 	mv $f.2 $f
 	ncatted -O -a calendar,,m,c,gregorian $f
     done
