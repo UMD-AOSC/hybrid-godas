@@ -2,12 +2,16 @@
 set -e
 
 cat <<EOF
- 
+
+
+
 #================================================================================
 #================================================================================
-# NCEP Hybrid-GODAS  -  da.prep.sh
+# Hybrid-GODAS  -  da.prep.sh
 #   observation and background file preparation
 #================================================================================
+#================================================================================
+
 EOF
 
 envar=()
@@ -45,7 +49,7 @@ done
 set -u
 
 
-# helper function to have "date" command be happy with  datetime strings 
+# helper function to have "date" command be happy with  datetime strings
 dtz(){ echo ${1:0:8}Z${1:8:10}; }
 
 
@@ -85,7 +89,7 @@ ln -s $GRID_DIR/{hgrid,vgrid,coast_dist}.nc INPUT/
 shopt -s nullglob
 for slot_offset in $DA_SLOTS; do
     slot=$(date "+%Y%m%d" -d "$(dtz $CYCLE) + $slot_offset hours")
-    
+
     echo ""
     echo ""
     echo "================================================================================"
@@ -97,14 +101,14 @@ for slot_offset in $DA_SLOTS; do
     if [[ "$OBS_SST" == 1 ]]; then
 	mkdir -p $WORK_DIR/obs/work/$slot.obs_sst
 	cd $WORK_DIR/obs/work/$slot.obs_sst
-	
+
 	# TODO do the actual processing, instead of linking to preprocessed files
 	echo ""
 	echo "SST observation files:"
 	file="$(date "+$OBS_SST_PATH" -d "$slot")"
 	if [[ -f $file ]]; then
 	    echo "  $file"
-	    ln -s $file obsprep.sst.nc	    
+	    ln -s $file obsprep.sst.nc
 	fi
     fi
 
@@ -162,5 +166,5 @@ for slot_offset in $DA_SLOTS; do
 	basedate="$(date "+%Y,%m,%d,%H,0,0" -d "$(dtz $slot)")"
 	$BIN_DIR/obsprep_combine -basedate $basedate ${files[@]} ../obs.$slot.nc
     fi
-    
+
 done

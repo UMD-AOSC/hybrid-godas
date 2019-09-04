@@ -1,0 +1,6 @@
+&rst_update_nml
+  alpha=0.5
+  alpha_eq=0.1
+  lat1=2
+  lat2=10	
+/

@@ -34,6 +34,7 @@ program rst_update
   update_vars="/Temp/Salt/u/v/"
 
   ! read in namelist
+  print *, "Reading rst_update.nml..."
   open(newunit=unit, file="rst_update.nml")
   read(unit, rst_update_nml)
   close(unit)
@@ -155,7 +156,7 @@ program rst_update
 
            ierr=nf90_inq_varid(ncid_v, varname, j)
            if(ierr == NF90_NOERR) then         
-
+              j = 0
               ! determine if restart the source is from a decomposed grid
               decomp_x=(/1,dimLen(1),1,dimLen(1)/)
               decomp_y=(/1,dimLen(2),1,dimLen(2)/)           
@@ -163,12 +164,12 @@ program rst_update
               call check(nf90_inquire_dimension(ncid_i, dimids(1), name=str))
               call check(nf90_inq_varid(ncid_i, str, vid))
               ierr=nf90_inquire_attribute(ncid_i, vid, "domain_decomposition", attnum=j)
-              if(j>=0) &
+              if(j>0) &
                    call check(nf90_get_att(ncid_i, vid, "domain_decomposition", decomp_x))
               call check(nf90_inquire_dimension(ncid_i, dimids(2), name=str))
               call check(nf90_inq_varid(ncid_i, str, vid))
               ierr=nf90_inquire_attribute(ncid_i, vid, "domain_decomposition", attnum=j)
-              if(j>=0) &
+              if(j>0) &
                    call check(nf90_get_att(ncid_i, vid, "domain_decomposition", decomp_y))
 
               ! calculate alpha values, if they haven't already

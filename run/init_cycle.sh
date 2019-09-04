@@ -28,8 +28,8 @@ cd $exp_dir
 mkdir -p config
 mkdir -p config/da
 mkdir -p config/mom
-cp $root_dir/run/config.exp_default/da/* config/da
-cp $root_dir/run/config.exp_default/mom/* config/mom
+cp $root_dir/run/config.exp_default/da_cfg/* config/da
+cp $root_dir/run/config.exp_default/mom_cfg/* config/mom
 ln -s $root_dir/run/rocoto/hybridgodas.{rocoto,run,status} .
 
 
@@ -41,12 +41,12 @@ export D='$'
 cat $root_dir/run/config.exp_default/hybridgodas.template.config | envsubst '$EXP_NAME $ROOT_DIR $EXP_DIR $D' > config/hybridgodas.config
 
 # setup the initial conditions
-icdir=$root_dir/DATA/ic/2004010100
-echo "Using initial conditions from $icdir"
-mkdir cycle
-cp $icdir/cycle/cycle.status cycle/
-chmod u+w cycle/cycle.status
-ln -s  $icdir/cycle/?????????? cycle/
+# icdir=$root_dir/DATA/ic/2004010100
+# echo "Using initial conditions from $icdir"
+# mkdir cycle
+# cp $icdir/cycle/cycle.status cycle/
+# chmod u+w cycle/cycle.status
+# ln -s  $icdir/cycle/?????????? cycle/
 
 # Save code version information
 touch version

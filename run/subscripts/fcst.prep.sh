@@ -4,13 +4,17 @@ set -e
 
 cat << EOF
 
+
+
 #================================================================================
 #================================================================================
-# NCEP Hybrid-GODAS  -  fcst.prep.sh 
-#   MOM6 ocean ensemble member forecast preparation.
+# Hybrid-GODAS  -  fcst.prep.sh
+#   MOM6/SIS2 ocean/seaice ensemble member forecast preparation.
 #   Processes control forcing, ensemble perturbations, and climatological
-#   corrections.
-#================================================================================ 
+#   corrections, for the atmospheric forcing
+#================================================================================
+#================================================================================
+
 EOF
 
 # Prerequisites:
@@ -22,7 +26,7 @@ EOF
 # Results:
 #  * ensemble surface forcing files are placed in $FORC_DIR
 #
-# TODO: 
+# TODO:
 #  * use FORC_PERTURB
 #  * allow climatology correction to be applied even if FORC_PERTURB=0
 #  * select between bilinear/bicubic interpolation methods
@@ -76,7 +80,7 @@ EOF
 
  envar+=("FORC_PERTURB")     # if =1, ensemble perturbations are pulled from
                              #  FORC_ENS_FILE and added to FORC_MEAN_FILE for each
-                             #  ensemble member. 
+                             #  ensemble member.
                              # if =0, FORC_MEAN_FILE is not used at all.
 
  envar+=("FORC_RUNOFF_CLIM")
@@ -104,9 +108,11 @@ echo ""
 IFS=',' read -ra forc_var <<< "$FORC_VAR"
 IFS=',' read -ra forc_var_pos <<< "$FORC_VAR_POS"
 IFS=',' read -ra forc_var_ens <<< "$FORC_VAR_ENS"
-IFS=',' read -ra forc_corr_add <<< "$FORC_CORR_ADD"
-IFS=',' read -ra forc_corr_mul <<< "$FORC_CORR_MUL"
-forc_corr_var="${forc_corr_add[@]} ${forc_corr_mul[@]}"
+if [[ "$FORC_CORR" -eq 1 ]]; then
+  IFS=',' read -ra forc_corr_add <<< "$FORC_CORR_ADD"
+  IFS=',' read -ra forc_corr_mul <<< "$FORC_CORR_MUL"
+  forc_corr_var="${forc_corr_add[@]} ${forc_corr_mul[@]}"
+fi
 
 # surface forcing interpolation method ("bil" or "bic")
 interp="bic"
@@ -115,13 +121,14 @@ interp="bic"
 
 # setup working directory
 #------------------------------------------------------------
-if [[ -e "$WORK_DIR" ]]; then
-    echo "WARNING: WORK_DIR already exists, removing:"
-    echo " $WORK_DIR"
-    rm -rf "$WORK_DIR"
+FORC_WORK_DIR=$WORK_DIR/forc
+if [[ -e "$FORC_WORK_DIR" ]]; then
+    echo "WARNING: FORC_WORK_DIR already exists, removing:"
+    echo " $FORC_WORK_DIR"
+    rm -rf "$FORC_WORK_DIR"
 fi
-mkdir -p "$WORK_DIR"
-cd $WORK_DIR
+mkdir -p "$FORC_WORK_DIR"
+cd $FORC_WORK_DIR
 mkdir -p work
 
 
@@ -154,7 +161,7 @@ mkdir -p mem_0000
 #------------------------------------------------------------
 echo "Generating river runoff files..."
 echo "------------------------------------------------------------"
-cp $FORC_RUNOFF_CLIM mem_0000/runoff.nc
+#cp $FORC_RUNOFF_CLIM mem_0000/runoff.nc
 
 
 # ------------------------------------------------------------
@@ -170,7 +177,7 @@ for f in ${forc_var[@]}; do
 
     # does this variable need bias correction applied?
     do_bias=0
-    if [[ $FORC_CORR -eq 1 ]]; then 
+    if [[ $FORC_CORR -eq 1 ]]; then
 	for v in $forc_corr_var; do
 	    [[ "$f" == "$v" ]] && do_bias=1
 	done
@@ -195,7 +202,7 @@ for f in ${forc_var[@]}; do
 	file_in=${FORC_MEAN_FILE//#var#/$f}
 	file_in=$(date "+$file_in" -d "$date_cur")
 	file_out=$file_in
-	
+
 	# make sure the file exists
 	# TODO
 
@@ -218,7 +225,7 @@ for f in ${forc_var[@]}; do
             # for each climatology period available
             for f2 in $FORC_CORR_DIR/*.*.monthly.${f}.nc; do
                 f3=${f2##*/}   # remove directory
-                f3=${f3#*.}   # remove first bit before the dates 
+                f3=${f3#*.}   # remove first bit before the dates
                 f3=${f3%%.*}  # remove the bit after the dates
                 yr1=${f3%%-*} # starting year of this climatology
                 yr2=${f3##*-} # ending year of this climatology
@@ -241,7 +248,7 @@ for f in ${forc_var[@]}; do
 	fi
 	# all done bias correcting this date
 	files="$files $file_out"
-	date_cur=$(date "+%Y%m%d" -d "$date_cur + 1 day")	
+	date_cur=$(date "+%Y%m%d" -d "$date_cur + 1 day")
     done
 
     ncrcat $files mem_0000/$f.nc
@@ -283,7 +290,7 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
 	fi
     done
 
-	
+
     # Create the combined atmospheric forcing file for each member
     for m in $ens_list; do
 	d=work/ens/mem_$m
@@ -312,7 +319,7 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
      for f in ${forc_var_ens[@]}; do
  	cdo -L ensmean "work/ens/*/$f.nc" work/ens_mean/$f.nc
      done
-     echo "" 
+     echo ""
 
      # generate remap weights
      echo 'Generating "ens->mean" interpolation weights...'
@@ -349,13 +356,13 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
 	    if [[ $is_ens -ne 0 ]]; then
 		cdo -L add work/ens_offset/$f.nc -remap,mem_0000/$f.nc,work/ens_weights/$f.nc work/ens/mem_$m/$f.nc $d/$f.nc
  		ncatted -O -a axis,time,c,c,T $d/$f.nc
- 		ncatted -O -a calendar,,m,c,gregorian $d/$f.nc	    
+ 		ncatted -O -a calendar,,m,c,gregorian $d/$f.nc
 	    else
 		# otherwise, just copy the mean file
 		cp mem_0000/$f.nc $d/$f.nc
 	    fi
-	done   
-     done  
+	done
+     done
 fi
 ens_list="0000 $ens_list"
 
@@ -374,3 +381,8 @@ for m in $ens_list; do
 	ncatted -O -a calendar,,m,c,gregorian $f
     done
 done
+
+# ------------------------------------------------------------
+# Setup initial conditions, if required
+# TODO add ens perturbations
+# ------------------------------------------------------------

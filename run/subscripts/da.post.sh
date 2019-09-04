@@ -6,7 +6,7 @@ cat <<EOF
 
 #================================================================================
 #================================================================================
-# NCEP Hybrid-GODAS  -  da.post.sh
+# Hybrid-GODAS  -  da.post.sh
 #================================================================================
 EOF
 
@@ -98,7 +98,7 @@ if [[ "$SAVE_OMF" -gt 0 ]]; then
 
     ifiles=$WORK_DIR/../da.run/mem_????/obsop/obs.nc
     ifile0=$WORK_DIR/../da.run/mem_$e/obsop/obs.nc
-    ofile=$OUTPUT_DIR/omf/${CYCLE:0:4}/${CYCLE}.nc    
+    ofile=$OUTPUT_DIR/omf/${CYCLE:0:4}/${CYCLE}.nc
 
     # calculate the ensemble members / mean / spread
     ncecat -h -O $ifiles -v inc omf.ens.tmp
@@ -159,19 +159,19 @@ if [[ ( "$DA_MODE" == "hyb" ) || ( "$DA_MODE" == "ekf" ) ]]; then
 
     # background mean
     combtiles $WORK_DIR/../da.run/mem_mean/letkf/bkg. tmp.nc
-    $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt 
+    $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt
     $POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $OUTPUT_DIR/bkg/mean/${CYCLE:0:4}/${CYCLE}.nc
     rm tmp*.nc
 
     # background spread
     combtiles $WORK_DIR/../da.run/mem_sprd/letkf/bkg. tmp.nc
-    $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt 
+    $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt
     $POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $OUTPUT_DIR/bkg/sprd/${CYCLE:0:4}/${CYCLE}.nc
     rm tmp*.nc
 
     # analysis spread
     combtiles $WORK_DIR/../da.run/mem_sprd/letkf/ana. tmp.nc
-    $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt 
+    $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt
     $POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $OUTPUT_DIR/ana/sprd/${CYCLE:0:4}/${CYCLE}.nc
     rm tmp*.nc
 
@@ -181,7 +181,7 @@ if [[ ( "$DA_MODE" == "hyb" ) || ( "$DA_MODE" == "ekf" ) ]]; then
 	ofile=$OUTPUT_DIR/ana/mean_letkf/${CYCLE:0:4}/${CYCLE}.nc
     fi
     combtiles $WORK_DIR/../da.run/mem_mean/letkf/ana. tmp.nc
-    $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt 
+    $POSTPROC_SCRIPTS/mask.py tmp.nc tmp2.nc $maskopt
     $POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $ofile
     rm tmp*.nc
 

@@ -1,9 +1,9 @@
 #!/bin/bash
-set -e 
+set -e
 
 #for each slot/mem that was passed in on the command line
 # perform observation operator
-for x in $*; do 
+for x in $*; do
     mem=${x##*/}
     slot=${x%%/*}
 
@@ -14,8 +14,8 @@ for x in $*; do
 
     bkg_dir=$WORK_DIR/../da.prep/bkg/mem_$mem/fcst.diag
     f=$(date "+%Y_%m_%d" -d "$slot")
-    diag_files=$bkg_dir/*.da_daily_${f}.nc.????
+    diag_files=$bkg_dir/*.ocean_da_${f}.nc
 
-    $BIN_DIR/obsop $WORK_DIR/../da.prep/obs/obs.$slot.nc $diag_files obs.nc > obsop.log&
+    $BIN_DIR/obsop $WORK_DIR/../da.prep/obs/obs.$slot.nc $diag_files obs.nc #> obsop.log&
 done
 wait

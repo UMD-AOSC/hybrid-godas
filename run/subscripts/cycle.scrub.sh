@@ -6,7 +6,7 @@ cat <<EOF
 
 #================================================================================
 #================================================================================
-# NCEP Hybrid-GODAS  -  cycle.scrub.sh
+# Hybrid-GODAS  -  cycle.scrub.sh
 #================================================================================
 EOF
 
@@ -17,7 +17,7 @@ envar+=("KEEP_CYCLES")
 envar+=("KEEP_CYCLES_REGEX")
 
 # make sure required env vars exist
-for v in ${envar[@]}; do 
+for v in ${envar[@]}; do
     if [[ -z "${!v}" ]]; then
 	echo "ERROR: env var $v is not set."; exit 1
     fi
@@ -47,14 +47,13 @@ for d in $SCRATCH_DIR/cycle_??????????/; do
 	rm -rf $d
     fi
 done
-    
+
 
 
 # delete old cycles no longer needed in the save directory
 for d in $SAVE_DIR/??????????/; do
     d2=${d%/}
     d2=${d2##*/}
-
     keep=1
 
     if [[ "$d2" -lt "$keep_date" ]]; then
@@ -69,5 +68,5 @@ for d in $SAVE_DIR/??????????/; do
     if [[ "$keep" -eq 0 ]]; then
 	echo "deleting $d"
 	rm -rf $d
-    fi	
+    fi
 done

@@ -4,10 +4,14 @@ set -e
 cat <<EOF
 
 
+
 #================================================================================
 #================================================================================
-# NCEP Hybrid-GODAS   -  da.sh
+# Hybrid-GODAS   -  da.run.sh
+#  Run the data assimilation step (with options of 3dvar/LETKF/hybrid-gain)
 #================================================================================
+#================================================================================
+
 EOF
 
 envar=()
@@ -48,7 +52,7 @@ for mem in $ENS_LIST; do
 	do_da=0
     fi
 done
-if [[ $do_da == 0 ]]; then 
+if [[ $do_da == 0 ]]; then
     echo "WARNING: no DA will be performed because the forecast diag files were not found."
     exit 0
 fi
@@ -60,7 +64,7 @@ ln -s $GRID_DIR/{hgrid,vgrid,coast_dist}.nc INPUT/
 
 
 # finish setting up working directory
-for mem in $ENS_LIST; do 
+for mem in $ENS_LIST; do
     mkdir -p mem_$mem
     ln -s $WORK_DIR/../da.prep/bkg/mem_$mem/fcst.rst mem_$mem/fcst.rst
     mkdir $WORK_DIR/mem_$mem/letkf
@@ -92,13 +96,22 @@ done
 
 # submit in batches, one script per node
 echo "running observation operators..."
+
 idx=0
 while [[ $idx -lt ${#sm[@]} ]]; do
-    s=${sm[@] :$idx:$PPN}
-    aprun -n 1 -d $PPN $SCRIPT_DIR/da.obsop.sh $s &
-    idx=$(( $idx + $PPN ))
+    s=${sm[@]:$idx}
+    $SCRIPT_DIR/da.obsop.sh $s
+    ((idx=idx+1))
 done
-wait
+
+#
+# idx=0
+# while [[ $idx -lt ${#sm[@]} ]]; do
+#     s=${sm[@] :$idx:$PPN}
+#     aprun -n 1 -d $PPN $SCRIPT_DIR/da.obsop.sh $s &
+#     idx=$(( $idx + $PPN ))
+# done
+# wait
 
 
 # combine all the slots for a given member
@@ -107,11 +120,20 @@ echo "combining slots for each member..."
 ens_list=($ENS_LIST)
 idx=0
 while [[ $idx -lt ${#ens_list[@]} ]]; do
-    s=${ens_list[@] :$idx:$PPN}
-    aprun -n 1 -d $PPN $SCRIPT_DIR/da.obsop.comb.sh $s &
-    idx=$(( $idx + $PPN ))
+    s=${ens_list[@]:$idx}
+    $SCRIPT_DIR/da.obsop.comb.sh $s
+    ((idx=idx+1))
+#    idx=$(( $idx + $PPN ))
 done
-wait
+
+
+# idx=0
+# while [[ $idx -lt ${#ens_list[@]} ]]; do
+#     s=${ens_list[@] :$idx:$PPN}
+#     aprun -n 1 -d $PPN $SCRIPT_DIR/da.obsop.comb.sh $s &
+#     idx=$(( $idx + $PPN ))
+# done
+# wait
 
 
 # if [[ $do_DA == 0 ]]; then
@@ -121,18 +143,23 @@ wait
 
 
 
-#-------------------------------------------------------------------------------- 
-#-------------------------------------------------------------------------------- 
+#--------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------
 
 
 # determine the ids of the restart tiles
-tiles=()
-for f in $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.*; do
-    tiles+=(${f##*.})
-done
-echo ""
-echo "restart files used in data assimilation have ${#tiles[@]} tiles"
-echo ""
+do_tiles=0
+if [[ -e $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.0000 ]]; then
+    do_tiles=1
+    tiles=()
+    for f in $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.*; do
+	tiles+=(${f##*.})
+	echo "res ${f##*.}"
+    done
+    echo -e "\nRestart files have ${#tiles[@]} tiles. Running multiple instances of LETKF"
+else
+    echo -e "\nrestart file is NOT tiled, only running one instance of LETKF"
+fi
 
 
 #------------------------------------------------------------
@@ -185,7 +212,7 @@ if [[ "$DA_MODE" == "hyb" || "$DA_MODE" == "ekf" ]]; then
 	done
     done
 
-fi 
+fi
 
 
 
@@ -207,6 +234,15 @@ if [[ "$DA_MODE" == "hyb" ]]; then
 
     # run observation operator
     aprun -n 1 $BIN_DIR/obsop $obs_file $bkg_files obs.nc > obsop.log  &
+
+elif [[ "$DA_MODE" == "var" ]]; then
+    # just link the directory
+    mkdir $WORK_DIR/obsop.var
+    cd $WORK_DIR/obsop.var
+    ln -s ../mem_0000/obsop/obs.nc .
+    # TODO, use s better path
+    pwd
+    bkg_files=../../da.prep/bkg/mem_0000/fcst.diag/*.ocean_da_*.nc
 fi
 
 
@@ -218,18 +254,22 @@ if [[ "$DA_MODE" == "var" || "$DA_MODE" == "hyb" ]]; then
 
     mkdir $WORK_DIR/var
     cd $WORK_DIR/var
-    
+
     mkdir INPUT
     ln -s $GRID_DIR/{hgrid,vgrid,coast_dist}.nc INPUT/
     ln -s $DA_CFG_DIR/*.3dvar .
     ln -s ../obsop.var/obs.nc .
 
-    # combine the background files
-    echo "combining background tiles for 3dvar..."
-    aprun -n 1 $BIN_DIR/mppnccombine -64 bkg.nc $bkg_files &
-    wait
+    # combine the background files, if needed
+    if [[ $do_tiles == 1 ]]; then
+	echo "combining background tiles for 3dvar..."
+	aprun -n 1 $BIN_DIR/mppnccombine -64 bkg.nc $bkg_files &
+	wait
+    else
+	ln -s $bkg_files bkg.nc
+    fi
 
-    echo ""
-    echo "Running 3dvar..."
-    aprun -n $PPN $BIN_DIR/godas_3dvar
+    pwd
+    echo -e "\n\nRunning 3dvar..."
+    $MPIEXEC $BIN_DIR/3dvardriver
 fi

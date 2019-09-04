@@ -3,10 +3,16 @@ set +x
 set -e
 
 cat << EOF
+
+
+
 #================================================================================
 #================================================================================
-# NCEP Hybrid-GODAS  -  jobwrapper.sh"
+# Hybrid-GODAS  -  jobwrapper.sh
+#  calculate derived environment variables common to all job scripts
 #================================================================================
+#================================================================================
+
 EOF
 # Required environment variables:
 #  * The following need to be specified by the caller of this script
@@ -24,7 +30,7 @@ EOF
 # make sure the required env vars exist
 #------------------------------------------------------------
 for v in ${envar[@]}; do
-    if [[ -z "${!v}" ]]; then 
+    if [[ -z "${!v}" ]]; then
         echo "ERROR: env var $v is not set."; exit 1
     fi
     echo " $v = ${!v}"
@@ -51,7 +57,7 @@ source $MACHINE_CONFIG
 # done
 # echo ""
 
-# env vars that should already be set 
+# env vars that should already be set
 #for v in EXP_NAME ENS_SIZE DA_MODE DA_TIMESLOTS DA_WNDW_OFST FCST_RST_OFST FCST_IO_PROC FCST_IO_MISS; do
 # for v in EXP_NAME ENS_SIZE; do
 #     echo " $v = ${!v}"
@@ -74,20 +80,20 @@ CYCLE_LEN_NEXT=$CYCLE_LEN
 CYCLE_LEN_PREV=$CYCLE_LEN
 if [[ $CYCLE_LEAPADJ -ne 0 ]]; then
     # determine if leap day could affect this cycle
-    if [[ $(date "+%m%d" -d "${CYCLE:0:4}0228 + 1 day") == "0229" ]]; then
+    if [[ $(date "+%m%d" -ud "${CYCLE:0:4}0228 + 1 day") == "0229" ]]; then
 	# yes, this is a leap year...
 	echo "Checking leap day..."
 	ldate=${CYCLE:0:4}0229  #< date of leap date for this year
 	cdate=${CYCLE:0:8}
-	pdate=$(date "+%Y%m%d" -d "$cdate - $CYCLE_LEN hours") #< date for prev cycle
-	ndate=$(date "+%Y%m%d" -d "$cdate + $CYCLE_LEN hours") #< date for next cycle
+	pdate=$(date "+%Y%m%d" -ud "$cdate - $CYCLE_LEN hours") #< date for prev cycle
+	ndate=$(date "+%Y%m%d" -ud "$cdate + $CYCLE_LEN hours") #< date for next cycle
 	cycle_len_leap=$(( $CYCLE_LEN + 24 ))
 
 	# if current cycle includes a leap day...
 	if [[ $cdate -ge $ldate && $pdate -le $ldate ]]; then
 	    echo "Current cycle has a leap day!"
 # TODO: allow increasing CYCLE_LEN, which will allow for an extra DA slot during leap day
-#  this will only work if rocoto script is NOT splitting jobs by slot numbers. add a 
+#  this will only work if rocoto script is NOT splitting jobs by slot numbers. add a
 # flag to the config file to allow for this.
 
 #	    export CYCLE_LEN=$cycle_len_leap
@@ -101,8 +107,8 @@ if [[ $CYCLE_LEAPADJ -ne 0 ]]; then
 	fi
     fi
 fi
-export CYCLE_NEXT=$(date "+%Y%m%d%H" -d "$(dtz $CYCLE) + $CYCLE_LEN_NEXT hours")
-export CYCLE_PREV=$(date "+%Y%m%d%H" -d "$(dtz $CYCLE) - $CYCLE_LEN_PREV hours")
+export CYCLE_NEXT=$(date "+%Y%m%d%H" -ud "$(dtz $CYCLE) + $CYCLE_LEN_NEXT hours")
+export CYCLE_PREV=$(date "+%Y%m%d%H" -ud "$(dtz $CYCLE) - $CYCLE_LEN_PREV hours")
 
 for v in CYCLE_LEN CYCLE_PREV CYCLE CYCLE_NEXT; do
     echo " $v = ${!v}"
@@ -113,8 +119,8 @@ echo ""
 # data assimilation window
 #------------------------------------------------------------
 export DA_WNDW_LEN=$CYCLE_LEN
-export DA_WNDW_END_TIME=$(date "+%Y%m%d%H" -d "$(dtz $CYCLE) + $DA_WNDW_OFST hours")
-export DA_WNDW_START_TIME=$(date "+%Y%m%d%H" -d "$(dtz $DA_WNDW_END_TIME) - $CYCLE_LEN hours")
+export DA_WNDW_START_TIME=$(date "+%Y%m%d%H" -ud "$(dtz $CYCLE) + $DA_WNDW_OFST hours")
+export DA_WNDW_END_TIME=$(date "+%Y%m%d%H" -ud "$(dtz $DA_WNDW_START_TIME) + $CYCLE_LEN hours")
 export DA_SLOT_NUM=$(($CYCLE_LEN / $DA_SLOT_LEN))
 ss=$(( $DA_WNDW_OFST - $DA_WNDW_LEN  + $DA_SLOT_LEN/2))
 se=$(( $ss + $DA_SLOT_LEN*($DA_SLOT_NUM-1) ))

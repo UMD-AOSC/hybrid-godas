@@ -5,12 +5,12 @@ cat <<EOF
 
 #================================================================================
 #================================================================================
-# NCEP Hybrid-GODAS  -  fcst.post.sh
+# Hybrid-GODAS  -  fcst.post.sh
 #   post processing of MOM6 background forecast output
 #================================================================================
 EOF
 
-envar=() 
+envar=()
 envar+=("WORK_DIR")
 envar+=("COMBINE_EXE")
 envar+=("FCST_DIR")
@@ -48,24 +48,25 @@ files=($( for f in $DIAG_FILES; do echo ${f%.*}; done | sort | uniq | xargs))
 cd $WORK_DIR
 
 # combine the files
-for f in ${files[@]}; do 
+for f in ${files[@]}; do
+  if [[ ${f##*.} != 'nc' ]]; then
+    echo "No need to combine diag file for $f.nc"
+    f2=${f::-11}; f2=${f2#*.}
+    ln -s $FCST_DIR/$f.nc $f2.nc.2
+  else
     f2=${f::-14}; f2=${f2#*.}
     echo "combining $f2"
     echo "    $COMBINE_EXE -m -64 $f2 $FCST_DIR/*$f2.*"
     $COMBINE_EXE -m -64 $f2.nc.2 $FCST_DIR/*$f2*
+  fi
 done
 
 
 # compress the files
-comp2=Temp/3,Salt/3,SSH/4,u/3,v/3
-comp3=Temp/2,Salt/2,SSH/3,u/2,v/2,\
-temp/2,salt/2,ssh/3,\
-mld_003/1,mld_0125/1,taux/2,tauy/2,speed/2,ssh/3,lh/1,lw/1,sh/1,net_heat_coupler/1,\
-cn/2,siu/3,siv/3,sisnconc/2,siconc/2,hs/2,hi/2
-for f in *.nc.2; do
-    f2=${f%.*}
-    $POSTPROC_SCRIPTS/compress.py -compression 5 -lsd $comp3 $f $f2
-done 
+ncks -4 -L 4 -O --ppc default=3 \
+  ocean_diag.nc.2 ocean_diag.nc
+ncks -4 -L 4 -O --ppc default=3 \
+  ice_diag.nc.2 ice_diag.nc
 
 
 # TODO processing of derrived parameters
