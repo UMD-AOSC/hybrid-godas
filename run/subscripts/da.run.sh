@@ -26,7 +26,7 @@ envar+=("BIN_DIR")
 envar+=("DA_CFG_DIR")
 envar+=("GRID_DIR")
 envar+=("SCRIPT_DIR")
-
+envar+=("LOG_DIR")
 
 # make sure required env vars exist
 for v in ${envar[@]}; do
@@ -36,7 +36,7 @@ for v in ${envar[@]}; do
     echo " $v = ${!v}"
 done
 set -u
-echo ""
+echo -e "\n================================================================================\n"
 
 
 # setup working directory
@@ -96,6 +96,7 @@ done
 # submit in batches, one script per node
 # TODO, enable multiple runs per script, again
 echo "running observation operators..."
+echo "  NOTE: additional output placed in \$LOG_DIR/obsop/#slot#/#mem#.log"
 idx=0
 while [[ $idx -lt ${#sm[@]} ]]; do
     s=${sm[@]:$idx:1}
@@ -117,6 +118,7 @@ done
 # TODO, enable multiple runs per script, again
 echo ""
 echo "combining slots for each member..."
+echo "  NOTE: additional output placed in \$LOG_DIR/obscomb/#mem#.log"
 ens_list=($ENS_LIST)
 idx=0
 while [[ $idx -lt ${#ens_list[@]} ]]; do
@@ -184,15 +186,23 @@ if [[ "$DA_MODE" == "hyb" || "$DA_MODE" == "ekf" ]]; then
     sed -e "s/#ENS_SIZE#/$ENS_SIZE/" -e "s/#TILE_NUM#//" -e "s/#TILE_X#//" -e "s/#TILE_Y#//" $DA_CFG_DIR/letkf.yaml > $WORK_DIR/letkf.cfg/letkf.yaml
 
 
+    
     # # submit in batches, one script per node
-    echo "Running LETKF..."
+    # TODO
+    echo -e "\nRunning LETKF..."
+
+    # setup log file
+    log=$LOG_DIR/letkf.log
+    mkdir -p $(dirname $log)
+    echo "  NOTE: additional output placed in \$LOG_DIR/$(basename $log)"
+
     # idx=0
     # export OMP_NUM_THREADS=1
     # for t in ${tiles[@]}; do
     # 	aprun -n $PPN $BIN_DIR/letkfdriver letkf.cfg/$t.yaml &> letkf.log/$t.log &
     # done
     # wait
-    ${MPIEXEC} $BIN_DIR/letkfdriver letkf.cfg/letkf.yaml &> letkf.log/letkf.log
+    ${MPIEXEC} $BIN_DIR/letkfdriver letkf.cfg/letkf.yaml &> $log
     
     # ensemble member 0000 actually uses the ensemble mean, so link those files
     cd $WORK_DIR/mem_0000/letkf
@@ -234,12 +244,16 @@ if [[ "$DA_MODE" == "hyb" ]]; then
     bkg_files=../mem_mean/letkf/ana.*
     obs_file=$WORK_DIR/mem_0000/obsop/obs.nc
 
+    # setup log file
+    log=$LOG_DIR/obsop.var.log
+    mkdir -p $(dirname $log)
+    echo "  NOTE: additional output placed in \$LOG_DIR/$(basename $log)"
+
     # run observation operator
     # TODO, parallel   
     #aprun -n 1 $BIN_DIR/obsop $obs_file $bkg_files obs.nc > obsop.log  &
-    $BIN_DIR/obsop $obs_file $bkg_files obs.nc > obsop.log
+    $BIN_DIR/obsop $obs_file $bkg_files obs.nc &> $log
     
-
 elif [[ "$DA_MODE" == "var" ]]; then
     # just link the directory
     mkdir $WORK_DIR/obsop.var
@@ -272,7 +286,12 @@ if [[ "$DA_MODE" == "var" || "$DA_MODE" == "hyb" ]]; then
 	ln -s $bkg_files bkg.nc
     fi
 
-    pwd
-    echo -e "\n\nRunning 3dvar..."
-    $MPIEXEC $BIN_DIR/3dvardriver
+    echo -e "\nRunning 3dvar..."
+
+    # setup log file
+    log=$LOG_DIR/var.log
+    mkdir -p $(dirname $log)
+    echo "  NOTE: additional output placed in \$LOG_DIR/$(basename $log)"
+    
+    $MPIEXEC $BIN_DIR/3dvardriver &> $log
 fi

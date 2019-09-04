@@ -20,6 +20,7 @@ envar+=("CYCLE_DIR")
 envar+=("WORK_DIR")
 envar+=("GRID_DIR")
 envar+=("BIN_DIR")
+envar+=("LOG_DIR")
 envar+=("CYCLE")
 envar+=("CYCLE_PREV")
 envar+=("DA_SLOT_LEN")
@@ -116,42 +117,54 @@ for slot_offset in $DA_SLOTS; do
     # ADT observations
     #------------------------------------------------------------
     if [[ "$OBS_ADT" == 1 ]]; then
+	# setup working directory
 	mkdir -p $WORK_DIR/obs/work/$slot.obs_adt
 	cd $WORK_DIR/obs/work/$slot.obs_adt
+	ln -s $WORK_DIR/obs/work/obsprep.nml .
+	ln -s $WORK_DIR/obs/work/INPUT .
 
 	# find all the files for this slot
 	obs_dir="$(date "+$OBS_ADT_PATH" -d "$slot")"
 	obs_files=$obs_dir/*.nc
 	echo ""
-	echo "ADT observation files: "
+	echo "Preparing ADT observation files: "
 	for f in $obs_files; do echo "  $f"; done
 
-	# get working directory ready
-	ln -s $WORK_DIR/obs/work/obsprep.nml .
-	ln -s $WORK_DIR/obs/work/INPUT .
+	# setup log file
+	log=$LOG_DIR/obsprep.adt.$slot.log
+	mkdir -p $(dirname $log)
+	echo "  NOTE: additional output placed in $(basename $log)"
 
 	# run obsprep
 	for f in $obs_files; do
 	    f2=${f##*/}
-	    $BIN_DIR/obsprep_adt $f obsprep.$f2
+	    $BIN_DIR/obsprep_adt $f obsprep.$f2 &> $log
 	done
     fi
 
     # insitu profiles
     #------------------------------------------------------------
     if [[ "$OBS_PROF" == 1 ]]; then
+	# setup working directory
 	mkdir -p $WORK_DIR/obs/work/$slot.obs_prof
 	cd $WORK_DIR/obs/work/$slot.obs_prof
-
 	ln -s $WORK_DIR/obs/work/obsprep.nml .
 	ln -s $WORK_DIR/obs/work/INPUT .
 
+	# find all the files for this slot
 	file="$(date +"$OBS_PROF_PATH" -d "$slot")"
 	echo ""
-	echo "Insitu observation files: "
+	echo "Preparing Insitu observation files: "
+	echo "  $file"
+
+	# setup log file
+	log=$LOG_DIR/obsprep.insitu.$slot.log
+	mkdir -p $(dirname $log)
+	echo "  NOTE: additional output placed in $(basename $log)"
+	
 	if [[ -f "$file" ]]; then
 	    f2=${file##*/}
-	    $BIN_DIR/obsprep_insitu $file obsprep.$f2
+	    $BIN_DIR/obsprep_insitu $file obsprep.$f2 &> $log
 	fi
     fi
 
@@ -161,10 +174,15 @@ for slot_offset in $DA_SLOTS; do
     cd $WORK_DIR/obs/work
     files=($slot.*/obsprep.*.nc)
     if [[ "${files[@]}" == 0 ]]; then
-	echo "WARNING:  there are no observation files to combine for this slot."
+	echo -e "\nWARNING:  there are no observation files to combine for this slot."
     else
+	echo -e "\nCombining files..."
+	log=$LOG_DIR/obscomb.$slot.log
+	mkdir -p $(dirname $log)
+	echo "  NOTE: additional output placed in $(basename $log)"
+
 	basedate="$(date "+%Y,%m,%d,%H,0,0" -d "$(dtz $slot)")"
-	$BIN_DIR/obsprep_combine -basedate $basedate ${files[@]} ../obs.$slot.nc
+	$BIN_DIR/obsprep_combine -basedate $basedate ${files[@]} ../obs.$slot.nc &> $log
     fi
 
 done

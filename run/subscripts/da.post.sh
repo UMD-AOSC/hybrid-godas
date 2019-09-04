@@ -8,6 +8,7 @@ cat <<EOF
 #================================================================================
 # Hybrid-GODAS  -  da.post.sh
 #================================================================================
+
 EOF
 
 envar=()
@@ -28,7 +29,7 @@ for v in ${envar[@]}; do
     echo " $v = ${!v}"
 done
 set -u
-echo ""
+echo -e "\n================================================================================\n"
 
 
 # setup working directory
@@ -205,7 +206,10 @@ if [[ ( "$DA_MODE" == "hyb" ) || ( "$DA_MODE" == "ekf" ) ]]; then
 	mkdir -p  $d
 	cdo --sort add -select,name=Temp,Salt $ekf_file $var_file tmp.nc
 	cdo replace $ekf_file tmp.nc tmp2.nc
-	$POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $ofile
+
+	mkdir -p $(dirname $ofile)
+	ncks -7 -L 4 -O --ppc default=4 tmp2.nc $ofile
+#	$POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $ofile
 	rm tmp*.nc
     fi
 fi
