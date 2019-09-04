@@ -75,7 +75,7 @@ echo "Running with $NPROC cores"
 echo "Setting up forecast working directory in:"
 echo " $WORK_DIR"
 if [[ -e "$WORK_DIR" ]]; then
-    echo "WARNING: $WORK_DIR already exists, removing."
+    echo -e "\nWARNING: $WORK_DIR already exists, removing.\n"
     rm -rf $WORK_DIR
 fi
 mkdir -p $WORK_DIR
@@ -126,10 +126,10 @@ if [[ ! -e $RST_DIR_IN ]]; then
     # case of no restart file found
     if [[ $ALLOW_COLDSTART != 0 ]]; then
       FCST_RESTART=0
-      echo "WARNING: no restart files found, starting from T/S initial conditions"
+      echo -e "\nWARNING: no restart files found, starting from T/S initial conditions\n"
       ln -s $IC_FILE INPUT/ic.nc
     else
-      echo "ERROR: no restart files found. Link restart files, or set ALLOW_COLDSTART to start from clim."
+      echo -e "\nERROR: no restart files found. Link restart files, or set ALLOW_COLDSTART to start from clim.\n"
       exit 1
     fi
 
@@ -153,7 +153,7 @@ else
     if [[ "$DA_MODE" != "var" ]]; then
       letkf_files=($LETKF_ANA_DIR/ana.*)
       if [[ ${#letkf_files[@]} == 0 ]]; then
-        echo "WARNING: no LETKF analysis files found."
+        echo -e "\n\nWARNING: no LETKF analysis files found."
       else
         rst_letkf=1
       fi
@@ -164,7 +164,7 @@ else
     if [[ "$DA_MODE" != "ekf" ]]; then
       var_files=($VAR_ANA_DIR/*.nc)
       if [[ ${#var_files[@]} == 0 ]]; then
-        echo "WARNING: no 3DVAR analysis increment files found."
+        echo -e "\nWARNING: no 3DVAR analysis increment files found."
       else
         rst_var=1
       fi
@@ -214,7 +214,7 @@ source input.nml.sh > input.nml
 # run the forecast
 #------------------------------------------------------------
 echo "running MOM..."
-${MPIEXEC} -n $NPROC ./mom6
+${MPIEXEC} -n $NPROC ./mom6 
 
 # move the diag files
 mv *.ocean_da*.nc DIAG/

@@ -53,7 +53,7 @@ for mem in $ENS_LIST; do
     fi
 done
 if [[ $do_da == 0 ]]; then
-    echo "WARNING: no DA will be performed because the forecast diag files were not found."
+    echo "WARNING: no DA will be performed because the forecast diag files were not found. (this is normal for the first cycle)"
     exit 0
 fi
 
@@ -93,13 +93,12 @@ for slot_offset in $DA_SLOTS; do
     done
 done
 
-
 # submit in batches, one script per node
+# TODO, enable multiple runs per script, again
 echo "running observation operators..."
-
 idx=0
 while [[ $idx -lt ${#sm[@]} ]]; do
-    s=${sm[@]:$idx}
+    s=${sm[@]:$idx:1}
     $SCRIPT_DIR/da.obsop.sh $s
     ((idx=idx+1))
 done
@@ -115,12 +114,13 @@ done
 
 
 # combine all the slots for a given member
+# TODO, enable multiple runs per script, again
 echo ""
 echo "combining slots for each member..."
 ens_list=($ENS_LIST)
 idx=0
 while [[ $idx -lt ${#ens_list[@]} ]]; do
-    s=${ens_list[@]:$idx}
+    s=${ens_list[@]:$idx:1}
     $SCRIPT_DIR/da.obsop.comb.sh $s
     ((idx=idx+1))
 #    idx=$(( $idx + $PPN ))
@@ -172,48 +172,50 @@ if [[ "$DA_MODE" == "hyb" || "$DA_MODE" == "ekf" ]]; then
     mkdir -p letkf.diag
     mkdir -p letkf.cfg
 
-    for t in ${tiles[@]}; do
-	# get the tile position in the grid
-	tile_x=$(ncks -m -v lonh $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.$t | grep domain_decomposition | cut -d ' ' -f 13- )
-	tile_y=$(ncks -m -v lath $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.$t | grep domain_decomposition | cut -d ' ' -f 13- )
+    # # IF TILED
+    # for t in ${tiles[@]}; do
+    # 	# get the tile position in the grid
+    # 	tile_x=$(ncks -m -v lonh $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.$t | grep domain_decomposition | cut -d ' ' -f 13- )
+    # 	tile_y=$(ncks -m -v lath $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.$t | grep domain_decomposition | cut -d ' ' -f 13- )
 
- 	# generate the letkf yaml file
- 	sed -e "s/#ENS_SIZE#/$ENS_SIZE/" -e "s/#TILE_NUM#/$t/" -e "s/#TILE_X#/$tile_x/" -e "s/#TILE_Y#/$tile_y/" $DA_CFG_DIR/letkf.yaml > $WORK_DIR/letkf.cfg/$t.yaml
-    done
+    # 	# generate the letkf yaml file
+    # 	sed -e "s/#ENS_SIZE#/$ENS_SIZE/" -e "s/#TILE_NUM#/$t/" -e "s/#TILE_X#/$tile_x/" -e "s/#TILE_Y#/$tile_y/" $DA_CFG_DIR/letkf.yaml > $WORK_DIR/letkf.cfg/$t.yaml
+    # done
+    sed -e "s/#ENS_SIZE#/$ENS_SIZE/" -e "s/#TILE_NUM#//" -e "s/#TILE_X#//" -e "s/#TILE_Y#//" $DA_CFG_DIR/letkf.yaml > $WORK_DIR/letkf.cfg/letkf.yaml
 
 
-    # submit in batches, one script per node
+    # # submit in batches, one script per node
     echo "Running LETKF..."
-    idx=0
-    export OMP_NUM_THREADS=1
-    for t in ${tiles[@]}; do
-	aprun -n $PPN $BIN_DIR/letkfdriver letkf.cfg/$t.yaml &> letkf.log/$t.log &
-    done
-    wait
-
+    # idx=0
+    # export OMP_NUM_THREADS=1
+    # for t in ${tiles[@]}; do
+    # 	aprun -n $PPN $BIN_DIR/letkfdriver letkf.cfg/$t.yaml &> letkf.log/$t.log &
+    # done
+    # wait
+    ${MPIEXEC} $BIN_DIR/letkfdriver letkf.cfg/letkf.yaml &> letkf.log/letkf.log
+    
     # ensemble member 0000 actually uses the ensemble mean, so link those files
     cd $WORK_DIR/mem_0000/letkf
     for f in $WORK_DIR/mem_mean/letkf/ana.*; do
-	f2=${f##*/}
-	ln -s $f $f2
+    	f2=${f##*/}
+    	ln -s $f $f2
     done
 
-    # add required netcdf domain_decomposition attributes to letkf files
-    cd ../../
-    for t in ${tiles[@]}; do
-	# get the tile position in the grid
-	decomp_x=$(ncks -m -v lonh $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.$t | grep domain_decomposition | cut -d ' ' -f 11- )
-	decomp_y=$(ncks -m -v lath $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.$t | grep domain_decomposition | cut -d ' ' -f 11- )
+    # # add required netcdf domain_decomposition attributes to letkf files
+    # cd ../../
+    # for t in ${tiles[@]}; do
+    # 	# get the tile position in the grid
+    # 	decomp_x=$(ncks -m -v lonh $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.$t | grep domain_decomposition | cut -d ' ' -f 11- )
+    # 	decomp_y=$(ncks -m -v lath $WORK_DIR/mem_0000/fcst.rst/MOM.res.nc.$t | grep domain_decomposition | cut -d ' ' -f 11- )
 
-	for ms in mean sprd; do
-	    for ba in ana bkg; do
-		ncatted -a domain_decomposition,lon,o,i,"$decomp_x" -a domain_decomposition,lat,o,i,"$decomp_y" -O $WORK_DIR/mem_$ms/letkf/$ba.nc.$t
-	    done
-	done
-    done
+    # 	for ms in mean sprd; do
+    # 	    for ba in ana bkg; do
+    # 		ncatted -a domain_decomposition,lon,o,i,"$decomp_x" -a domain_decomposition,lat,o,i,"$decomp_y" -O $WORK_DIR/mem_$ms/letkf/$ba.nc.$t
+    # 	    done
+    # 	done
+    # done
 
 fi
-
 
 
 #--------------------------------------------------------------------------------
@@ -233,7 +235,10 @@ if [[ "$DA_MODE" == "hyb" ]]; then
     obs_file=$WORK_DIR/mem_0000/obsop/obs.nc
 
     # run observation operator
-    aprun -n 1 $BIN_DIR/obsop $obs_file $bkg_files obs.nc > obsop.log  &
+    # TODO, parallel   
+    #aprun -n 1 $BIN_DIR/obsop $obs_file $bkg_files obs.nc > obsop.log  &
+    $BIN_DIR/obsop $obs_file $bkg_files obs.nc > obsop.log
+    
 
 elif [[ "$DA_MODE" == "var" ]]; then
     # just link the directory
@@ -241,10 +246,8 @@ elif [[ "$DA_MODE" == "var" ]]; then
     cd $WORK_DIR/obsop.var
     ln -s ../mem_0000/obsop/obs.nc .
     # TODO, use s better path
-    pwd
     bkg_files=../../da.prep/bkg/mem_0000/fcst.diag/*.ocean_da_*.nc
 fi
-
 
 
 #--------------------------------------------------------------------------------

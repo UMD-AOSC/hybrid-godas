@@ -35,13 +35,6 @@ EOF
 # Required environment variables:
  envar=()
 
- # default values
- FORC_HR=${FORC_HR:-12}
- FORC_CORR=${FORC_CORR:-0}
- FORC_SKIP_LEAP=${FORC_SKIP_LEAP:-1}
- FORC_PERTURB=${FORC_PERTURB:-1}
- FORC_POS=${FORC_POS:" "}
-
  envar+=("WORK_DIR")     # The temporary directory in which this script
                              #  will do all of its work
 
@@ -52,6 +45,7 @@ EOF
  envar+=("FCST_END_TIME")    # Datetime for end of the forecast (YYYYMMDDHH)
 
  envar+=("FORC_HR")          # The hour at which forcing is specified (usually 12Z)
+ FORC_HR=${FORC_HR:-12}
 
  envar+=("FORC_MEAN_FILE")   # path to the input daily flux files
 
@@ -67,8 +61,9 @@ EOF
  fi
 
  envar+=("FORC_CORR")        # If =1, a monthly bias correction is done to FORC_MEAN_FILE
-
+ FORC_CORR=${FORC_CORR:-0}
  if [[ ! $FORC_CORR -eq 0 ]]; then
+     
    envar+=("FORC_CORR_DIR")  # path to the monthly flux bias correction files
 
    envar+=("FORC_CORR_ADD")  # comma separated list of variables that have additive correction done
@@ -77,16 +72,21 @@ EOF
  fi
 
  envar+=("FORC_SKIP_LEAP")   # If == 1, no error is thrown if dataset is missing leap day
+ FORC_SKIP_LEAP=${FORC_SKIP_LEAP:-1}
 
- envar+=("FORC_PERTURB")     # if =1, ensemble perturbations are pulled from
-                             #  FORC_ENS_FILE and added to FORC_MEAN_FILE for each
-                             #  ensemble member.
-                             # if =0, FORC_MEAN_FILE is not used at all.
+ envar+=("FORC_PERTURB")         # if =1, ensemble perturbations are pulled from
+ FORC_PERTURB=${FORC_PERTURB:-1} #  FORC_ENS_FILE and added to FORC_MEAN_FILE for each
+                                 #  ensemble member.
+                                 # if =0, FORC_MEAN_FILE is not used at all.
 
- envar+=("FORC_RUNOFF_CLIM")
- envar+=("FORC_RUNOFF_PERTURB")
- if [[ ! $FORC_RUNOFF_PERTURB -eq 0 ]]; then
-     envar+=("FORC_RUNOFF_VAR")
+ envar+=("FORC_RUNOFF")
+ if [[ ! $FORC_RUNOFF -eq 0 ]]; then
+
+     envar+=("FORC_RUNOFF_CLIM")
+     envar+=("FORC_RUNOFF_PERTURB")
+     if [[ ! $FORC_RUNOFF_PERTURB -eq 0 ]]; then
+	 envar+=("FORC_RUNOFF_VAR")
+     fi
  fi
 
 #================================================================================
@@ -157,11 +157,13 @@ echo ""
 mkdir -p mem_0000
 
 #------------------------------------------------------------
-# Create the river runoff perturbations
+# Create the river runoff mean
 #------------------------------------------------------------
-echo "Generating river runoff files..."
-echo "------------------------------------------------------------"
-#cp $FORC_RUNOFF_CLIM mem_0000/runoff.nc
+if [[ $FORC_RUNOFF == 1 ]]; then
+    echo "Generating river runoff files..."
+    echo "------------------------------------------------------------"
+    cp $FORC_RUNOFF_CLIM mem_0000/runoff.nc
+fi
 
 
 # ------------------------------------------------------------
@@ -192,7 +194,7 @@ for f in ${forc_var[@]}; do
 	fi
 	echo "$(printf %15s $f) (bias corrected, $bias_op)"
     else
-	echo "$(printf %15s $f)"
+	echo "$(printf %15s $f) "
     fi
 
     # for each date in the range that needs to be processed for this variable
@@ -251,11 +253,10 @@ for f in ${forc_var[@]}; do
 	date_cur=$(date "+%Y%m%d" -d "$date_cur + 1 day")
     done
 
-    ncrcat $files mem_0000/$f.nc
+    ncrcat -O -L 0 $files mem_0000/$f.nc
     ncatted -O -a axis,time,c,c,T -a calendar,,m,c,gregorian mem_0000/$f.nc
 done
 echo ""
-
 
 
 # ------------------------------------------------------------
@@ -269,29 +270,32 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
     echo "Generating ensemble member forcing files..."
     echo "------------------------------------------------------------"
 
-    # generate river runoff files
-    echo "River Runoff"
-    yr=${date_cur:0:4}
-    mn=${date_cur:4:2}
-    for m in $ens_list; do
-	d=work/ens/mem_$m
-	mkdir -p $d
- 	mkdir -p mem_$m
+    if [[ $FORC_RUNOFF == 1 ]]; then
+	# generate river runoff files
+	echo "River Runoff"
+	yr=${date_cur:0:4}
+	mn=${date_cur:4:2}
+	for m in $ens_list; do
+	    d=work/ens/mem_$m
+	    mkdir -p $d
+ 	    mkdir -p mem_$m
 
-	if [[ ! $FORC_RUNOFF_PERTURB -eq 0 ]]; then
-	    $ROOT_GODAS_DIR/tools/clim_noise.py -nx 1440 -ny 1080 -month $mn -year $yr -seed $m $d/runoff.noise.nc
-	    cdo -L add $FORC_RUNOFF_CLIM -mul $FORC_RUNOFF_VAR $d/runoff.noise.nc mem_$m/runoff.nc
-	    # cdo screws some things up, fix them..
-	    ncatted -O -a axis,i,d,, -a axis,j,d,, -a cartesian_axis,i,o,c,X -a cartesian_axis,j,o,c,Y \
-		       -a axis,time,d,, -a cartesian_axis,time,o,c,T -a calendar,time,o,c,noleap \
-                       -a modulo,time,o,c," " mem_$m/runoff.nc
-	else
-	    cp $FORC_RUNOFF_CLIM mem_$m/runoff.nc
-	fi
-    done
+	    if [[ ! $FORC_RUNOFF_PERTURB -eq 0 ]]; then
+		$ROOT_GODAS_DIR/tools/clim_noise.py -nx 1440 -ny 1080 -month $mn -year $yr -seed $m $d/runoff.noise.nc
+		cdo -L add $FORC_RUNOFF_CLIM -mul $FORC_RUNOFF_VAR $d/runoff.noise.nc mem_$m/runoff.nc
+		# cdo screws some things up, fix them..
+		ncatted -O -a axis,i,d,, -a axis,j,d,, -a cartesian_axis,i,o,c,X -a cartesian_axis,j,o,c,Y \
+			-a axis,time,d,, -a cartesian_axis,time,o,c,T -a calendar,time,o,c,noleap \
+			-a modulo,time,o,c," " mem_$m/runoff.nc
+	    else
+		cp $FORC_RUNOFF_CLIM mem_$m/runoff.nc
+	    fi
+	done
+    fi
 
 
     # Create the combined atmospheric forcing file for each member
+    echo "Generating combined atmospheric focing file for each member..."
     for m in $ens_list; do
 	d=work/ens/mem_$m
 	mkdir -p $d
@@ -322,18 +326,21 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
      echo ""
 
      # generate remap weights
+     # (assuming all variables use the same grid
      echo 'Generating "ens->mean" interpolation weights...'
-     mkdir -p work/ens_weights
-     for f in ${forc_var_ens[@]}; do
- 	cdo -L gen${interp},mem_0000/$f.nc work/ens_mean/$f.nc work/ens_weights/$f.nc
-     done
+#     mkdir -p work/ens_weights
+     v=${forc_var_ens[0]}
+     cdo -L gen${interp},mem_0000/$v.nc work/ens_mean/$v.nc work/remap_weights.nc    
+#     for f in ${forc_var_ens[@]}; do
+# 	cdo -L gen${interp},mem_0000/$f.nc work/ens_mean/$f.nc work/ens_weights/$f.nc
+#     done
      echo ""
 
      # remap the ens means and calculate mean-ens_mean
      echo 'Calculating "mean - ens_mean"...'
      mkdir -p work/ens_offset
      for f in ${forc_var_ens[@]}; do
- 	cdo -L sub mem_0000/$f.nc -remap,mem_0000/$f.nc,work/ens_weights/$f.nc work/ens_mean/$f.nc work/ens_offset/$f.nc
+ 	cdo -L sub mem_0000/$f.nc -remap,mem_0000/$f.nc,work/remap_weights.nc work/ens_mean/$f.nc work/ens_offset/$f.nc
      done
      echo ""
 
@@ -354,7 +361,7 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
 	    # if this is a variable that should have an ensemble
 	    # perturbation added to it...
 	    if [[ $is_ens -ne 0 ]]; then
-		cdo -L add work/ens_offset/$f.nc -remap,mem_0000/$f.nc,work/ens_weights/$f.nc work/ens/mem_$m/$f.nc $d/$f.nc
+		cdo -L add work/ens_offset/$f.nc -remap,mem_0000/$f.nc,work/remap_weights.nc work/ens/mem_$m/$f.nc $d/$f.nc
  		ncatted -O -a axis,time,c,c,T $d/$f.nc
  		ncatted -O -a calendar,,m,c,gregorian $d/$f.nc
 	    else

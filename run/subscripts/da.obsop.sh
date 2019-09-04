@@ -16,6 +16,6 @@ for x in $*; do
     f=$(date "+%Y_%m_%d" -d "$slot")
     diag_files=$bkg_dir/*.ocean_da_${f}.nc
 
-    $BIN_DIR/obsop $WORK_DIR/../da.prep/obs/obs.$slot.nc $diag_files obs.nc #> obsop.log&
+    $BIN_DIR/obsop $WORK_DIR/../da.prep/obs/obs.$slot.nc $diag_files obs.nc > obsop.log
 done
 wait

@@ -7,7 +7,7 @@ if [[ $TILED_IO == 0 ]]; then
     cd $WORK_DIR
     args=""    
     if [[ $DA_MODE != "var" ]]; then
-	args="$args $LETKF_ANA_DIR/ana.nc.$t"
+	args="$args $LETKF_ANA_DIR/ana.nc"
     fi
     if [[ $DA_MODE != "ekf" ]]; then
 	args="$args $VAR_ANA_DIR/ana_inc.nc"

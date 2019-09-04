@@ -15,12 +15,11 @@ for mem in $*; do
 	echo "WARNING: no observations found for $mem"
 	exit 0
     fi
-    pwd
     mkdir INPUT
     ln -s $GRID_DIR/{hgrid,vgrid,coast_dist}.nc INPUT/
     ln -s $DA_CFG_DIR/obsprep.nml .
 
-    $BIN_DIR/obsprep_combine -basedate $basedate */obs.nc obs.nc #> combine.log &
+    $BIN_DIR/obsprep_combine -basedate $basedate */obs.nc obs.nc > combine.log 
 done
 wait
 
