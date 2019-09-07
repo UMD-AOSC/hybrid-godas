@@ -89,6 +89,11 @@ EOF
      fi
  fi
 
+ envar+=("IC_GEN")
+ if [[ ! $IC_GEN -eq 0 ]]; then
+
+     envar+=("IC_DIR")
+ fi
 #================================================================================
 #================================================================================
 
@@ -117,6 +122,36 @@ fi
 # surface forcing interpolation method ("bil" or "bic")
 interp="bil"
 
+# ------------------------------------------------------------
+# Initial COnditions
+# ------------------------------------------------------------
+if [[ $IC_GEN == 1 ]]; then
+    echo "linking initial conditions..."
+    echo "------------------------------------------------------------"
+    IC_WORK_DIR=$WORK_DIR/ic
+    if [[ -e "$IC_WORK_DIR" ]]; then
+	echo "WARNING: IC_WORK_DIR already exists, removing:"
+	echo " $IC_WORK_DIR"
+	rm -rf "$IC_WORK_DIR"
+    fi
+    mkdir -p "$IC_WORK_DIR"
+
+    for mem in $ENS_LIST; do
+	mkdir -p $IC_WORK_DIR/mem_$mem;
+	# make sure ic file exists
+	ic_file=$IC_DIR/mem_$mem.nc
+	if [[ ! -e $ic_file ]]; then
+	    echo "ERROR: IC file $ic_file does not exist"
+	    exit 1
+	fi
+	ln -s $ic_file $IC_WORK_DIR/mem_$mem/ic.nc
+    done
+fi
+
+
+#------------------------------------------------------------
+# Forcing
+#------------------------------------------------------------
 
 # setup working directory
 #------------------------------------------------------------
@@ -364,7 +399,6 @@ fi
 ens_list="0000 $ens_list"
 
 
-
 # ------------------------------------------------------------
 # some fields need to be kept positive, check those
 # ------------------------------------------------------------
@@ -378,6 +412,7 @@ for m in $ens_list; do
 	ncatted -O -a calendar,,m,c,gregorian $f
     done
 done
+
 
 # ------------------------------------------------------------
 # Setup initial conditions, if required

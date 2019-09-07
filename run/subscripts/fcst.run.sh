@@ -214,7 +214,7 @@ source input.nml.sh > input.nml
 # run the forecast
 #------------------------------------------------------------
 echo "running MOM..."
-${MPIEXEC} -n $NPROC ./mom6 
+${MPIEXEC} ./mom6 
 
 # move the diag files
 mv *.ocean_da*.nc DIAG/
