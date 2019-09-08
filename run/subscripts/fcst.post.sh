@@ -19,6 +19,7 @@ envar+=("OUTPUT_DIR")
 envar+=("CYCLE")
 
 # make sure the required env vars exist
+set +u
 for v in ${envar[@]}; do
     if [[ -z "${!v}" ]]; then
 	echo "ERROR: env var $v is not set."; exit 1

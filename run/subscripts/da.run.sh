@@ -15,7 +15,7 @@ cat <<EOF
 EOF
 
 envar=()
-envar+=("PPN")
+#envar+=("PPN")
 envar+=("CYCLE")
 envar+=("DA_SLOTS")
 envar+=('DA_MODE')

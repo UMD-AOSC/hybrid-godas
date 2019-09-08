@@ -12,7 +12,7 @@ EOF
 
 envar=()
 envar+=("SCRATCH_DIR")
-envar+=("SAVE_DIR")
+envar+=("CYCLE_DIR")
 envar+=("KEEP_CYCLES")
 envar+=("KEEP_CYCLES_REGEX")
 
@@ -51,7 +51,7 @@ done
 
 
 # delete old cycles no longer needed in the save directory
-for d in $SAVE_DIR/??????????/; do
+for d in $CYCLE_DIR/??????????/; do
     d2=${d%/}
     d2=${d2##*/}
     keep=1

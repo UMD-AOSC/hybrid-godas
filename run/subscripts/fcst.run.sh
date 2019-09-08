@@ -65,9 +65,9 @@ echo ""
 set -u
 
 
-# calculate number of cores needed
-NPROC=$(($PPN * $NODES))
-echo "Running with $NPROC cores"
+## calculate number of cores needed
+#NPROC=$(($PPN * $NODES))
+#echo "Running with $NPROC cores"
 
 
 # setup the foreacst directory

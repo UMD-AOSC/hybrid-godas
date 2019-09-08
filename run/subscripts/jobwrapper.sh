@@ -16,19 +16,20 @@ cat << EOF
 EOF
 # Required environment variables:
 #  * The following need to be specified by the caller of this script
- envar=()
- envar+=("CYCLE")
- envar+=("CYCLE_LEN")
- envar+=("CYCLE_LEAPADJ")
- envar+=("DA_WNDW_OFST")
- envar+=("DA_SLOT_LEN")
- envar+=("MACHINE_CONFIG")
+envar=()
+envar+=("CYCLE")
+envar+=("CYCLE_LEN")
+envar+=("CYCLE_LEAPADJ")
+envar+=("DA_WNDW_OFST")
+envar+=("DA_SLOT_LEN")
+
 #================================================================================
 #================================================================================
 
 
 # make sure the required env vars exist
 #------------------------------------------------------------
+set +u
 for v in ${envar[@]}; do
     if [[ -z "${!v}" ]]; then
         echo "ERROR: env var $v is not set."; exit 1
@@ -48,12 +49,12 @@ set -u
 #files+=("${ROOT_GODAS_DIR}/config/env")
 # files+=("${ROOT_EXP_DIR}/config/hybridgodas.config")
 # for f in ${files[@]}; do
-if [[ ! -f "$MACHINE_CONFIG" ]]; then
-  echo "ERROR: cannot find environment file: $MACHINE_CONFIG"
-  exit 1
-fi
-echo "loading config file: $MACHINE_CONFIG"
-source $MACHINE_CONFIG
+# if [[ ! -f "$MACHINE_CONFIG" ]]; then
+#   echo "ERROR: cannot find environment file: $MACHINE_CONFIG"
+#   exit 1
+# fi
+# echo "loading config file: $MACHINE_CONFIG"
+# source $MACHINE_CONFIG
 # done
 # echo ""
 

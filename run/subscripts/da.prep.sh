@@ -22,7 +22,6 @@ envar+=("GRID_DIR")
 envar+=("BIN_DIR")
 envar+=("LOG_DIR")
 envar+=("CYCLE")
-envar+=("CYCLE_PREV")
 envar+=("DA_SLOT_LEN")
 envar+=("DA_SLOTS")
 envar+=("DA_CFG_DIR")
@@ -30,10 +29,12 @@ envar+=("OBS_SST")
 if [[ "$OBS_SST" -gt 0 ]]; then
     envar+=("OBS_SST_PATH")
 fi
+
 envar+=("OBS_ADT")
 if [[ "$OBS_ADT" -gt 0 ]]; then
     envar+=("OBS_ADT_PATH")
 fi
+
 envar+=("OBS_PROF")
 if [[ "$OBS_PROF" -gt 0 ]]; then
     envar+=("OBS_PROF_PATH")
