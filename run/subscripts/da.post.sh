@@ -199,16 +199,18 @@ if [[ ( "$DA_MODE" == "hyb" ) || ( "$DA_MODE" == "ekf" ) ]]; then
 
     # analysis mean (hybrid)
     if [[ "$DA_MODE" == "hyb" ]]; then
+	pwd 
 	ekf_file=$OUTPUT_DIR/ana/mean_letkf/${CYCLE:0:4}/${CYCLE}.nc
 	var_file=$WORK_DIR/../da.run/var/ana_inc.nc
 	ofile=$OUTPUT_DIR/ana/mean/${CYCLE:0:4}/${CYCLE}.nc
 	d=$(dirname $ofile)
 	mkdir -p  $d
-	cdo --sort add -select,name=Temp,Salt $ekf_file $var_file tmp.nc
-	cdo replace $ekf_file tmp.nc tmp2.nc
+	cdo select,name=Temp,Salt $ekf_file  tmp.nc
+	cdo --sort add tmp.nc $var_file tmp2.nc
+	cdo replace $ekf_file tmp2.nc tmp.nc
 
 	mkdir -p $(dirname $ofile)
-	ncks -7 -L 4 -O --ppc default=4 tmp2.nc $ofile
+	ncks -7 -L 4 -O --ppc default=4 tmp.nc $ofile
 #	$POSTPROC_SCRIPTS/compress.py  $compopt $comp2 tmp2.nc $ofile
 	rm tmp*.nc
     fi
