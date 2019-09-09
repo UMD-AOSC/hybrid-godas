@@ -1,0 +1,18 @@
+#!/bin/bash
+
+export FC=mpif90
+export CC=mpicc
+export MPIEXEC=mpirun
+
+# determine the root hgdoas directory based on this scripts location
+export HGODAS_ROOT_DIR=$(readlink -f $(dirname $(readlink -f ${BASH_SOURCE[0]}))/../)
+
+# other required default directory locations
+export HGODAS_BUILD_DIR=$HGODAS_ROOT_DIR/build/gcc
+export HGODAS_DATA_DIR=$HGODAS_ROOT_DIR/DATA
+export HGODAS_BIN_DIR=$HGODAS_BUILD_DIR/bin
+
+# ...
+set +u
+export HGODAS_SCRATCH_DIR=$EXP_DIR/WRK
+set -u
