@@ -82,10 +82,11 @@ for yr in years:
     # for each date in this year
     while(cdate <= edate):
         print(str(cdate))
-
+        date = cdate.strftime("%Y%m%d")
+        
         # prepare ens output directories
         for e in range(1,args.mem+1):
-            d = args.tmpdir+'/20CRv2.{}/{:02d}'.format(cdate.strftime("%Y%m%d"), e)
+            d = args.tmpdir+'/20CRv2.{}/{:04d}'.format(date, e)
             if not os.path.exists(d):
                 os.makedirs(d)
         
@@ -125,16 +126,18 @@ for yr in years:
                 sp.check_call(cmd.format(files,varname,f[0]),
                     shell=True, cwd=args.tmpdir)
 
-                sp.check_call('ncks -O -7 -L 6 --ppc default=5 tmp.nc 20CRv2.{0}/{1:02d}/20CRv2.{0}.{2}.nc && rm tmp.nc'.format(
-                    cdate.strftime("%Y%m%d"), m, f[0]), shell=True, cwd=args.tmpdir)
+                sp.check_call('ncks -O -7 -L 6 --ppc default=5 tmp.nc 20CRv2.{0}/{1:04d}/{2}.nc && rm tmp.nc'.format(
+                    date, m, f[0]), shell=True, cwd=args.tmpdir)
+
+            # cleanup some temp files
+            sp.check_call('rm {}.*.nc'.format(f[0]), shell=True, cwd=args.tmpdir)
 
         # compress and move
-        sp.check_call('tar -caf {1}/20CRv2.{0}.tgz 20CRv2.{0}'.format(
-            cdate.strftime("%Y%m%d"), outdir),
-                      shell=True, cwd=args.tmpdir)
+        sp.check_call('tar -caf {1}/20CRv2.{0}.tgz *'.format(date, outdir),
+                      shell=True, cwd=args.tmpdir+'/20CRv2.{0}'.format(date))
 
         # cleanup
-        sp.check_call('rm -r *.nc 20CRv2.{}'.format(cdate.strftime("%Y%m%d")), shell=True, cwd=args.tmpdir)
+        sp.check_call('rm -r 20CRv2.{}'.format(date), shell=True, cwd=args.tmpdir)
             
         cdate += dt.timedelta(days=1)
 

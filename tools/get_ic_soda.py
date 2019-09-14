@@ -16,13 +16,13 @@ parser.add_argument(
     'date',
     help="a date in YYYYMMDD format")
 parser.add_argument(
-    '-mem', type=int, default=0,
+    '--mem', type=int, default=0,
     help="Number of extra dates to download for ensemble members")
 parser.add_argument(
-    '-version', default="3.3.1",
+    '--version', default="3.3.1",
     help="The version of SODA to download, list of versions can be found at atmos.umd.edu/~ocean/index_files/soda3_readme.htm")
 parser.add_argument(
-    '-outdir', default=default_outdir,
+    '--outdir', default=default_outdir,
     help="directory to place the output files in (default: %(default)s)")
 args = parser.parse_args()
 args.date = datetime.strptime(args.date, '%Y%m%d')

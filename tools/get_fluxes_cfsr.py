@@ -90,6 +90,7 @@ cdate = args.start_date
 while(cdate <= args.end_date):
     date = cdate.strftime("%Y%m%d")
 
+    print("")
     print("************************************************************")
     print("Processing date "+date)
     print("************************************************************")
@@ -233,12 +234,12 @@ while(cdate <= args.end_date):
                     corrfile), shell=True, cwd=args.tmpdir)
 
         # compress
-        cmd = 'ncks -O -7 -L 6 --ppc default={2} {0}.nc cfsr.{1}.{0}.nc '.format(
-            field[0], date, field[3])
+        cmd = 'ncks -O -7 -L 6 --ppc default={1} {0}.nc {0}.nc.tmp && mv {0}.nc.tmp {0}.nc '.format(
+            field[0], field[3])
         sp.check_call(cmd, shell=True, cwd=args.tmpdir)
 
     # tar / move to final location
-    sp.check_call('tar -caf {1}/cfsr.{0}.tgz cfsr.{0}.*.nc'.format(date,outdir),
+    sp.check_call('tar -caf {1}/cfsr.{0}.tgz *.nc'.format(date,outdir),
                   shell=True, cwd=args.tmpdir)
                   
 
