@@ -74,7 +74,7 @@ if [[ $FIRST_CYCLE == 0 ]]; then
     export WORK_DIR=$SCRATCH_DIR_CYCLE/da.prep
     export LOG_DIR=$LOG_DIR_BASE/da.prep
     $SCRIPT_DIR/da.prep.sh
-)
+) || { echo "ERROR in da.prep"; exit 1; }
 fi
 
 
@@ -87,7 +87,7 @@ if [[ $FIRST_CYCLE == 0 ]]; then
     export WORK_DIR=$SCRATCH_DIR_CYCLE/da.run
     export LOG_DIR=$LOG_DIR_BASE/da.run
     $SCRIPT_DIR/da.run.sh
-)
+) || { echo "ERROR in da.run"; exit 1; }
 fi
 
 
@@ -99,7 +99,7 @@ if [[ $FIRST_CYCLE == 0 ]]; then
     export SAVE_OMF=1
     export WORK_DIR=$SCRATCH_DIR_CYCLE/da.post
     $SCRIPT_DIR/da.post.sh
-)
+) || { echo "ERROR in da.post"; exit 1; }
 fi  
 
 
@@ -112,6 +112,7 @@ fi
     export WORK_DIR=$SCRATCH_DIR_CYCLE/fcst.prep
     $SCRIPT_DIR/fcst.prep.sh
 )
+
 
 # -------------------------------------------------------------------
 # Forecast run for each ens member
@@ -140,12 +141,12 @@ for MEM in $ENS_LIST; do
     else
 	export FCST_DIAG_OTHER=0
     fi
-    export LETKF_ANA_DIR=$SCRATCH_DIR/da.run/mem_$MEM/letkf
+    export LETKF_ANA_DIR=$SCRATCH_DIR_CYCLE/da.run/mem_$MEM/letkf
     export VAR_ANA_DIR=$SCRATCH_DIR_CYCLE/da.run/var
     export WORK_DIR=$SCRATCH_DIR_CYCLE/fcst.run/mem_$MEM
 
-    $SCRIPT_DIR/fcst.run.sh &> $log  || echo "ERROR: unable to run fcst for member $MEM. Check the individual log file."
-)   
+    $SCRIPT_DIR/fcst.run.sh &> $log
+) || { echo "ERROR in fcst.run for member $MEM"; exit 1; }
 done
 
 
@@ -158,7 +159,8 @@ done
     export DIAG_FILES="*_diag*"
     export WORK_DIR=$SCRATCH_DIR_CYCLE/fcst.post
     $SCRIPT_DIR/fcst.post.sh
-)
+) || { echo "ERROR in fcst.post"; exit 1; }
+
 
 # -------------------------------------------------------------------
 # cleanup
@@ -169,7 +171,7 @@ done
     export KEEP_CYCLES=0
     export KEEP_CYCLES_REGEX="none"
     $SCRIPT_DIR/cycle.scrub.sh
-)
+) || { echo "ERROR in cycle.scrub"; exit 1; }
 
 
 # -------------------------------------------------------------------
