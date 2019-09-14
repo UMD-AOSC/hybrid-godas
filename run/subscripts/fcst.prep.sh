@@ -29,9 +29,6 @@ EOF
 # TODO:
 #  * use FORC_PERTURB
 #  * allow climatology correction to be applied even if FORC_PERTURB=0
-#  * select between bilinear/bicubic interpolation methods
-#  * allow for different ENS/MEAN temporal resolutions
-#  * why is cdo having issues with gregorian calendar ?
 # Required environment variables:
  envar=()
 
@@ -122,15 +119,16 @@ fi
 # surface forcing interpolation method ("bil" or "bic")
 interp="bil"
 
+
 # ------------------------------------------------------------
-# Initial COnditions
+# Initial Conditions
 # ------------------------------------------------------------
 if [[ $IC_GEN == 1 ]]; then
     echo "linking initial conditions..."
     echo "------------------------------------------------------------"
     IC_WORK_DIR=$WORK_DIR/ic
     if [[ -e "$IC_WORK_DIR" ]]; then
-	echo "WARNING: IC_WORK_DIR already exists, removing:"
+	echo -e "\nWARNING: IC_WORK_DIR already exists, removing:"
 	echo " $IC_WORK_DIR"
 	rm -rf "$IC_WORK_DIR"
     fi
@@ -157,7 +155,7 @@ fi
 #------------------------------------------------------------
 FORC_WORK_DIR=$WORK_DIR/forc
 if [[ -e "$FORC_WORK_DIR" ]]; then
-    echo "WARNING: FORC_WORK_DIR already exists, removing:"
+    echo -e "\nWARNING: FORC_WORK_DIR already exists, removing:"
     echo " $FORC_WORK_DIR"
     rm -rf "$FORC_WORK_DIR"
 fi
@@ -209,9 +207,22 @@ fi
 mkdir -p work/mean
 echo "Generating forcing mean files..."
 echo "------------------------------------------------------------"
+
+# untar all the input files
+date_cur=$forc_start_dy
+while [[ $(date -d "$date_cur" +%s) -le $(date -d "$forc_end_dy" +%s) ]];do
+    out_dir=work/mean/$(date -d "$date_cur" +%Y%m%d%H)
+    mkdir -p $out_dir
+    file_in=$(date "+$FORC_MEAN_FILE" -d "$date_cur")
+    tar -xaf $file_in -C $out_dir
+    date_cur=$(date "+%Y%m%d" -d "$date_cur + 1 day")
+done
+
+# process each input variables
 for f in ${forc_var[@]}; do
 
     # does this variable need bias correction applied?
+    # TODO: need to retest this section of script
     do_bias=0
     if [[ $FORC_CORR -eq 1 ]]; then
 	for v in $forc_corr_var; do
@@ -235,8 +246,7 @@ for f in ${forc_var[@]}; do
     files=""
     date_cur=$forc_start_dy
     while [[ $(date -d "$date_cur" +%s) -le $(date -d "$forc_end_dy" +%s) ]];do
-	file_in=${FORC_MEAN_FILE//#var#/$f}
-	file_in=$(date "+$file_in" -d "$date_cur")
+	file_in=work/mean/$(date -d "$date_cur" +%Y%m%d%H)/$f.nc
 	file_out=$file_in
 
 	# make sure the file exists
@@ -244,6 +254,7 @@ for f in ${forc_var[@]}; do
 
 	#------------------------------------------------------------
 	# if we are bias correcting this variable
+	# TODO make sure this section of code works
 	#------------------------------------------------------------
 	if [[ $do_bias -eq 1 ]]; then
 	    file_out=work/mean/corrected.$f.$date_cur.nc
@@ -306,6 +317,7 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
 
     if [[ $FORC_RUNOFF == 1 ]]; then
 	# generate river runoff files
+	# TODO make sure this still works
 	echo "River Runoff"
 	yr=${date_cur:0:4}
 	mn=${date_cur:4:2}
@@ -327,6 +339,18 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
 	done
     fi
 
+    # untar the needed ensemble atmospheric files
+    echo "  Untarring source files..."    
+    mkdir -p work/ens_files
+    date_cur=$forc_start_dy
+    while [[ $(date -d "$date_cur" +%s) -le $(date -d "$forc_end_dy" +%s) ]];do
+	out_dir=work/ens_files/$(date -d "$date_cur" +%Y%m%d%H)
+	mkdir -p $out_dir
+	file_in=$(date "+$FORC_ENS_FILE" -d "$date_cur")
+	tar -xaf $file_in -C $out_dir
+	date_cur=$(date "+%Y%m%d" -d "$date_cur + 1 day")
+    done
+    
     # Create the combined atmospheric forcing file for each member
     echo "  Generating combined atmospheric forcing file for each member..."
     for m in $ens_list; do
@@ -338,9 +362,7 @@ if [[ "$ENS_SIZE" -gt 1 ]]; then
  	    date_cur=$forc_start_dy
  	    while [[ $(date -d "$date_cur" +%s) -le $(date -d "$forc_end_dy" +%s) ]];do
  		date_next=$(date "+%F" -d "$date_cur + 1 day")
- 		file=${FORC_ENS_FILE//#var#/$f}
- 		file=${file//#mem2#/${m: -2}}
- 		file=$(date "+$file" -d "$date_cur")
+		file=work/ens_files/$(date -d $date_cur +%Y%m%d%H)/${m: -4}/$f.nc
  		files+=("$file")
  		date_cur=$date_next
  	    done
@@ -402,7 +424,7 @@ ens_list="0000 $ens_list"
 # ------------------------------------------------------------
 # some fields need to be kept positive, check those
 # ------------------------------------------------------------
-echo "  Checking that the positiveness of the variables..."
+echo "  Checking the positiveness of the variables..."
 echo "     vars: ${forc_var_pos[@]}"
 for m in $ens_list; do
     for v in ${forc_var_pos[@]}; do

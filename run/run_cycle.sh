@@ -108,7 +108,7 @@ fi
 # -------------------------------------------------------------------
 (
     export IC_GEN=$FIRST_CYCLE
-    export IC_DIR=$HGODAS_DATA_DIR/ic/soda_20160101
+    export IC_DIR=$HGODAS_DATA_DIR/ic/soda_${CYCLE:0:8}
     export WORK_DIR=$SCRATCH_DIR_CYCLE/fcst.prep
     $SCRIPT_DIR/fcst.prep.sh
 )
