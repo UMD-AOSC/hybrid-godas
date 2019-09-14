@@ -1,15 +1,15 @@
 &grid_nml
-  grid_file="INPUT/hgrid.nc"
+  grid_file="INPUT/da_hgrid.nc"
   grid_lon_dim="lonq"
   grid_lat_dim="latq"
   grid_lon_var="geolon"
   grid_lat_var="geolat"
   grid_msk_var="wet"
   grid_D_var="D"
-  grid_dpth_file="INPUT/vgrid.nc"
+  grid_dpth_file="INPUT/da_vgrid.nc"
   grid_dpth_dim="Layer"
   grid_dpth_var="Layer"
-  grid_coast_file="INPUT/coast_dist.nc"
+  grid_coast_file="INPUT/da_coast_dist.nc"
   grid_coast_var="coast_dist"
 /
 

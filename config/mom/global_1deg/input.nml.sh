@@ -3,7 +3,7 @@ set -e
 
 # This is a script file that generates the main input.nml file required by MOM for forecast runs.
 # The following environment variables need to be set by the caller:
-#  FCST_START_TIME   start date in YYYYMMDDHH format
+#  FCST_START_TIME   start date in any "date" util friendly format
 #  FCST_RESTART      1 if starting from a restart, otherwise 0
 #  FCST_LEN          integration length, in hours
 #  FCST_RST_OFST     time (hours) from beginning of forecast until when restart file is to be saved.
@@ -21,7 +21,6 @@ cat <<EOF
          restart_output_dir = 'RESTART',
          parameter_filename = 'MOM_input',
                               'MOM_layout',
-                              'MOM_saltrestore',
                               'MOM_override'
 /
 
@@ -42,7 +41,7 @@ cat <<EOF
             months = 0,
             days   = 0,
             hours  = $FCST_LEN,
-            current_date = $(date "+%Y,%m,%d,%H" -d "${FCST_START_TIME:0:8}Z${FCST_START_TIME:8:10}"),0,0,
+            current_date = $(date -u "+%Y,%m,%d,%H" -d "${FCST_START_TIME:0:8}Z${FCST_START_TIME:8:10}"),0,0,
             calendar = 'julian', !< NOTE: an OVERRIDE of default OM4_025 settings
             dt_cpld = 1800,
             dt_atmos = 1800,
@@ -51,9 +50,9 @@ cat <<EOF
             do_ice = .true.,
             do_ocean = .true.,
             do_flux = .true.,
-            atmos_npes = 0, 
-            concurrent = .false.     
-            use_lag_fluxes=.false.    
+            atmos_npes = 0,
+            concurrent = .false.
+            use_lag_fluxes=.false.
             check_stocks = 0
             do_endpoint_chksum=.false.
             restart_interval=0,0,0,${FCST_RST_OFST},0 !< NOTE: not in default OM4_025 settings
@@ -70,7 +69,7 @@ cat <<EOF
 
  &flux_exchange_nml
             debug_stocks = .FALSE.
-            divert_stocks_report = .TRUE.            
+            divert_stocks_report = .TRUE.
             do_area_weighted_flux = .FALSE.
             partition_fprec_from_lprec=.TRUE. !< NOTE: an OVERRIDE of default OM4_025 settings
 /
@@ -86,7 +85,7 @@ cat <<EOF
  &fms_nml
             clock_grain='ROUTINE'
             clock_flags='NONE'
-            domains_stack_size = 5000000
+            domains_stack_size = 6000000
             stack_size =0
 /
 
@@ -133,8 +132,8 @@ cat <<EOF
             ncar_ocean_flux = .true.
 !            coare4_ocean_flux = .true.  !< NOTE: not present in default OM4_025 settings
 	    raoult_sat_vap = .true.
-!            fixed_z_atm_tq = 2.0        !< NOTE: not present in default OM4_025 settings
-!            fixed_z_atm_uv = 10.0       !< NOTE: not present in default OM4_025 settings
+            fixed_z_atm_tq = 2.0        !< NOTE: not present in default OM4_025 settings
+            fixed_z_atm_uv = 10.0       !< NOTE: not present in default OM4_025 settings
 /
 
  &topography_nml

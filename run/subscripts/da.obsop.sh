@@ -10,7 +10,7 @@ for x in $*; do
     # setup working directory
     cd $WORK_DIR/mem_$mem/obsop/$slot
     mkdir INPUT
-    ln -s $GRID_DIR/{hgrid,vgrid,coast_dist}.nc INPUT/
+    ln -s $GRID_DIR/da_{hgrid,vgrid,coast_dist}.nc INPUT/
     ln -s $DA_CFG_DIR/obsprep.nml .
 
     # setup log file

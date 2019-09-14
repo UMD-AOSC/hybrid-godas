@@ -82,7 +82,7 @@ mkdir -p $WORK_DIR/obs/work
 cd $WORK_DIR/obs/work
 ln -s $DA_CFG_DIR/obsprep.nml .
 mkdir INPUT
-ln -s $GRID_DIR/{hgrid,vgrid,coast_dist}.nc INPUT/
+ln -s $GRID_DIR/da_{hgrid,vgrid,coast_dist}.nc INPUT/
 
 
 # for each DA slot

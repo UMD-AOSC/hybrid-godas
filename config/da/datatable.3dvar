@@ -3,12 +3,12 @@
 
 ! Grid parameters
 !------------------------------------------------------------
-"grid_x",	"geolon",	"INPUT/hgrid.nc",
-"grid_y",	"geolat",	"INPUT/hgrid.nc",
-"grid_z",	"Layer",	"INPUT/vgrid.nc"
-"grid_mask",	"wet",		"INPUT/hgrid.nc"
-"grid_D",	"D",		"INPUT/hgrid.nc"
-"grid_coast",	"coast_dist",   "INPUT/coast_dist.nc"
+"grid_x",	"geolon",	"INPUT/da_hgrid.nc",
+"grid_y",	"geolat",	"INPUT/da_hgrid.nc",
+"grid_z",	"Layer",	"INPUT/da_vgrid.nc"
+"grid_mask",	"wet",		"INPUT/da_hgrid.nc"
+"grid_D",	"D",		"INPUT/da_hgrid.nc"
+"grid_coast",	"coast_dist",   "INPUT/da_coast_dist.nc"
 
 
 

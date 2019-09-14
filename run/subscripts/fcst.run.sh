@@ -25,6 +25,7 @@ EOF
  envar+=("FCST_DONE")
  envar+=("BIN_DIR")
  envar+=("MOM_CFG_DIR")
+ envar+=("MOM_INPUT_DIR")
  envar+=("RST_DIR_IN")
  envar+=("RST_DIR_OUT")
  # envar+=("DIAG_DIR_OUT")
@@ -89,9 +90,8 @@ ln -s $MOM6_EXE .
 ln -s $MOM_CFG_DIR/* .
 
 # static input files
-rm INPUT
 mkdir -p INPUT
-ln -s $MOM_CFG_DIR/INPUT/* INPUT/
+ln -s $MOM_INPUT_DIR/* INPUT/
 
 # output directory for restart files
 d=${RST_DIR_OUT/\#CYCLE_NEXT\#/$CYCLE_NEXT}
@@ -214,6 +214,7 @@ source input.nml.sh > input.nml
 # run the forecast
 #------------------------------------------------------------
 echo "running MOM..."
+OMP_NUM_THREADS=1
 ${MPIEXEC} ./mom6 
 
 # move the diag files

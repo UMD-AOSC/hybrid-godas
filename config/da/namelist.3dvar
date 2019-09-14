@@ -9,8 +9,8 @@
 ! g3dv_grid  : Grid dimensions
 !--------------------------------------------------------------------------------
 &g3dv_grid
-  grid_nx = 720
-  grid_ny = 576
+  grid_nx = 360
+  grid_ny = 210
   grid_nz = 75
 /
 

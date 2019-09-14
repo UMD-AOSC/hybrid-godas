@@ -1,0 +1,41 @@
+#!/bin/bash
+set -eu
+
+# load the and machine configuration
+source ../../config/machine/gcc
+
+# DA parameters
+export CYCLE_START=2009010200
+export CYCLE_END=2009010500
+export CYCLE_LEN=24 # hours
+export CYCLE_LEAPADJ=0
+export DA_WNDW_OFST=0
+export DA_SLOT_LEN=24
+export DA_MODE=var
+export ENS_SIZE=1
+
+# Location of MOM input and configuration files
+export MOM_INPUT_DIR=$HGODAS_DATA_DIR/mom_input/global_1deg
+export MOM_CFG_DIR=$HGODAS_ROOT_DIR/config/mom/global_1deg
+
+# location of 3dvar/lektf/obsprep config files
+export DA_CFG_DIR=$HGODAS_ROOT_DIR/config/da
+
+# observations
+export OBS_SST=0
+export OBS_ADT=1
+export OBS_ADT_PATH=$HGODAS_DATA_DIR/obs/adt/%Y/%Y%m%d
+export OBS_PROF=1
+export OBS_PROF_PATH=$HGODAS_DATA_DIR/obs/insitu/%Y/%Y%m%d.nc
+
+# initial conditions
+export IC_DIR=$HGODAS_DATA_DIR/ic/soda_${CYCLE_START:0:8}
+
+# forcing
+export FORC_MEAN_FILE=$HGODAS_DATA_DIR/fluxes/cfsr/%Y/cfsr.%Y%m%d.tgz
+export FORC_VAR=DLWRF.sfc,DSWRF.sfc,PRATE,SLP,TMP.2m,SPFH.2m,UGRD.10m,VGRD.10m
+export FORC_ENS_FILE=$HGODAS_DATA_DIR/fluxes/20CRv2/%Y/20CRv2.%Y%m%d.tgz
+export FORC_VAR_ENS=$FORC_VAR
+export FORC_RUNOFF=0
+export FORC_CORR=0
+export FORC_VAR_POS=DLWRF.sfc,DSWRF.sfc,PRATE,SPFH.2m

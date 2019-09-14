@@ -60,7 +60,7 @@ fi
 
 #ln -s $DA_CFG_DIR/obsprep.nml .
 mkdir INPUT
-ln -s $GRID_DIR/{hgrid,vgrid,coast_dist}.nc INPUT/
+ln -s $GRID_DIR/da_{hgrid,vgrid,coast_dist}.nc INPUT/
 
 
 # finish setting up working directory
@@ -273,7 +273,7 @@ if [[ "$DA_MODE" == "var" || "$DA_MODE" == "hyb" ]]; then
     cd $WORK_DIR/var
 
     mkdir INPUT
-    ln -s $GRID_DIR/{hgrid,vgrid,coast_dist}.nc INPUT/
+    ln -s $GRID_DIR/da_{hgrid,vgrid,coast_dist}.nc INPUT/
     ln -s $DA_CFG_DIR/*.3dvar .
     ln -s ../obsop.var/obs.nc .
 
