@@ -1,5 +1,7 @@
 #!/bin/bash
-set -eu
+set -e
+
+export HGODAS_ROOT_DIR=$(readlink -f $(dirname ${BASH_SOURCE[0]}))
 
 # get the machine config file and source it
 if [[ $# != 1 ]]; then
@@ -14,6 +16,10 @@ echo "Updating git submodules..."
 git submodule update --init --recursive
 
 # run cmake
+echo "Preparing build in $HGODAS_BUILD_DIR"
 mkdir -p $HGODAS_BUILD_DIR
 cd $HGODAS_BUILD_DIR
-cmake $HGODAS_ROOT_DIR
+cmake $HGODAS_ROOT_DIR $CMAKE_OPT
+
+cd $HGODAS_BUILD_DIR
+make 

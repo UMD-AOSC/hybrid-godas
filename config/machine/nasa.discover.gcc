@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# load modules
+module purge
+module load other/cmake-3.8.2
+module load other/comp/gcc-7.3
+module load other/mpi/openmpi/3.0.0-gcc-7.3
+module load compiler/gcc/7.3/baselibs/5.1.2_openmpi-3.0.0
+
+# set compiler
+export FC=mpif90
+export CC=mpicc
+
+# options needed to be passed to cmake
+export CMAKE_OPT="-DNETCDF_INCLUDE_DIR=$NETCDF_INCLUDE_DIRS"
+export CMAKE_OPT="$CMAKE_OPT -DNETCDF_LIBRARY=$NETCDF_LIBRARIES"
+export CMAKE_OPT="$CMAKE_OPT -DNETCDF_F90_LIBRARY=$NETCDF_LIBRARIES;$HDF5_ROOT/lib/libsz.a"
+
+# directory to build in
+export HGODAS_BUILD_DIR=$HGODAS_ROOT_DIR/build/gcc
+
+
+#--------------------------------------------------------------------------------
+# The following are needed for the runtime 
+
+export MPIEXEC=mpirun
+
+# other required default directory locations
+export HGODAS_BIN_DIR=$HGODAS_BUILD_DIR/bin
+export HGODAS_DATA_DIR=$HGODAS_ROOT_DIR/DATA
+export HGODAS_SCRATCH_DIR=$EXP_DIR/WRK
+

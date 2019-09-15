@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.6)
 
-project(HybridGODAS C Fortran)
+project(HybridGODAS CXX C Fortran)
 
 # update the git submodules
 find_package(Git)
