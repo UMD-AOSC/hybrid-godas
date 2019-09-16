@@ -7,12 +7,10 @@ if [[ $# != 1 || ! -d $1 ]]; then
     exit 1
 fi
 export EXP_DIR=$(readlink -f $1)
-
-# read in the machine config file
-source $EXP_DIR/config/config.machine
+echo "Running experiment in $EXP_DIR"
 
 # read in experiment config file
-source $EXP_DIR/config/config.exp
+source $EXP_DIR/config.exp
 
 
 #================================================================================
@@ -46,10 +44,6 @@ export LOG_DIR_BASE=$EXP_DIR/logs/$CYCLE
 export SCRATCH_DIR_CYCLE=$HGODAS_SCRATCH_DIR/cycle_$CYCLE
 export OUTPUT_DIR=$EXP_DIR/output
 export DA_CFG_DIR=$EXP_DIR/config/da
-
-# # machine/build specific params (move elsewhere)
-# export PPN=8
-# export NODES=1
     
 # Create a list of all ensemble member IDs.
 # Note, this is used even if not doing ensemble DA
@@ -117,6 +111,7 @@ fi
 # -------------------------------------------------------------------
 # Forecast run for each ens member
 # -------------------------------------------------------------------
+echo -e "\n\n============================================================\n\n"
 for MEM in $ENS_LIST; do
 (
     log=$LOG_DIR_BASE/fcst.run/fcst.$MEM.log
@@ -127,8 +122,6 @@ for MEM in $ENS_LIST; do
     export FORC_DIR=$SCRATCH_DIR_CYCLE/fcst.prep/forc/mem_$MEM
     export IC_FILE=$SCRATCH_DIR_CYCLE/fcst.prep/ic/mem_$MEM/ic.nc
     export FCST_DONE=$EXP_DIR/cycle/$CYCLE_NEXT/mem_$MEM/fcst_done
-    export MOM_CFG_DIR=$EXP_DIR/config/mom
-#     export FCST_RESTART=0
     export MOM6_EXE=$BIN_DIR/mom6
     export RST_DIR_IN=$EXP_DIR/cycle/$CYCLE/mem_$MEM/fcst.rst
     export RST_DIR_OUT=$EXP_DIR/cycle/$CYCLE_NEXT/mem_$MEM/fcst.rst

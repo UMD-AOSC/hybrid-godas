@@ -50,12 +50,15 @@ cd $WORK_DIR
 
 # combine the files
 for f in ${files[@]}; do
+  flen=${#f}
   if [[ ${f##*.} != 'nc' ]]; then
     echo "No need to combine diag file for $f.nc"
-    f2=${f::-11}; f2=${f2#*.}
+    ((i0=flen-11))
+    f2=${f:0:$i0}; f2=${f2#*.}
     ln -s $FCST_DIR/$f.nc $f2.nc.2
   else
-    f2=${f::-14}; f2=${f2#*.}
+    ((i0=flen-14))
+    f2=${f:0:$i0}; f2=${f2#*.}
     echo "combining $f2"
     echo "    $COMBINE_EXE -m -64 $f2 $FCST_DIR/*$f2.*"
     $COMBINE_EXE -m -64 $f2.nc.2 $FCST_DIR/*$f2*
