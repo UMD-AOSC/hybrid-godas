@@ -2,7 +2,8 @@
 set -eu
 
 # load the and machine configuration
-source ../../config/machine/gcc
+export HGODAS_ROOT_DIR=/data/work_bak/hybrid-godas
+source $HGODAS_ROOT_DIR/config/machine/gcc
 
 # DA parameters
 export CYCLE_START=2009010200

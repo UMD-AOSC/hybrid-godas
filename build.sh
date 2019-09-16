@@ -22,4 +22,4 @@ cd $HGODAS_BUILD_DIR
 cmake $HGODAS_ROOT_DIR $CMAKE_OPT
 
 cd $HGODAS_BUILD_DIR
-make 
+make -j 4

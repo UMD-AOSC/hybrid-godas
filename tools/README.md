@@ -1,10 +1,10 @@
-this directory contains scripts to perform secondary tasks such as downloading observations and preparing surface forcing files.
+This directory contains scripts to perform secondary tasks such as downloading observations and preparing surface forcing files. Most of these scripts are python, and a detailed description of each tool can be viewed by running the tool with the `-h` option.
 
 ### plots
 `./plots/` contains basic python scripts for generating plots for evaluating O-F (observation minud forecast) statistics.
 
 ### postproc
-`./postproc` scripts that are called by the `/run/subscript/cycle.post.sh` subscript to perform masking, remapping, and compressing of output files.
+`./postproc` scripts that are called by the `/run/subscript/cycle.post.sh` subscript to perform masking, remapping, and compressing of output files. (Note: this is being phased out since the python code can be slow)
 
 ### Observation preparation
 
@@ -17,11 +17,11 @@ this directory contains scripts to perform secondary tasks such as downloading o
 
 | file | description |
 | --------------------   | ----------------- |
-| `get_cfsr_fluxes.py` | Downloads and converts CFSR daily fluxes |
+| `get_fluxes_cfsr.py` | Downloads and converts CFSR 6 hourly fluxes |
+| `get_fluxes_20CRv2.py` | Download the 20crv2 ensemble members used for flux purturbations. |
 
 ### Misc 
 
 | file | description |
 | --------------------   | ----------------- |
 | `calc_mask_table.py` | calculates new processor masks for MOM6 for any given number of processors / nodes |
-| `rst_update.py` | applies the update from the LETKF/3Dvar to a single ensemble member's restart file. Obviously python is not the prefered way of doing this (too slow). This will be replaced in the future. |

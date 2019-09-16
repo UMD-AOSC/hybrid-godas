@@ -12,7 +12,7 @@ export HGODAS_BUILD_DIR=$HGODAS_ROOT_DIR/build/gcc
 # The following are needed for the runtime
 
 export MPIEXEC=mpirun
-ulimit -s unlimied
+ulimit -s unlimited
 export OMP_NUM_THREADS=1
 
 # other required default directory locations
