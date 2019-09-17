@@ -1,9 +1,9 @@
 #!/bin/bash
 set -eu
 
-# load the and machine configuration
-export HGODAS_ROOT_DIR=/data/work_bak/hybrid-godas
-source $HGODAS_ROOT_DIR/config/machine/gcc
+# set root HGODAS directory and load the machine configuration
+export HGODAS_ROOT_DIR=/discover/nobackup/tsluka/hybrid-godas
+source $HGODAS_ROOT_DIR/config/machine/nasa.discover.gcc
 
 # DA parameters
 export CYCLE_START=2009010200
@@ -24,8 +24,7 @@ export DA_CFG_DIR=$HGODAS_ROOT_DIR/config/da
 
 # observations
 export OBS_SST=0
-export OBS_ADT=1
-export OBS_ADT_PATH=$HGODAS_DATA_DIR/obs/adt/%Y/%Y%m%d
+export OBS_ADT=0
 export OBS_PROF=1
 export OBS_PROF_PATH=$HGODAS_DATA_DIR/obs/insitu/%Y/%Y%m%d.nc
 

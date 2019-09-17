@@ -43,7 +43,6 @@ export SCRIPT_DIR=$HGODAS_ROOT_DIR/run/subscripts
 export LOG_DIR_BASE=$EXP_DIR/logs/$CYCLE
 export SCRATCH_DIR_CYCLE=$HGODAS_SCRATCH_DIR/cycle_$CYCLE
 export OUTPUT_DIR=$EXP_DIR/output
-export DA_CFG_DIR=$EXP_DIR/config/da
     
 # Create a list of all ensemble member IDs.
 # Note, this is used even if not doing ensemble DA
@@ -63,8 +62,8 @@ set --
 # DA preparation
 # -------------------------------------------------------------------
 if [[ $FIRST_CYCLE == 0 ]]; then
-(
-    export GRID_DIR=$EXP_DIR/config/da/grid
+    (
+    export GRID_DIR=$MOM_INPUT_DIR
     export WORK_DIR=$SCRATCH_DIR_CYCLE/da.prep
     export LOG_DIR=$LOG_DIR_BASE/da.prep
     $SCRIPT_DIR/da.prep.sh
@@ -77,7 +76,7 @@ fi
 # -------------------------------------------------------------------
 if [[ $FIRST_CYCLE == 0 ]]; then
 (
-    export GRID_DIR=$EXP_DIR/config/da/grid    
+    export GRID_DIR=$MOM_INPUT_DIR
     export WORK_DIR=$SCRATCH_DIR_CYCLE/da.run
     export LOG_DIR=$LOG_DIR_BASE/da.run
     $SCRIPT_DIR/da.run.sh
@@ -102,7 +101,6 @@ fi
 # -------------------------------------------------------------------
 (
     export IC_GEN=$FIRST_CYCLE
-    export IC_DIR=$HGODAS_DATA_DIR/ic/soda_${CYCLE:0:8}
     export WORK_DIR=$SCRATCH_DIR_CYCLE/fcst.prep
     $SCRIPT_DIR/fcst.prep.sh
 )
